@@ -1,0 +1,37 @@
+management.security.enabled: false
+spring.jmx.enabled: false
+
+server:
+  port: 9004
+  servlet:
+    contextPath: /tesk
+
+spring:
+  jackson:
+    dateFormat: yyyy-MM-dd HH:mm:ss
+    timeZone: GMT+8
+  application:
+    name: syhz-tesk
+  profiles:
+    active: test
+  datasource:
+    separator: ;;
+    url: ${db.url}
+    username: ${db.username}
+    password: ${db.password}
+    type: com.alibaba.druid.pool.DruidDataSource
+    driver-class-name: com.mysql.jdbc.Driver
+    platform: mysql
+    initial-size: 2
+    maximum-pool-size: 10
+    connection-timeout: 5000
+    validationQuery: select 1
+    testWhileIdle: true
+    testOnBorrow: false
+    testOnReturn: false
+    continue-on-error: true
+    initialization-mode: always
+mybatis:
+    typeHandlersPackage: com.nmghr.basic.rmdb.handler
+signDept: 1000
+
