@@ -8,7 +8,7 @@
 	<parent>
 		<groupId>com.ngmhr.syhz</groupId>
 		<artifactId>syhz-parent</artifactId>
-		<version>0.0.1-SNAPSHOT</version>
+		<version>1.0</version>
 	</parent>
 
 	<dependencies>
@@ -33,9 +33,9 @@
 			<artifactId>spring-boot-starter-actuator</artifactId>
 		</dependency>
 		<dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-aop</artifactId>
-        </dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-aop</artifactId>
+		</dependency>
 		<dependency>
 			<groupId>mysql</groupId>
 			<artifactId>mysql-connector-java</artifactId>
@@ -94,9 +94,9 @@
 			<version>3.9.0</version>
 		</dependency>
 		<dependency>
-		    <groupId>org.springframework.boot</groupId>
-		    <artifactId>spring-boot-starter-activemq</artifactId>
-        </dependency>
+			<groupId>com.ngmhr.syhz</groupId>
+			<artifactId>syhz-exam</artifactId>
+		</dependency>
 	</dependencies>
 
 	<build>
@@ -141,7 +141,7 @@
 				<dependency>
 					<groupId>com.ngmhr.syhz</groupId>
 					<artifactId>syhz-ajgl</artifactId>
-					<version>0.0.1-SNAPSHOT</version>
+					<version>1.0</version>
 				</dependency>
 			</dependencies>
 			<activation>
