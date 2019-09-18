@@ -97,6 +97,11 @@
 			<groupId>com.ngmhr.syhz</groupId>
 			<artifactId>syhz-exam</artifactId>
 		</dependency>
+		<dependency>
+			<groupId>com.ngmhr.syhz</groupId>
+			<artifactId>syhz-train</artifactId>
+		</dependency>
+		
 	</dependencies>
 
 	<build>

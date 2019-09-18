@@ -10,6 +10,7 @@
     <module>syhz-ajgl</module>
     <module>syhz-task</module>
     <module>syhz-exam</module>
+    <module>syhz-train</module>
   </modules>
 
   <parent>
@@ -30,6 +31,11 @@
       <dependency>
         <groupId>com.ngmhr.syhz</groupId>
         <artifactId>syhz-exam</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+       <dependency>
+        <groupId>com.ngmhr.syhz</groupId>
+        <artifactId>syhz-train</artifactId>
         <version>${project.version}</version>
       </dependency>
     </dependencies>
