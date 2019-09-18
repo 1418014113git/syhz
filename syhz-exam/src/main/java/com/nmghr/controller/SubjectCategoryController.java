@@ -15,6 +15,8 @@ import java.util.regex.Pattern;
 
 import com.nmghr.basic.common.Constant;
 import com.nmghr.basic.common.Result;
+import com.nmghr.basic.common.exception.GlobalErrorEnum;
+import com.nmghr.basic.common.exception.GlobalErrorException;
 import com.nmghr.basic.core.common.LocalThreadStorage;
 import com.nmghr.basic.core.service.IBaseService;
 import org.apache.ibatis.annotations.Delete;
@@ -50,7 +52,7 @@ public class SubjectCategoryController {
     LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMSUBJECTCATEINSTCHECK");
     Map<String, Object> result = (Map<String, Object>) baseService.get(param);
     if(result!=null && result.get("num")!=null &&Integer.parseInt(String.valueOf(result.get("num")))>0){
-      return Result.fail("999996", "该名称已存在此父类中");
+      return Result.fail(GlobalErrorEnum.PARAM_NOT_VALID.getCode(), "该名称已存在此父类中");
     }
     LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMSUBJECTCATEGORY");
     return baseService.save(requestBody);
@@ -73,7 +75,7 @@ public class SubjectCategoryController {
     LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMSUBJECTCATEINSTCHECK");
     Map<String, Object> result = (Map<String, Object>) baseService.get(param);
     if(result!=null && result.get("num")!=null &&Integer.parseInt(String.valueOf(result.get("num")))>0){
-      return Result.fail("999996", "该名称已存在此父类中");
+      return Result.fail(GlobalErrorEnum.PARAM_NOT_VALID.getCode(), "该名称已存在此父类中");
     }
     LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMSUBJECTCATEGORY");
     return baseService.update(String.valueOf(requestBody.get("id")), requestBody);
@@ -110,7 +112,7 @@ public class SubjectCategoryController {
     LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMSUBJECTCATEDELCHECK");
     Map<String, Object> result = (Map<String, Object>) baseService.get(param);
     if(result!=null && result.get("num")!=null &&Integer.parseInt(String.valueOf(result.get("num")))>0){
-      return Result.fail("999996", "该名称下存在试卷");
+      return Result.fail(GlobalErrorEnum.PARAM_NOT_VALID.getCode(), "该名称下存在试卷");
     }
     LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMSUBJECTCATEGORYDEL");
     return baseService.update(String.valueOf(requestBody.get("id")),new HashMap<>());
@@ -124,7 +126,10 @@ public class SubjectCategoryController {
     ValidationUtils.notNull(requestBody.get("parentId"), "上级id不能为空!");
     ValidationUtils.notNull(requestBody.get("deptCode"), "当前部门编号不能为空!");
     ValidationUtils.notNull(requestBody.get("deptName"), "当前部门名称不能为空!");
-//    ValidationUtils.regexp(requestBody.get("categoryName"), "[！@#￥%……&*$]", "不能输入特殊字符！@#￥%……&*$");
+    Matcher m = Pattern.compile("[！@#￥%……&*$]").matcher(String.valueOf(requestBody.get("categoryName")));
+    if (m.find()) {
+      throw new GlobalErrorException(GlobalErrorEnum.PARAM_NOT_VALID.getCode(), "不能输入特殊字符！@#￥%……&*$");
+    }
   }
 
   private void validId(Object id){
