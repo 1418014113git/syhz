@@ -47,6 +47,8 @@ public class PaperSaveHandler extends AbstractSaveHandler {
       params.put("remark", requestBody.get("remark"));
       if (requestBody.get("paperStatus") == null) {
         params.put("paperStatus", 1);
+      } else {
+        params.put("paperStatus", requestBody.get("paperStatus"));
       }
       LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMPAPER");
       Object paperObj = baseService.save(params);
