@@ -4,23 +4,25 @@ import com.sargeraswang.util.ExcelUtil.ExcelCell;
 
 public class ExamExcelFillGapVo {
 
+    @ExcelCell(defaultValue="序号", index = 0)
+    private String index;
     @ExcelCell(defaultValue="题目内容", index = 1)
     private String content;
-    @ExcelCell(defaultValue="次序", index = 2)
-    private String order;
-    @ExcelCell(defaultValue="题目解析", index = 3)
-    private String answerReason;
-    @ExcelCell(defaultValue="正确答案", index = 4)
+    @ExcelCell(defaultValue="正确答案", index = 2)
     private String answer;
-    @ExcelCell(defaultValue="出处", index = 5)
-    private String from;
+    @ExcelCell(defaultValue="题目解析", index =3)
+    private String analysis;
+    @ExcelCell(defaultValue="出处", index = 4)
+    private String source;
+    @ExcelCell(defaultValue ="次序",index = 5)
+    private String sort;
 
-    public String getOrder() {
-        return order;
+    public String getIndex() {
+        return index;
     }
 
-    public void setOrder(String order) {
-        this.order = order;
+    public void setIndex(String index) {
+        this.index = index;
     }
 
     public String getContent() {
@@ -31,14 +33,6 @@ public class ExamExcelFillGapVo {
         this.content = content;
     }
 
-    public String getAnswerReason() {
-        return answerReason;
-    }
-
-    public void setAnswerReason(String answerReason) {
-        this.answerReason = answerReason;
-    }
-
     public String getAnswer() {
         return answer;
     }
@@ -47,22 +41,27 @@ public class ExamExcelFillGapVo {
         this.answer = answer;
     }
 
-    public String getFrom() {
-        return from;
+    public String getAnalysis() {
+        return analysis;
     }
 
-    public void setFrom(String from) {
-        this.from = from;
+    public void setAnalysis(String analysis) {
+        this.analysis = analysis;
     }
 
-    @Override
-    public String toString() {
-        return "ExamExcelFillGapVo{" +
-                "content='" + content + '\'' +
-                ", order='" + order + '\'' +
-                ", answerReason='" + answerReason + '\'' +
-                ", answer='" + answer + '\'' +
-                ", from='" + from + '\'' +
-                '}';
+    public String getSource() {
+        return source;
+    }
+
+    public void setSource(String source) {
+        this.source = source;
+    }
+
+    public String getSort() {
+        return sort;
+    }
+
+    public void setSort(String sort) {
+        this.sort = sort;
     }
 }
