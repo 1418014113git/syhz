@@ -1,11 +1,15 @@
 package com.nmghr.controller;
 
+import cn.hutool.json.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.nmghr.basic.common.Constant;
 import com.nmghr.basic.common.Result;
 import com.nmghr.basic.common.exception.GlobalErrorEnum;
 import com.nmghr.basic.common.exception.GlobalErrorException;
 import com.nmghr.basic.core.common.LocalThreadStorage;
+import com.nmghr.basic.core.page.Paging;
 import com.nmghr.basic.core.service.IBaseService;
+import com.nmghr.basic.core.service.handler.IQueryHandler;
 import com.nmghr.basic.core.service.handler.ISaveHandler;
 import com.nmghr.basic.core.service.handler.IUpdateHandler;
 import com.nmghr.basic.core.util.SpringUtils;
@@ -33,12 +37,120 @@ public class PaperController {
   private IBaseService baseService;
 
   /**
+   * 随机组卷 保存
+   *
    * @param requestBody body
    * @return Object obj
    * @throws Exception e
    */
   @SuppressWarnings("unchecked")
-  @PutMapping("save")
+  @PutMapping("/random/save")
+  public Object saveRandom(@RequestBody Map<String, Object> requestBody) throws Exception {
+    //校验表单数据
+//    validParams(requestBody);
+
+    //根据题库查询题目试题， 根据设置 随机选择试题并返回预览，
+    Map<String, Object> param = new HashMap<>();
+    param.put("paperName", requestBody.get("paperName"));
+    LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMPAPERCHECK");
+    Map<String, Object> result = (Map<String, Object>) baseService.get(param);
+    if (result != null && result.get("num") != null && Integer.parseInt(String.valueOf(result.get("num"))) > 0) {
+      return Result.fail(GlobalErrorEnum.PARAM_NOT_VALID.getCode(), "试卷名称已存在");
+    }
+    requestBody.put("from", "controller");
+    requestBody.put("operator", "save");
+    IQueryHandler queryHandler = SpringUtils.getBean("paperRandomQuestionQueryHandler", IQueryHandler.class);
+    List<Map<String, Object>> list = (List<Map<String, Object>>) queryHandler.list(requestBody);
+    System.out.println(JSONObject.toJSONString(list));
+
+    Map<String, Object> saveParam = new HashMap<>();
+    saveParam.put("paperName",requestBody.get("paperName"));
+    saveParam.put("paperType",requestBody.get("paperType"));
+    saveParam.put("creator",requestBody.get("creator"));
+    saveParam.put("deptCode",requestBody.get("deptCode"));
+    saveParam.put("deptName",requestBody.get("deptName"));
+    saveParam.put("paperStatus",requestBody.get("paperStatus"));
+    saveParam.put("remark",requestBody.get("remark"));
+    saveParam.put("questionList",list);
+    saveParam.put("from", "controller");
+    ISaveHandler saveHandler = SpringUtils.getBean("paperSaveHandler", ISaveHandler.class);
+    return Result.ok(saveHandler.save(saveParam));
+  }
+
+  /**
+   * 随机组卷预览
+   *
+   * @param requestBody body
+   * @return Object obj
+   * @throws Exception e
+   */
+  @SuppressWarnings("unchecked")
+  @PutMapping("/random/preView")
+  public Object randomPreView(@RequestBody Map<String, Object> requestBody) throws Exception {
+    //校验表单数据
+//    validParams(requestBody);
+    //根据题库查询题目试题， 根据设置 随机选择试题并返回预览，
+    requestBody.put("from", "controller");
+    requestBody.put("operator", "random");
+    IQueryHandler queryHandler = SpringUtils.getBean("paperRandomQuestionQueryHandler", IQueryHandler.class);
+    return Result.ok(queryHandler.list(requestBody));
+  }
+
+
+  /**
+   * 修改试卷
+   *
+   * @param requestBody body
+   * @return Object obj
+   * @throws Exception e
+   */
+  @SuppressWarnings("unchecked")
+  @PostMapping("/random/update")
+  public Object updateRandom(@RequestBody Map<String, Object> requestBody) throws Exception {
+    //校验表单数据
+    validId(requestBody.get("id"));
+//    validParams(requestBody);
+    Map<String, Object> param = new HashMap<>();
+    param.put("paperName", requestBody.get("paperName"));
+    param.put("id", requestBody.get("id"));
+    LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMPAPERCHECK");
+    Map<String, Object> result = (Map<String, Object>) baseService.get(param);
+    if (result != null && result.get("num") != null && Integer.parseInt(String.valueOf(result.get("num"))) > 0) {
+      return Result.fail(GlobalErrorEnum.PARAM_NOT_VALID.getCode(), "试卷名称已存在");
+    }
+    //随机试题
+    requestBody.put("from", "controller");
+    requestBody.put("operator", "save");
+    IQueryHandler queryHandler = SpringUtils.getBean("paperRandomQuestionQueryHandler", IQueryHandler.class);
+    List<Map<String, Object>> list = (List<Map<String, Object>>) queryHandler.list(requestBody);
+    System.out.println(JSONObject.toJSONString(list));
+
+    Map<String, Object> saveParam = new HashMap<>();
+    saveParam.put("paperName",requestBody.get("paperName"));
+    saveParam.put("paperType",requestBody.get("paperType"));
+    saveParam.put("creator",requestBody.get("creator"));
+    saveParam.put("deptCode",requestBody.get("deptCode"));
+    saveParam.put("deptName",requestBody.get("deptName"));
+    saveParam.put("paperStatus",requestBody.get("paperStatus"));
+    saveParam.put("id",requestBody.get("id"));
+    saveParam.put("remark",requestBody.get("remark"));
+    saveParam.put("questionList",list);
+    saveParam.put("from", "controller");
+    IUpdateHandler updateHandler = SpringUtils.getBean("paperUpdateHandler", IUpdateHandler.class);
+    return Result.ok(updateHandler.update(String.valueOf(requestBody.get("id")), saveParam));
+  }
+
+
+
+  /**
+   * 人工组卷
+   *
+   * @param requestBody body
+   * @return Object obj
+   * @throws Exception e
+   */
+  @SuppressWarnings("unchecked")
+  @PutMapping("/save")
   public Object save(@RequestBody Map<String, Object> requestBody) throws Exception {
     //校验表单数据
     validParams(requestBody);
@@ -62,7 +174,7 @@ public class PaperController {
    * @throws Exception e
    */
   @SuppressWarnings("unchecked")
-  @PostMapping("update")
+  @PostMapping("/update")
   public Object update(@RequestBody Map<String, Object> requestBody) throws Exception {
     //校验表单数据
     validId(requestBody.get("id"));
@@ -123,7 +235,7 @@ public class PaperController {
   }
 
   /**
-   * 列表
+   * 试卷列表
    *
    * @param param param
    * @return Object
@@ -204,6 +316,38 @@ public class PaperController {
     return result;
   }
 
+
+  /**
+   * 试题列表
+   *
+   * @param param param
+   * @return Object
+   * @throws Exception e
+   */
+  @SuppressWarnings("unchecked")
+  @GetMapping("/questionList")
+  public Object questionList(@RequestParam Map<String, Object> param) throws Exception {
+    int pageNum = 1, pageSize = 10;
+    if (param.get("pageNum") != null && !"".equals(String.valueOf(param.get("pageSize")).trim())) {
+      pageNum = Integer.parseInt(String.valueOf(param.get("pageNum")));
+    }
+    if (param.get("pageSize") != null && !"".equals(String.valueOf(param.get("pageSize")).trim())) {
+      pageSize = Integer.parseInt(String.valueOf(param.get("pageSize")));
+    }
+    if (param.get("type") == null || "".equals(String.valueOf(param.get("pageSize")).trim())) {
+      throw new GlobalErrorException(GlobalErrorEnum.PARAM_NOT_VALID.getCode(), "试题类型不能为空!");
+    }
+    LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMPAPERQUESTION");
+    Paging paging = (Paging) baseService.page(param, pageNum, pageSize);
+    List<Map<String, Object>> list = paging.getList();
+    if ("1".equals(String.valueOf(param.get("type")))||"2".equals(String.valueOf(param.get("type")))) {
+      list = settingChoices(list);
+      return new Paging<>(pageSize, pageNum, paging.getTotalCount(), list);
+    }
+    return paging;
+  }
+
+
   /**
    * 根据排序定位
    *
@@ -220,6 +364,53 @@ public class PaperController {
   /**
    * 整理选择题
    *
+   * @param choices
+   */
+  @SuppressWarnings("unchecked")
+  private List<Map<String, Object>> settingChoices(List<Map<String, Object>> choices) {
+    if (choices == null || choices.size() == 0) {
+      return new ArrayList<>();
+    }
+    Map<String, Object> result = new HashMap<>();
+    StringBuilder ids = new StringBuilder();
+    for (Map<String, Object> map : choices) {
+      ids.append(",");
+      ids.append(map.get("id"));
+      result.put(String.valueOf(map.get("id")), map);
+    }
+    try {
+      Map<String, Object> param = new HashMap<>();
+      param.put("ids", ids.toString().substring(1));
+      param.put("type", 99);
+      LocalThreadStorage.clear();
+      LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMPAPERQUESTION");
+      List<Map<String, Object>> list = (List<Map<String, Object>>) baseService.list(param);
+      if (list != null && list.size() > 0) {
+        for (Map<String, Object> map : list) {
+          String key = String.valueOf(map.get("id"));
+          if (result.get(key) != null) {
+            Map<String, Object> question = (Map<String, Object>) result.get(key);
+            Map<String, Object> items = (Map<String, Object>) question.get("items");
+            if(items==null){
+              items = new HashMap<>();
+              items.put(String.valueOf(map.get("point")), map.get("text"));
+            }else {
+              items.put(String.valueOf(map.get("point")), map.get("text"));
+            }
+            question.put("items", items);
+            result.put(key, question);
+          }
+        }
+      }
+    } catch (Exception e) {
+
+    }
+    return new ArrayList(result.values());
+  }
+
+  /**
+   * 整理选择题
+   *
    * @param result
    * @param choices
    */
@@ -228,24 +419,20 @@ public class PaperController {
     if (choices != null && choices.size() > 0) {
       Map<String, Object> res = new HashMap<>();
       for (Map<String, Object> map : choices) {
-        Map<String, Object> point = new HashMap<>();
-        point.put(String.valueOf(map.get("point")), map.get("value"));
+        res.put(String.valueOf(map.get("id")) + "#" + map.get("type"), map);
+      }
+      for (Map<String, Object> map : choices) {
         String key = String.valueOf(map.get("id")) + "#" + map.get("type");
-        if (res.get(key) == null) {
-          Map<String, Object> question = new HashMap<>();
-          question.put("id", map.get("id"));
-          question.put("type", map.get("type"));
-          question.put("sort", map.get("sort"));
-          question.put("score", map.get("score"));
-          question.put("name", map.get("name"));
-          List<Map<String, Object>> array = new ArrayList<>();
-          array.add(point);
-          question.put("list", array);
-          res.put(key, question);
-        } else {
+        if (res.get(key) != null) {
           Map<String, Object> question = (Map<String, Object>) res.get(key);
-          List<Map<String, Object>> array = (List<Map<String, Object>>) question.get("list");
-          array.add(point);
+          Map<String, Object> items = (Map<String, Object>) question.get("items");
+          if(items==null){
+            items = new HashMap<>();
+            items.put(String.valueOf(map.get("point")), map.get("value"));
+          }else {
+            items.put(String.valueOf(map.get("point")), map.get("value"));
+          }
+          question.put("items", items);
           res.put(key, question);
         }
       }
@@ -301,6 +488,9 @@ public class PaperController {
   private void validId(Object id) {
     ValidationUtils.notNull(id, "id不能为空!");
     ValidationUtils.regexp(id, "^\\d+$", "非法输入");
-  }
+/**
+
+ **/
+ }
 
 }
