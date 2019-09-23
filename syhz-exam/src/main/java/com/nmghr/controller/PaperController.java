@@ -14,6 +14,7 @@ import com.nmghr.basic.core.service.handler.ISaveHandler;
 import com.nmghr.basic.core.service.handler.IUpdateHandler;
 import com.nmghr.basic.core.util.SpringUtils;
 import com.nmghr.basic.core.util.ValidationUtils;
+import com.nmghr.common.ExamConstant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -61,8 +62,10 @@ public class PaperController {
     requestBody.put("operator", "save");
     IQueryHandler queryHandler = SpringUtils.getBean("paperRandomQuestionQueryHandler", IQueryHandler.class);
     List<Map<String, Object>> list = (List<Map<String, Object>>) queryHandler.list(requestBody);
-    System.out.println(JSONObject.toJSONString(list));
-
+    if(list==null||list.size()<2){
+      return Result.fail(GlobalErrorEnum.PARAM_NOT_VALID.getCode(), "试卷随机试题异常，请检查试题是否正确");
+    }
+    System.out.println(list.subList(1,list.size()-1));
     Map<String, Object> saveParam = new HashMap<>();
     saveParam.put("paperName",requestBody.get("paperName"));
     saveParam.put("paperType",requestBody.get("paperType"));
@@ -70,8 +73,8 @@ public class PaperController {
     saveParam.put("deptCode",requestBody.get("deptCode"));
     saveParam.put("deptName",requestBody.get("deptName"));
     saveParam.put("paperStatus",requestBody.get("paperStatus"));
-    saveParam.put("remark",requestBody.get("remark"));
-    saveParam.put("questionList",list);
+    saveParam.put("remark",JSONObject.toJSON(list.get(0)));
+    saveParam.put("questionList",list.subList(1,list.size()-1));
     saveParam.put("from", "controller");
     ISaveHandler saveHandler = SpringUtils.getBean("paperSaveHandler", ISaveHandler.class);
     return Result.ok(saveHandler.save(saveParam));
@@ -123,18 +126,20 @@ public class PaperController {
     requestBody.put("operator", "save");
     IQueryHandler queryHandler = SpringUtils.getBean("paperRandomQuestionQueryHandler", IQueryHandler.class);
     List<Map<String, Object>> list = (List<Map<String, Object>>) queryHandler.list(requestBody);
-    System.out.println(JSONObject.toJSONString(list));
-
+    if(list==null||list.size()<2){
+      return Result.fail(GlobalErrorEnum.PARAM_NOT_VALID.getCode(), "试卷随机试题异常，请检查试题是否正确");
+    }
+    System.out.println(list.subList(1,list.size()-1));
     Map<String, Object> saveParam = new HashMap<>();
+    saveParam.put("id",requestBody.get("id"));
     saveParam.put("paperName",requestBody.get("paperName"));
     saveParam.put("paperType",requestBody.get("paperType"));
     saveParam.put("creator",requestBody.get("creator"));
     saveParam.put("deptCode",requestBody.get("deptCode"));
     saveParam.put("deptName",requestBody.get("deptName"));
     saveParam.put("paperStatus",requestBody.get("paperStatus"));
-    saveParam.put("id",requestBody.get("id"));
-    saveParam.put("remark",requestBody.get("remark"));
-    saveParam.put("questionList",list);
+    saveParam.put("remark",JSONObject.toJSON(list.get(0)));
+    saveParam.put("questionList",list.subList(1,list.size()-1));
     saveParam.put("from", "controller");
     IUpdateHandler updateHandler = SpringUtils.getBean("paperUpdateHandler", IUpdateHandler.class);
     return Result.ok(updateHandler.update(String.valueOf(requestBody.get("id")), saveParam));
@@ -261,6 +266,7 @@ public class PaperController {
    * @return Object
    * @throws Exception e
    */
+  @SuppressWarnings("unchecked")
   @GetMapping("/{id}")
   public Object detail(@PathVariable("id") String id) throws Exception {
     LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMPAPER");
@@ -275,8 +281,47 @@ public class PaperController {
     if (infos == null) {
       return Result.fail(GlobalErrorEnum.PARAM_NOT_VALID.getCode(), "试卷为空");
     }
-    paper.put("info", infos);
+
+    Map<String, Object> temp = new HashMap<>();
+    String remark = (String) paper.get("remark");
+    JSONObject json = JSONObject.parseObject(remark);
+    if(json == null){
+      return Result.fail(GlobalErrorEnum.PARAM_NOT_VALID.getCode(), "试卷异常");
+    }
+    returnQuestions(temp, json.getString(ExamConstant.CHOICESNAME), ExamConstant.CHOICESNAME);
+    returnQuestions(temp, json.getString(ExamConstant.MULTISELECTNAME), ExamConstant.MULTISELECTNAME);
+    returnQuestions(temp, json.getString(ExamConstant.FILLGAPNAME), ExamConstant.FILLGAPNAME);
+    returnQuestions(temp, json.getString(ExamConstant.JUDGENAME), ExamConstant.JUDGENAME);
+    returnQuestions(temp, json.getString(ExamConstant.SHORTANSWERNAME), ExamConstant.SHORTANSWERNAME);
+    returnQuestions(temp, json.getString(ExamConstant.DISCUSSNAME), ExamConstant.DISCUSSNAME);
+    returnQuestions(temp, json.getString(ExamConstant.CASEANALYSISNAME), ExamConstant.CASEANALYSISNAME);
+
+    for(Map<String, Object> map: infos){
+      int num = Integer.parseInt(String.valueOf(map.get("type")));
+      Map<String, Object> bean = (Map<String, Object>) temp.get(ExamConstant.questionNumToName(num));
+      List<Map<String, Object>> list = (List<Map<String, Object>>) bean.get("data");
+      Map<String, Object> q = new HashMap<>();
+      q.put("id",map.get("id"));
+      q.put("subjectCategoryId",map.get("subjectCategoryId"));
+      q.put("questionsId",map.get("questionsId"));
+      list.add(q);
+    }
+    paper.putAll(temp);
+    paper.remove("remark");
     return paper;
+  }
+
+  private void returnQuestions(Map<String, Object> temp, String str, String name) {
+    Map<String, Object> map = new HashMap<>();
+    if(str!=null){
+      String[] arr = str.split("#");
+      map.put("desc", arr[0]);
+      map.put("sort", arr[1]);
+      map.put("value", arr[2]);
+      map.put("type", ExamConstant.questionNameToNum(name));
+      map.put("data", new ArrayList<>());
+    }
+    temp.put(name, map);
   }
 
   /**
@@ -309,6 +354,7 @@ public class PaperController {
     List<Map<String, Object>> fillgaps = (List<Map<String, Object>>) baseService.list(param);
     LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMPAPERINFOJUDGE");
     List<Map<String, Object>> judges = (List<Map<String, Object>>) baseService.list(param);
+
     //查询试题及关联信息
     settingChoices(result, choices);
     settingSort(result, fillgaps);
@@ -455,42 +501,51 @@ public class PaperController {
   private void validParams(Map<String, Object> requestBody) {
     ValidationUtils.notNull(requestBody.get("paperName"), "题库类型不能为空!");
     ValidationUtils.notNull(requestBody.get("paperType"), "试卷类型不能为空!");
-    if (requestBody.get("questionList") == null) {
-      throw new GlobalErrorException(GlobalErrorEnum.PARAM_NOT_VALID.getCode(), "试题信息不存在!");
-    }
-    List<Map<String, Object>> questionList = (List<Map<String, Object>>) requestBody.get("questionList");
-    if (questionList.size() == 0) {
-      throw new GlobalErrorException(GlobalErrorEnum.PARAM_NOT_VALID.getCode(), "试题信息不存在!");
-    }
-    for (Map<String, Object> map : questionList) {
-      if (map.get("subjectCategoryId") == null) {
-        throw new GlobalErrorException(GlobalErrorEnum.PARAM_NOT_VALID.getCode(), "有试题题库Id不存在!");
-      }
-      if (map.get("questionsId") == null) {
-        throw new GlobalErrorException(GlobalErrorEnum.PARAM_NOT_VALID.getCode(), "有试题Id不存在!");
-      }
-      if (map.get("type") == null) {
-        throw new GlobalErrorException(GlobalErrorEnum.PARAM_NOT_VALID.getCode(), "有试题类型不存在!");
-      }
-      if (map.get("sort") == null) {
-        throw new GlobalErrorException(GlobalErrorEnum.PARAM_NOT_VALID.getCode(), "有试题排序不存在!");
-      }
-      if (map.get("value") == null) {
-        throw new GlobalErrorException(GlobalErrorEnum.PARAM_NOT_VALID.getCode(), "有试题分值不存在!");
-      }
-    }
-
     ValidationUtils.notNull(requestBody.get("creator"), "当前用户账号不能为空!");
     ValidationUtils.notNull(requestBody.get("deptCode"), "当前部门编号不能为空!");
     ValidationUtils.notNull(requestBody.get("deptName"), "当前部门名称不能为空!");
+    validQuestions((Map<String, Object>) requestBody.get(ExamConstant.CHOICESNAME));
+    validQuestions((Map<String, Object>) requestBody.get(ExamConstant.MULTISELECTNAME));
+    validQuestions((Map<String, Object>) requestBody.get(ExamConstant.FILLGAPNAME));
+    validQuestions((Map<String, Object>) requestBody.get(ExamConstant.JUDGENAME));
+    validQuestions((Map<String, Object>) requestBody.get(ExamConstant.SHORTANSWERNAME));
+    validQuestions((Map<String, Object>) requestBody.get(ExamConstant.DISCUSSNAME));
+    validQuestions((Map<String, Object>) requestBody.get(ExamConstant.CASEANALYSISNAME));
+  }
+
+  @SuppressWarnings("unchecked")
+  private void validQuestions(Map<String, Object> bean) {
+    if (bean!=null) {
+      if (bean.get("sort") == null) {
+        throw new GlobalErrorException(GlobalErrorEnum.PARAM_NOT_VALID.getCode(), "有试题类型不存在!");
+      }
+      if (bean.get("value") == null) {
+        throw new GlobalErrorException(GlobalErrorEnum.PARAM_NOT_VALID.getCode(), "有试题分值不存在!");
+      }
+      if (bean.get("desc") == null) {
+        throw new GlobalErrorException(GlobalErrorEnum.PARAM_NOT_VALID.getCode(), "有试题分值不存在!");
+      }
+      if (bean.get("data") == null) {
+        throw new GlobalErrorException(GlobalErrorEnum.PARAM_NOT_VALID.getCode(), "有试题分值不存在!");
+      }
+      List<Map<String, Object>> datas = (List<Map<String, Object>>) bean.get("data");
+      if(datas== null || datas.size() == 0){
+        throw new GlobalErrorException(GlobalErrorEnum.PARAM_NOT_VALID.getCode(), "试题不存在!");
+      }
+      for (Map<String, Object> q : datas) {
+        if (q.get("subjectCategoryId") == null) {
+          throw new GlobalErrorException(GlobalErrorEnum.PARAM_NOT_VALID.getCode(), "有试题题库Id不存在!");
+        }
+        if (q.get("questionsId") == null) {
+          throw new GlobalErrorException(GlobalErrorEnum.PARAM_NOT_VALID.getCode(), "有试题Id不存在!");
+        }
+      }
+    }
   }
 
   private void validId(Object id) {
     ValidationUtils.notNull(id, "id不能为空!");
     ValidationUtils.regexp(id, "^\\d+$", "非法输入");
-/**
-
- **/
  }
 
 }
