@@ -2,19 +2,17 @@ package com.nmghr.controller.vo;
 
 import com.sargeraswang.util.ExcelUtil.ExcelCell;
 
-public class ExamExcelJudgeVo {
-
+public class ExamExcelEasyQuestionVo {
+    //简答
     @ExcelCell(defaultValue="序号", index = 0)
     private String index;
     @ExcelCell(defaultValue="题目内容", index = 1)
     private String content;
-    @ExcelCell(defaultValue="正确答案", index = 2)
-    private String answer;
-    @ExcelCell(defaultValue="题目解析", index =3)
+    @ExcelCell(defaultValue="题目解析", index = 2)
     private String analysis;
-    @ExcelCell(defaultValue="出处", index = 4)
+    @ExcelCell(defaultValue="出处", index = 3)
     private String source;
-    @ExcelCell(defaultValue ="次序",index = 5)
+    @ExcelCell(defaultValue ="次序",index = 4)
     private String sort;
 
     public String getIndex() {
@@ -31,14 +29,6 @@ public class ExamExcelJudgeVo {
 
     public void setContent(String content) {
         this.content = content;
-    }
-
-    public String getAnswer() {
-        return answer;
-    }
-
-    public void setAnswer(String answer) {
-        this.answer = answer;
     }
 
     public String getAnalysis() {
@@ -64,4 +54,6 @@ public class ExamExcelJudgeVo {
     public void setSort(String sort) {
         this.sort = sort;
     }
+
+
 }
