@@ -4,31 +4,37 @@ package com.nmghr.controller.vo;
 import com.sargeraswang.util.ExcelUtil.ExcelCell;
 
 public class ExamExcelMutiChoiceVo {
+    @ExcelCell(defaultValue="序号", index = 0)
+    private String index;
     @ExcelCell(defaultValue="题目内容", index = 1)
     private String content;
-    @ExcelCell(defaultValue="次序", index = 2)
-    private String order;
-    @ExcelCell(defaultValue="题目解析", index = 3)
-    private String answerReason;
-    @ExcelCell(defaultValue="选项A", index = 4)
+    @ExcelCell(defaultValue="选项A", index = 2)
     private String choiceA;
-    @ExcelCell(defaultValue="选项B", index = 5)
+    @ExcelCell(defaultValue="选项B", index = 3)
     private String choiceB;
-    @ExcelCell(defaultValue="选项C", index = 6)
+    @ExcelCell(defaultValue="选项C", index = 4)
     private String choiceC;
-    @ExcelCell(defaultValue="选项D", index = 7)
+    @ExcelCell(defaultValue="选项D", index = 5)
     private String choiceD;
+    @ExcelCell(defaultValue="选项E", index = 6)
+    private String choiceE;
+    @ExcelCell(defaultValue="选项F", index = 7)
+    private String choiceF;
     @ExcelCell(defaultValue="正确答案", index = 8)
     private String answer;
-    @ExcelCell(defaultValue="出处", index = 9)
-    private String from;
+    @ExcelCell(defaultValue="题目解析", index = 9)
+    private String analysis;
+    @ExcelCell(defaultValue="出处", index = 10)
+    private String source;
+    @ExcelCell(defaultValue ="次序",index = 11)
+    private String sort;
 
-    public String getOrder() {
-        return order;
+    public String getIndex() {
+        return index;
     }
 
-    public void setOrder(String order) {
-        this.order = order;
+    public void setIndex(String index) {
+        this.index = index;
     }
 
     public String getContent() {
@@ -37,15 +43,6 @@ public class ExamExcelMutiChoiceVo {
 
     public void setContent(String content) {
         this.content = content;
-    }
-
-
-    public String getAnswerReason() {
-        return answerReason;
-    }
-
-    public void setAnswerReason(String answerReason) {
-        this.answerReason = answerReason;
     }
 
     public String getChoiceA() {
@@ -80,6 +77,22 @@ public class ExamExcelMutiChoiceVo {
         this.choiceD = choiceD;
     }
 
+    public String getChoiceE() {
+        return choiceE;
+    }
+
+    public void setChoiceE(String choiceE) {
+        this.choiceE = choiceE;
+    }
+
+    public String getChoiceF() {
+        return choiceF;
+    }
+
+    public void setChoiceF(String choiceF) {
+        this.choiceF = choiceF;
+    }
+
     public String getAnswer() {
         return answer;
     }
@@ -88,26 +101,27 @@ public class ExamExcelMutiChoiceVo {
         this.answer = answer;
     }
 
-    public String getFrom() {
-        return from;
+    public String getAnalysis() {
+        return analysis;
     }
 
-    public void setFrom(String from) {
-        this.from = from;
+    public void setAnalysis(String analysis) {
+        this.analysis = analysis;
     }
 
-    @Override
-    public String toString() {
-        return "ExamExcelMutiChoiceVo{" +
-                "content='" + content + '\'' +
-                ", order='" + order + '\'' +
-                ", answerReason='" + answerReason + '\'' +
-                ", choiceA='" + choiceA + '\'' +
-                ", choiceB='" + choiceB + '\'' +
-                ", choiceC='" + choiceC + '\'' +
-                ", choiceD='" + choiceD + '\'' +
-                ", answer='" + answer + '\'' +
-                ", from='" + from + '\'' +
-                '}';
+    public String getSource() {
+        return source;
+    }
+
+    public void setSource(String source) {
+        this.source = source;
+    }
+
+    public String getSort() {
+        return sort;
+    }
+
+    public void setSort(String sort) {
+        this.sort = sort;
     }
 }
