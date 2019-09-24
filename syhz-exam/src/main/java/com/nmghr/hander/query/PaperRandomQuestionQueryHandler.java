@@ -1,6 +1,5 @@
 package com.nmghr.hander.query;
 
-import com.alibaba.fastjson.JSONObject;
 import com.nmghr.basic.common.Constant;
 import com.nmghr.basic.common.exception.GlobalErrorException;
 import com.nmghr.basic.core.common.LocalThreadStorage;
@@ -22,7 +21,7 @@ public class PaperRandomQuestionQueryHandler extends AbstractQueryHandler {
 
   private Logger log = LoggerFactory.getLogger(PaperRandomQuestionQueryHandler.class);
 
-  private String QUESTIONS = "questions";
+  private String Q_KEY = "data";
   public PaperRandomQuestionQueryHandler(IBaseService baseService) {
     super(baseService);
   }
@@ -39,6 +38,8 @@ public class PaperRandomQuestionQueryHandler extends AbstractQueryHandler {
     }
     if (param.get("operator") != null && "save".equals(String.valueOf(param.get("operator")))) {
       return saveRandomList(param);
+    } else if(param.get("operator") != null && "preViewSave".equals(String.valueOf(param.get("operator")))){
+      return preViewSavePackage(param);
     }
     return previewRandomList(param);
   }
@@ -51,39 +52,45 @@ public class PaperRandomQuestionQueryHandler extends AbstractQueryHandler {
    */
   private Map<String, Object> previewRandomList(Map<String, Object> reqMap) {
     Map<String, Object> randomPaper = new HashMap<>();
+    randomPaper.put("paperName",reqMap.get("paperName"));
+    randomPaper.put("paperType",reqMap.get("paperType"));
+    randomPaper.put("creator",reqMap.get("creator"));
+    randomPaper.put("deptCode",reqMap.get("deptCode"));
+    randomPaper.put("deptName",reqMap.get("deptName"));
+    randomPaper.put("paperStatus",reqMap.get("paperStatus"));
     if (reqMap.get(ExamConstant.CHOICESNAME) != null) {
       Map<String, Object> map = (Map<String, Object>) reqMap.get(ExamConstant.CHOICESNAME);
-      map.put(QUESTIONS, getPreViewRandomList(map, ExamConstant.CHOICES));
+      map.put(Q_KEY, getPreViewRandomList(map, ExamConstant.CHOICES));
       randomPaper.put(ExamConstant.CHOICESNAME, map);
     }
     if (reqMap.get(ExamConstant.MULTISELECTNAME) != null) {
       Map<String, Object> map = (Map<String, Object>) reqMap.get(ExamConstant.MULTISELECTNAME);
-      map.put(QUESTIONS, getPreViewRandomList(map, ExamConstant.MULTISELECT));
+      map.put(Q_KEY, getPreViewRandomList(map, ExamConstant.MULTISELECT));
       randomPaper.put(ExamConstant.MULTISELECTNAME, map);
     }
     if (reqMap.get(ExamConstant.FILLGAPNAME) != null) {
       Map<String, Object> map = (Map<String, Object>) reqMap.get(ExamConstant.FILLGAPNAME);
-      map.put(QUESTIONS, getPreViewRandomList(map, ExamConstant.FILLGAP));
+      map.put(Q_KEY, getPreViewRandomList(map, ExamConstant.FILLGAP));
       randomPaper.put(ExamConstant.FILLGAPNAME, map);
     }
     if (reqMap.get(ExamConstant.JUDGENAME) != null) {
       Map<String, Object> map = (Map<String, Object>) reqMap.get(ExamConstant.JUDGENAME);
-      map.put(QUESTIONS, getPreViewRandomList(map, ExamConstant.JUDGE));
+      map.put(Q_KEY, getPreViewRandomList(map, ExamConstant.JUDGE));
       randomPaper.put(ExamConstant.JUDGENAME, map);
     }
     if (reqMap.get(ExamConstant.SHORTANSWERNAME) != null) {
       Map<String, Object> map = (Map<String, Object>) reqMap.get(ExamConstant.SHORTANSWERNAME);
-      map.put(QUESTIONS, getPreViewRandomList(map, ExamConstant.SHORTANSWER));
+      map.put(Q_KEY, getPreViewRandomList(map, ExamConstant.SHORTANSWER));
       randomPaper.put(ExamConstant.SHORTANSWERNAME, map);
     }
     if (reqMap.get(ExamConstant.DISCUSSNAME) != null) {
       Map<String, Object> map = (Map<String, Object>) reqMap.get(ExamConstant.DISCUSSNAME);
-      map.put(QUESTIONS, getPreViewRandomList(map, ExamConstant.DISCUSS));
+      map.put(Q_KEY, getPreViewRandomList(map, ExamConstant.DISCUSS));
       randomPaper.put(ExamConstant.DISCUSSNAME, map);
     }
     if (reqMap.get(ExamConstant.CASEANALYSISNAME) != null) {
       Map<String, Object> map = (Map<String, Object>) reqMap.get(ExamConstant.CASEANALYSISNAME);
-      map.put(QUESTIONS, getPreViewRandomList(map, ExamConstant.CASEANALYSIS));
+      map.put(Q_KEY, getPreViewRandomList(map, ExamConstant.CASEANALYSIS));
       randomPaper.put(ExamConstant.CASEANALYSISNAME, map);
     }
     return randomPaper;
@@ -136,9 +143,81 @@ public class PaperRandomQuestionQueryHandler extends AbstractQueryHandler {
     randomList.add(0, remark);
     return randomList;
   }
+
+  private List<Map<String, Object>> preViewSavePackage(Map<String, Object> reqMap) {
+    List<Map<String, Object>> randomList = new ArrayList<>();
+    Map<String, Object> remark = new HashMap<>();
+    if (reqMap.get(ExamConstant.CHOICESNAME) != null) {
+      Map<String, Object> map = (Map<String, Object>) reqMap.get(ExamConstant.CHOICESNAME);
+      getRemark(map, remark, ExamConstant.CHOICESNAME);
+      randomList.addAll(getSaveParams(map, ExamConstant.CHOICES));
+    }
+    if (reqMap.get(ExamConstant.MULTISELECTNAME) != null) {
+      Map<String, Object> map = (Map<String, Object>) reqMap.get(ExamConstant.MULTISELECTNAME);
+      getRemark(map, remark, ExamConstant.MULTISELECTNAME);
+      randomList.addAll(getSaveParams(map, ExamConstant.MULTISELECT));
+    }
+    if (reqMap.get(ExamConstant.FILLGAPNAME) != null) {
+      Map<String, Object> map = (Map<String, Object>) reqMap.get(ExamConstant.FILLGAPNAME);
+      getRemark(map, remark, ExamConstant.FILLGAPNAME);
+      randomList.addAll(getSaveParams(map, ExamConstant.FILLGAP));
+    }
+    if (reqMap.get(ExamConstant.JUDGENAME) != null) {
+      Map<String, Object> map = (Map<String, Object>) reqMap.get(ExamConstant.JUDGENAME);
+      getRemark(map, remark, ExamConstant.JUDGENAME);
+      randomList.addAll(getSaveParams(map, ExamConstant.JUDGE));
+    }
+    if (reqMap.get(ExamConstant.SHORTANSWERNAME) != null) {
+      Map<String, Object> map = (Map<String, Object>) reqMap.get(ExamConstant.SHORTANSWERNAME);
+      getRemark(map, remark, ExamConstant.SHORTANSWERNAME);
+      randomList.addAll(getSaveParams(map, ExamConstant.SHORTANSWER));
+    }
+    if (reqMap.get(ExamConstant.DISCUSSNAME) != null) {
+      Map<String, Object> map = (Map<String, Object>) reqMap.get(ExamConstant.DISCUSSNAME);
+      getRemark(map, remark, ExamConstant.DISCUSSNAME);
+      randomList.addAll(getSaveParams(map, ExamConstant.DISCUSS));
+    }
+    if (reqMap.get(ExamConstant.CASEANALYSISNAME) != null) {
+      Map<String, Object> map = (Map<String, Object>) reqMap.get(ExamConstant.CASEANALYSISNAME);
+      getRemark(map, remark, ExamConstant.CASEANALYSISNAME);
+      randomList.addAll(getSaveParams(map, ExamConstant.CASEANALYSIS));
+    }
+    randomList.add(0, remark);
+    return randomList;
+  }
+
   private void getRemark(Map<String, Object> map, Map<String, Object> remark, String key){
-    remark.put(key, String.valueOf(map.get("desc")) + "#" + Integer.parseInt(String.valueOf(map.get("sort")))
-        + "#" + Integer.parseInt(String.valueOf(map.get("score"))));
+    remark.put(key, String.valueOf(map.get("desc")) + ExamConstant.DESCFLAG + Integer.parseInt(String.valueOf(map.get("sort")))
+        + ExamConstant.DESCFLAG + Integer.parseInt(String.valueOf(map.get("score"))));
+  }
+
+  /**
+   * 拼组保存时随机的数据
+   *
+   * @param paramMap
+   * @return
+   */
+  private List<Map<String, Object>> getSaveParams(Map<String, Object> paramMap, int type) {
+    int sort = Integer.parseInt(String.valueOf(paramMap.get("sort")));
+    int score = Integer.parseInt(String.valueOf(paramMap.get("score")));
+    List<Map<String, Object>> rdList = new ArrayList<>();
+    try {
+      List<Map<String, Object>> list = (List<Map<String, Object>>) paramMap.get(Q_KEY);
+      if (list != null && list.size() > 0) {
+        for(Map<String, Object> map : list){
+          Map<String, Object> bean = new HashMap<>();
+          bean.put("subjectCategoryId", map.get("subCategoryId"));
+          bean.put("questionsId", map.get("id"));
+          bean.put("type", type);
+          bean.put("sort", sort);
+          bean.put("value", score);
+          rdList.add(bean);
+        }
+      }
+    } catch (Exception e) {
+      //log
+    }
+    return rdList;
   }
 
   /**
@@ -219,6 +298,7 @@ public class PaperRandomQuestionQueryHandler extends AbstractQueryHandler {
               Map<String, Object> question = list.get(idx);
               Map<String, Object> bean = new HashMap<>();
               bean.put("name", question.get("name"));
+              bean.put("subCategoryId", question.get("subCategoryId"));
               bean.put("id", question.get("id"));
               bean.put("type", type);
               bean.put("sort", sort);

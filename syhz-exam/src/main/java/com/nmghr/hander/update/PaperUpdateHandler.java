@@ -129,7 +129,7 @@ public class PaperUpdateHandler extends AbstractUpdateHandler {
   private void packageParams(Map<String, Object> bean, Map<String, Object> params, String key, int type) {
     JSONObject remark = (JSONObject) params.get("remark");
     if (bean != null) {
-      remark.put(key, bean.get("desc") + "#" + bean.get("sort") + "#" + bean.get("value"));
+      remark.put(key, bean.get("desc") + ExamConstant.DESCFLAG + bean.get("sort") + ExamConstant.DESCFLAG + bean.get("value"));
       params.put("remark", remark);
       List<Map<String, Object>> list = (List<Map<String, Object>>) params.get("questionList");
       List<Map<String, Object>> datas = (List<Map<String, Object>>) bean.get("data");
