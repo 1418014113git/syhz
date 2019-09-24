@@ -26,5 +26,9 @@
             <artifactId>hutool-all</artifactId>
             <version>4.5.0</version>
         </dependency>
+		<dependency>
+			<groupId>com.nmghr.basic</groupId>
+			<artifactId>nmghr-basic-excel</artifactId>
+		</dependency>
 	</dependencies>
 </project>
