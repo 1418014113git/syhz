@@ -10,16 +10,12 @@
 
 package com.nmghr.controller;
 
-import com.nmghr.basic.common.Constant;
 import com.nmghr.basic.common.Result;
-import com.nmghr.basic.core.common.LocalThreadStorage;
+import com.nmghr.basic.common.exception.GlobalErrorException;
 import com.nmghr.basic.core.service.IBaseService;
 import com.nmghr.controller.vo.*;
 import com.nmghr.hander.save.ExamQuestionsSaveHandler;
-import com.sargeraswang.util.ExcelUtil.ExcelSheet;
-import com.sargeraswang.util.ExcelUtil.ExcelUtil;
 import com.sargeraswang.util.ExcelUtil.ExcelsUtil;
-import org.apache.xmlbeans.impl.regex.RegularExpression;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,10 +23,8 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.*;
+import java.io.FileNotFoundException;
 import java.util.*;
 
 /**
@@ -54,9 +48,25 @@ public class ExamExcelController {
   @PostMapping(value = "/examUploadFile")
   @ResponseBody
   public Object uploadFile(@RequestParam("file") MultipartFile mulFile,
-                           @RequestParam("type") String type, HttpServletRequest request) {
-    log.info("excel uploadFile file start {}{}", mulFile, type);
-    Map<String, Object> result = new HashMap<String, Object>();
+                           @RequestParam("subjectCategoryId") String subjectCategoryId,
+                           @RequestParam("creator") String creator,
+                           @RequestParam("deptCode") String deptCode,
+                           @RequestParam("deptName") String deptName,
+                           HttpServletRequest request
+
+  ) {
+    log.info("excel uploadFile file start {}{}", mulFile);
+    if(subjectCategoryId == null || "".equals(subjectCategoryId)){
+        throw new GlobalErrorException("998001", "模块Id不能为空!");
+    }
+      if(creator == null || "".equals(creator)){
+          throw new GlobalErrorException("998001", "创建人不能为空!");
+      }
+      if(deptCode == null || "".equals(deptCode)){
+          throw new GlobalErrorException("998001", "区域编码不能为空!");
+      }
+
+
     try {
         List<Class> classes = new ArrayList<>();
         //加入各个实体类对应class
@@ -83,7 +93,12 @@ public class ExamExcelController {
         List<ExamExcelCaseAnalysisVo> caseAnalysisVos = new ArrayList<>();
 
         Collection<Object> lists = ExcelsUtil.importExcel(classes, mulFile.getInputStream(), 0);
-        //装入四个集合
+
+        if (lists.size() > 1000) {
+            log.error("excel uploadFile error, Maximum length exceeds 1000 ");
+            throw new GlobalErrorException("99952", "最多不能超过1000条");
+        }
+        //装入集合
         for (Object vo : lists) {
            if(vo.getClass() == ExamExcelSimpleChoiceVo.class){
               simpleChoiceVos.add((ExamExcelSimpleChoiceVo) vo);
@@ -116,201 +131,303 @@ public class ExamExcelController {
         discussVos.remove(0);
         caseAnalysisVos.remove(0);
         //获取数据校验消息集合 若返回值为NULL，则校验通过
-        List<String> simpleChoiceMsgList = (List<String>) checkSimpleChoiceData(simpleChoiceVos);
-        List<String> mutiChoiceMsgList = (List<String>) checkMutiChoiceData(mutiChoiceVos);
-        List<String> fillGapMsgList = (List<String>) checkFillGapData(fillGapVos);
-        List<String> judgeMsgList = (List<String>) checkJudgeData(judgeVos);
-        List<String> easyQuestionMsgList = (List<String>) checkEasyQuestionData(easyQuestionVos);
-        List<String> discussMsgList = (List<String>) checkDiscussData(discussVos);
-        List<String> caseAnalysisMsgList = (List<String>) checkAnalysisData(caseAnalysisVos);
-        if(mutiChoiceMsgList!=null && simpleChoiceMsgList.size() > 0){
-            return simpleChoiceMsgList;
-        }
-        if(mutiChoiceMsgList!=null && mutiChoiceMsgList.size() > 0){
-           return mutiChoiceMsgList;
-        }
-        if(fillGapMsgList!=null && fillGapMsgList.size() > 0){
-            return fillGapMsgList;
-        }
-        if(judgeMsgList!=null && judgeMsgList.size() > 0){
-            return judgeMsgList;
-        }
-        if(easyQuestionMsgList!=null && easyQuestionMsgList.size() > 0){
-            return easyQuestionMsgList;
-        }
-        if(discussMsgList!=null && discussMsgList.size() > 0) {
-            return discussMsgList;
-        }
-        if(caseAnalysisMsgList!=null && caseAnalysisMsgList.size() > 0){
-            return caseAnalysisMsgList;
-        }
-
-        //入库单选
-        saveSimpleChoice(simpleChoiceVos);
-        //入库多选
-        saveMutiChoice(mutiChoiceVos);
-        //入库填空
-        saveFillGap(fillGapVos);
-        //入库判断
-        saveJudge(judgeVos);
-        //入库论述
-        saveDiscuss(discussVos);
-        //入库简答
-        saveEasyQuestion(easyQuestionVos);
-        //入库案例分析
-        saveAnalysis(caseAnalysisVos);
+        Map<String,Object> simpleChoiceMsgMap = (Map<String, Object>) checkSimpleChoiceData(simpleChoiceVos);
+        Map<String,Object> mutiChoiceMsgMap = (Map<String, Object>)checkMutiChoiceData(mutiChoiceVos);
+        Map<String,Object> fillGapMsgMap = (Map<String, Object>)checkFillGapData(fillGapVos);
+        Map<String,Object> judgeMsgMap = (Map<String, Object>)checkJudgeData(judgeVos);
+        Map<String,Object> easyQuestionMsgMap = (Map<String, Object>)checkEasyQuestionData(easyQuestionVos);
+        Map<String,Object> discussMsgMap = (Map<String, Object>)checkDiscussData(discussVos);
+        Map<String,Object> caseAnalysisMsgMap = (Map<String, Object>)checkAnalysisData(caseAnalysisVos);
 
 
-
-
+        List<Map<String,Object>> errors = new ArrayList<>();
+        Map<String,Object> simpleChoiceError = (Map<String, Object>) simpleChoiceMsgMap.get("errors");
+        if(simpleChoiceError !=null && simpleChoiceError.size() > 0) {
+            errors.add(simpleChoiceMsgMap);
+        }
+        Map<String,Object> mutiChoiceError = (Map<String, Object>) mutiChoiceMsgMap.get("errors");
+        if(mutiChoiceError !=null && mutiChoiceError.size() > 0) {
+            errors.add(mutiChoiceMsgMap);
+        }
+        Map<String,Object> fillGapError = (Map<String, Object>) fillGapMsgMap.get("errors");
+        if(fillGapError !=null && fillGapError.size() > 0) {
+            errors.add(fillGapMsgMap);
+        }
+        Map<String,Object> judgeError = (Map<String, Object>) judgeMsgMap.get("errors");
+        if(judgeError !=null && judgeError.size() > 0) {
+            errors.add(judgeMsgMap);
+        }
+        Map<String,Object> easyQuestionError = (Map<String, Object>) easyQuestionMsgMap.get("errors");
+        if(easyQuestionError !=null && easyQuestionError.size() > 0) {
+            errors.add(easyQuestionMsgMap);
+        }
+        Map<String,Object> discussError = (Map<String, Object>) discussMsgMap.get("errors");
+        if(discussError !=null && discussError.size() > 0) {
+            errors.add(discussMsgMap);
+        }
+        Map<String,Object> caseAnalysisError = (Map<String, Object>) caseAnalysisMsgMap.get("errors");
+        if(caseAnalysisError !=null && caseAnalysisError.size() > 0) {
+            errors.add(caseAnalysisMsgMap);
+        }
+        //将异常返回前端
+        if(errors!=null && errors.size() > 0){
+            return errors;
+        }
+        else {
+            Map<String,Object> baseParam = new HashMap<>();
+            baseParam.put("subjectCategoryId",subjectCategoryId);
+            baseParam.put("creator",creator);
+            baseParam.put("deptCode",deptCode);
+            baseParam.put("deptName",deptName);
+            //入库单选
+            saveSimpleChoice(simpleChoiceVos,baseParam);
+            //入库多选
+            saveMutiChoice(mutiChoiceVos,baseParam);
+            //入库填空
+            saveFillGap(fillGapVos,baseParam);
+            //入库判断
+            saveJudge(judgeVos,baseParam);
+            //入库论述
+            saveDiscuss(discussVos,baseParam);
+            //入库简答
+            saveEasyQuestion(easyQuestionVos,baseParam);
+            //入库案例分析
+            saveAnalysis(caseAnalysisVos,baseParam);
+        }
     } catch (FileNotFoundException e) {
-      e.printStackTrace();
-    } catch (Exception e) {
-      // TODO Auto-generated catch block
-      log.error("excel uploadFile error", e.getMessage());
-      e.printStackTrace();
+        log.error("excel uploadFile error", e.getMessage());
+        throw new GlobalErrorException("99954", "上传文件为空");
+    } catch (IllegalArgumentException e) {
+        log.error("excel uploadFile error", e.getMessage());
+        throw new GlobalErrorException("99951", "上传文件错误");
+    }
+    catch (Exception e) {
+        log.error("excel uploadFile error", e.getMessage());
+        throw new GlobalErrorException("99950", "上传异常");
     }
     return Result.ok(null);
   }
 
-    private void saveAnalysis(List<ExamExcelCaseAnalysisVo> caseAnalysisVos) throws Exception {
+    private void saveAnalysis(List<ExamExcelCaseAnalysisVo> caseAnalysisVos,Map<String,Object> baseParamMap) throws Exception {
         //案例分析表Map
         Map<String, Object> caseAnalysisMap = new HashMap<>();
 
         for (ExamExcelCaseAnalysisVo caseAnalysisVo : caseAnalysisVos) {
+            caseAnalysisMap.put("subjectCategoryId",baseParamMap.get("subjectCategoryId"));
+            //创建人
+            caseAnalysisMap.put("creator",baseParamMap.get("creator"));
+            caseAnalysisMap.put("deptCode",baseParamMap.get("deptCode"));
+            caseAnalysisMap.put("deptName",baseParamMap.get("deptName"));
             //题目名称
             caseAnalysisMap.put("subjectName",caseAnalysisVo.getContent());
             caseAnalysisMap.put("type","7");
             //题目解析
-            caseAnalysisMap.put("analysis",caseAnalysisVo.getAnalysis());
+            if(caseAnalysisVo.getAnalysis() != null) {
+                caseAnalysisMap.put("analysis", caseAnalysisVo.getAnalysis());
+            }
             //来源
             caseAnalysisMap.put("source",caseAnalysisVo.getSource());//出处
-            caseAnalysisMap.put("sort",caseAnalysisVo.getSort());
+            if(caseAnalysisVo.getSort() != null) {
+                caseAnalysisMap.put("sort", caseAnalysisVo.getSort());
+            }
             questionsSaveHandler.save(caseAnalysisMap);
         }
     }
-    private void saveEasyQuestion(List<ExamExcelEasyQuestionVo> easyQuestionVos) throws Exception {
+    private void saveEasyQuestion(List<ExamExcelEasyQuestionVo> easyQuestionVos, Map<String,Object> baseParamMap) throws Exception {
         //简答表Map
         Map<String, Object> easyQuestionMap = new HashMap<>();
         for (int i = 0; i < easyQuestionVos.size(); i++) {
             ExamExcelEasyQuestionVo easyQuestionVo = easyQuestionVos.get(i);
-            //题目名称
+            easyQuestionMap.put("subjectCategoryId",baseParamMap.get("subjectCategoryId"));
+            //创建人
+            easyQuestionMap.put("creator",baseParamMap.get("creator"));
+            easyQuestionMap.put("deptCode",baseParamMap.get("deptCode"));
+            easyQuestionMap.put("deptName",baseParamMap.get("deptName"));
             easyQuestionMap.put("subjectName",easyQuestionVo.getContent());
             easyQuestionMap.put("type","5");
             //题目解析
-            easyQuestionMap.put("analysis",easyQuestionVo.getAnalysis());
+            if(easyQuestionVo.getAnalysis()!=null) {
+                easyQuestionMap.put("analysis", easyQuestionVo.getAnalysis());
+            }
             //来源
             easyQuestionMap.put("source",easyQuestionVo.getSource());//出处
-            easyQuestionMap.put("sort",easyQuestionVo.getSort());
+            if(easyQuestionVo.getSort()!=null) {
+                easyQuestionMap.put("sort", easyQuestionVo.getSort());
+            }
             questionsSaveHandler.save(easyQuestionMap);
         }
 
     }
 
-    private void saveDiscuss(List<ExamExcelDiscussVo> discussVos) throws Exception {
+    private void saveDiscuss(List<ExamExcelDiscussVo> discussVos, Map<String,Object> baseParamMap) throws Exception {
         //论述表Map
         Map<String, Object> discussMap = new HashMap<>();
         for (int i = 0; i < discussVos.size(); i++) {
             ExamExcelDiscussVo examExcelDiscussVo = discussVos.get(i);
-            //题目名称
+            discussMap.put("subjectCategoryId",baseParamMap.get("subjectCategoryId"));
+            //创建人
+            discussMap.put("creator",baseParamMap.get("creator"));
+            discussMap.put("deptCode",baseParamMap.get("deptCode"));
+            discussMap.put("deptName",baseParamMap.get("deptName"));
             discussMap.put("subjectName",examExcelDiscussVo.getContent());
             discussMap.put("type","6");
             //题目解析
-            discussMap.put("analysis",examExcelDiscussVo.getAnalysis());
+            if(examExcelDiscussVo.getAnalysis()!=null) {
+                discussMap.put("analysis", examExcelDiscussVo.getAnalysis());
+            }
             //来源
             discussMap.put("source",examExcelDiscussVo.getSource());//出处
-            discussMap.put("sort",examExcelDiscussVo.getSort());
+            if(examExcelDiscussVo.getSort()!=null) {
+                discussMap.put("sort", examExcelDiscussVo.getSort());
+            }
             questionsSaveHandler.save(discussMap);
 
         }
     }
 
     //入库判断并建立关系
-    private void saveJudge(List<ExamExcelJudgeVo> judgeVos) throws Exception{
+    private void saveJudge(List<ExamExcelJudgeVo> judgeVos, Map<String,Object> baseParamMap) throws Exception{
         //填空题表Map
         Map<String, Object> judgeMap = new HashMap<>();
         for (ExamExcelJudgeVo judgeVo : judgeVos) {
+            judgeMap.put("subjectCategoryId",baseParamMap.get("subjectCategoryId"));
+            //创建人
+            judgeMap.put("creator",baseParamMap.get("creator"));
+            judgeMap.put("deptCode",baseParamMap.get("deptCode"));
+            judgeMap.put("deptName",baseParamMap.get("deptName"));
+
             //题目名称
             judgeMap.put("subjectName",judgeVo.getContent());
+            //创建人
             judgeMap.put("type","4");
             //答案
-            judgeMap.put("answer",judgeVo.getAnswer());
-            //题目解析
-            judgeMap.put("analysis",judgeVo.getAnalysis());
+            if("正确".equals(judgeVo.getAnswer())){
+                judgeMap.put("answer",1);
+            }
+            if("错误".equals(judgeVo.getAnswer())){
+                judgeMap.put("answer",0);
+            }
+            if(judgeVo.getAnalysis()!=null) {
+                //题目解析
+                judgeMap.put("analysis", judgeVo.getAnalysis());
+            }
             //来源
             judgeMap.put("source",judgeVo.getSource());
-            //排序
-            judgeMap.put("sort",judgeVo.getSort());
+            if(judgeVo.getSort()!=null) {
+                //排序
+                judgeMap.put("sort", judgeVo.getSort());
+            }
             questionsSaveHandler.save(judgeMap);
         }
     }
 
     //入库填空并建立关系
-    private void saveFillGap(List<ExamExcelFillGapVo> fillGapVos ) throws Exception {
+    private void saveFillGap(List<ExamExcelFillGapVo> fillGapVos, Map<String,Object> baseParamMap) throws Exception {
         //填空题表Map
         Map<String, Object> fillGapMap = new HashMap<>();
         for (ExamExcelFillGapVo fillGapVo : fillGapVos) {
+            fillGapMap.put("subjectCategoryId",baseParamMap.get("subjectCategoryId"));
+            //创建人
+            fillGapMap.put("creator",baseParamMap.get("creator"));
+            fillGapMap.put("deptCode",baseParamMap.get("deptCode"));
+            fillGapMap.put("deptName",baseParamMap.get("deptName"));
             //题目名称
             fillGapMap.put("subjectName",fillGapVo.getContent());
             fillGapMap.put("type","3");
             //答案
             fillGapMap.put("answer",fillGapVo.getAnswer());
-            //题目解析
-            fillGapMap.put("analysis",fillGapVo.getAnalysis());
+            if(fillGapVo.getAnalysis()!=null) {
+                //题目解析
+                fillGapMap.put("analysis", fillGapVo.getAnalysis());
+            }
             //来源
             fillGapMap.put("source",fillGapVo.getSource());
-            //排序
-            fillGapMap.put("sort",fillGapVo.getSort());
+            if(fillGapVo.getSort()!=null) {
+                //排序
+                fillGapMap.put("sort", fillGapVo.getSort());
+            }
             questionsSaveHandler.save(fillGapMap);
         }
     }
     //入库多选并建立关系
-    private void saveMutiChoice(List<ExamExcelMutiChoiceVo> mutiChoiceVos) throws Exception {
+    private void saveMutiChoice(List<ExamExcelMutiChoiceVo> mutiChoiceVos, Map<String,Object> baseParamMap) throws Exception {
         //多选题表Map
         Map<String, Object> mutiChoiceMap = new HashMap<>();
         for (ExamExcelMutiChoiceVo mutiChoiceVo : mutiChoiceVos) {
+            //题库Id
+            mutiChoiceMap.put("subjectCategoryId",baseParamMap.get("subjectCategoryId"));
+            //创建人
+            mutiChoiceMap.put("creator",baseParamMap.get("creator"));
+            mutiChoiceMap.put("deptCode",baseParamMap.get("deptCode"));
+            mutiChoiceMap.put("deptName",baseParamMap.get("deptName"));
             //题目名称
             mutiChoiceMap.put("subjectName", mutiChoiceVo.getContent());
             //题目类型 2多选
             mutiChoiceMap.put("type","2");
             //答案
             mutiChoiceMap.put("answer", mutiChoiceVo.getAnswer());
-            //题目解析
-            mutiChoiceMap.put("analysis", mutiChoiceVo.getAnalysis());
+            if(mutiChoiceVo.getAnalysis()!=null) {
+                //题目解析
+                mutiChoiceMap.put("analysis", mutiChoiceVo.getAnalysis());
+            }
             //来源
             mutiChoiceMap.put("source", mutiChoiceVo.getSource());
-            //排序
-            mutiChoiceMap.put("sort", mutiChoiceVo.getSort());
+            if(mutiChoiceVo.getSort()!=null) {
+                //排序
+                mutiChoiceMap.put("sort", mutiChoiceVo.getSort());
+            }
             //选项表Map
             Map<String, Object> mutiChoicePointMap = new HashMap<>();
             mutiChoicePointMap.put("pointA",mutiChoiceVo.getChoiceA());
             mutiChoicePointMap.put("pointB",mutiChoiceVo.getChoiceB());
             mutiChoicePointMap.put("pointC",mutiChoiceVo.getChoiceC());
             mutiChoicePointMap.put("pointD",mutiChoiceVo.getChoiceD());
-            mutiChoicePointMap.put("pointE",mutiChoiceVo.getChoiceE());
-            mutiChoicePointMap.put("pointF",mutiChoiceVo.getChoiceF());
-            mutiChoiceMap.put("points",mutiChoicePointMap);
+            if(mutiChoiceVo.getChoiceE()!=null) {
+                mutiChoicePointMap.put("pointE", mutiChoiceVo.getChoiceE());
+            }
+            if(mutiChoiceVo.getChoiceF() !=null) {
+                mutiChoicePointMap.put("pointF", mutiChoiceVo.getChoiceF());
+            }
+            mutiChoiceMap.put("points", mutiChoicePointMap);
             questionsSaveHandler.save(mutiChoiceMap);
-
         }
     }
     //入库单选并建立关系
-    private void saveSimpleChoice(List<ExamExcelSimpleChoiceVo> simpleChoiceVos) throws Exception {
+    private void saveSimpleChoice(List<ExamExcelSimpleChoiceVo> simpleChoiceVos,Map<String,Object> baseParamMap) throws Exception {
+
+      String subjectCategoryId =  String.valueOf(baseParamMap.get("subjectCategoryId"));
+      String creator = String.valueOf(baseParamMap.get("creator"));
+      String deptCode = String.valueOf(baseParamMap.get("deptCode"));
+      String deptName = String.valueOf(baseParamMap.get("deptName"));
+
+
         //单选题表Map
         Map<String,Object> simpleChoiceMap = new HashMap<>();
         for (ExamExcelSimpleChoiceVo simpleChoiceVo : simpleChoiceVos) {
+            //题库Id
+            simpleChoiceMap.put("subjectCategoryId",subjectCategoryId);
+            //创建人
+            simpleChoiceMap.put("creator",creator);
+            //deptCode
+            simpleChoiceMap.put("deptCode",deptCode);
+            //deptName
+            simpleChoiceMap.put("deptName",deptName);
             //题目名称
             simpleChoiceMap.put("subjectName",simpleChoiceVo.getContent());
             //题目类型 1单选
             simpleChoiceMap.put("type","1");
             //答案
             simpleChoiceMap.put("answer",simpleChoiceVo.getAnswer());
-            //题目解析
-            simpleChoiceMap.put("analysis",simpleChoiceVo.getAnalysis());
+            if(simpleChoiceVo.getAnalysis()!=null) {
+                //题目解析
+                simpleChoiceMap.put("analysis", simpleChoiceVo.getAnalysis());
+            }
             //来源
             simpleChoiceMap.put("source",simpleChoiceVo.getSource());
             //排序
-            simpleChoiceMap.put("sort",simpleChoiceVo.getSort());
+            if(simpleChoiceVo.getSort()!=null) {
+                simpleChoiceMap.put("sort", simpleChoiceVo.getSort());
+            }
             //选项表Map
             Map<String,Object> simpleChoicePointMap = new HashMap<>();
             simpleChoicePointMap.put("pointA",simpleChoiceVo.getChoiceA());
@@ -323,218 +440,291 @@ public class ExamExcelController {
     }
     //校验判断题必填项的方法
     private Object checkJudgeData(List<ExamExcelJudgeVo> judgeList) {
-        List<String> judgeMsgList = new ArrayList<>();
+        Map<String,Object> judgeMsgMap = new HashMap<>();
+        List<String> msgArr = new ArrayList<>();
+        Map<String,Object> lineMsgMap = new HashMap<>();
         for (int i = 0; i < judgeList.size(); i++) {
+             msgArr.clear();
             ExamExcelJudgeVo vo = judgeList.get(i);
             if(vo.getContent() == null){
-                judgeMsgList.add("判断题"+ (i+1)+"行"+"题目内容为空");
+                msgArr.add("题目内容为空");
             }
             if(vo.getContent() != null && vo.getContent().length() > 200){
-                judgeMsgList.add("判断题"+ (i+1)+"行"+"题目内容长度大于200");
+                msgArr.add("题目内容长度大于200");
             }
             if(vo.getAnswer() == null){
-                judgeMsgList.add("判断题"+(i+1)+"行"+"正确答案为空");
+                msgArr.add("正确答案为空");
             }
-            if(vo.getSource() == null){
-                judgeMsgList.add("判断题"+(i+1)+"行"+"出处为空");
-            }
-            if(vo.getSource() != null && vo.getSource().length() > 50){
-                judgeMsgList.add("判断题"+(i+1)+"行"+"出处长度大于50");
-            }
-        }
-
-     return judgeMsgList;
-    }
-    //校验填空题必填项的方法
-    private Object checkFillGapData(List<ExamExcelFillGapVo> fillGapList) {
-        List<String> fillGapMsgList = new ArrayList<>();
-        for (int i = 0; i < fillGapList.size(); i++) {
-            ExamExcelFillGapVo vo = fillGapList.get(i);
-            if(vo.getContent() == null){
-                fillGapMsgList.add("填空题"+ (i+1)+"行"+"题目内容为空");
-            }
-            if(vo.getContent() != null && vo.getContent().length() > 200){
-                fillGapMsgList.add("判断题"+ (i+1)+"行"+"题目内容长度大于200");
-            }
-            if(vo.getAnswer() == null){
-                fillGapMsgList.add("填空题"+(i+1)+"行"+"正确答案为空");
-            }
-            if(vo.getAnswer() != null &&vo.getAnswer().length() > 255){
-                fillGapMsgList.add("填空题"+(i+1)+"行"+"正确答案长度大于255");
-            }
-            if(vo.getSource() == null){
-                fillGapMsgList.add("填空题"+(i+1)+"行"+"出处为空");
-            }
-            if(vo.getSource() != null && vo.getSource().length() > 50){
-                fillGapMsgList.add("填空题"+(i+1)+"行"+"出处长度大于50");
-            }
-        }
-      return fillGapMsgList;
-    }
-    //校验多选题必填项的方法
-    private Object checkMutiChoiceData(List<ExamExcelMutiChoiceVo> mutiChoiceList) {
-        List<String> mutiChoiceMsgList = new ArrayList<>();
-        for (int i = 0; i < mutiChoiceList.size(); i++) {
-            ExamExcelMutiChoiceVo vo = mutiChoiceList.get(i);
-            if(vo.getContent() == null){
-                mutiChoiceMsgList.add("多选题"+ (i+1)+"行"+"题目内容为空");
-            }
-            if(vo.getContent().length() > 200){
-                mutiChoiceMsgList.add("多选题"+ (i+1)+"行"+"题目内容长度大于200");
-            }
-            if(vo.getChoiceA() == null){
-                mutiChoiceMsgList.add("多选题"+ (i+1)+"行"+"选项A内容为空");
-            }
-            if(vo.getChoiceA() != null && vo.getChoiceA().length() > 200){
-                mutiChoiceMsgList.add("多选题"+ (i+1)+"行"+"选项A长度大于200");
-            }
-            if(vo.getChoiceB() == null){
-                mutiChoiceMsgList.add("多选题"+ (i+1)+"行"+"选项B内容为空");
-            }
-            if(vo.getChoiceB() != null && vo.getChoiceB().length() > 200){
-                mutiChoiceMsgList.add("多选题"+ (i+1)+"行"+"选项B长度大于200");
-            }
-            if(vo.getChoiceC() == null){
-                mutiChoiceMsgList.add("多选题"+ (i+1)+"行"+"选项C内容为空");
-            }
-            if(vo.getChoiceC() != null && vo.getChoiceC().length() > 200){
-                mutiChoiceMsgList.add("多选题"+ (i+1)+"行"+"选项C长度大于200");
-            }
-            if(vo.getChoiceD() == null){
-                mutiChoiceMsgList.add("多选题"+ (i+1)+"行"+"选项D内容为空");
-            }
-            if(vo.getChoiceD() != null && vo.getChoiceD().length() > 200){
-                mutiChoiceMsgList.add("多选题"+ (i+1)+"行"+"选项D长度大于200");
-            }
-            if(vo.getAnswer() == null){
-                mutiChoiceMsgList.add("多选题"+ (i+1)+"行"+"答案为空");
-            }
-            if(vo.getAnswer() != null && vo.getAnswer().length() >255){
-                mutiChoiceMsgList.add("多选题"+ (i+1)+"行"+"答案长度大于255");
-            }
-            if(vo.getSource() == null){
-                mutiChoiceMsgList.add("多选题"+ (i+1)+"行"+"出处为空");
-            }
-            if(vo.getSource()!=null && vo.getSource().length() > 50){
-                mutiChoiceMsgList.add("多选题"+ (i+1)+"行"+"出处大于50");
-            }
-        }
-        return mutiChoiceMsgList;
-    }
-    //校验单选题必填项的方法
-    private Object checkSimpleChoiceData(List<ExamExcelSimpleChoiceVo> simpleChoiceList) {
-        List<String> simpleChoiceMsgList = new ArrayList<>();
-        for (int i = 0; i < simpleChoiceList.size(); i++) {
-            ExamExcelSimpleChoiceVo vo = simpleChoiceList.get(i);
-            if(vo.getContent() == null){
-                    simpleChoiceMsgList.add("单选题"+ (i+1)+"行"+"题目内容为空");
-            }
-            if(vo.getContent().length() > 200){
-                    simpleChoiceMsgList.add("单选题"+ (i+1)+"行"+"题目内容长度大于200");
-            }
-            if(vo.getChoiceA() == null){
-                simpleChoiceMsgList.add("单选题"+ (i+1)+"行"+"选项A内容为空");
-            }
-            if(vo.getChoiceA() != null && vo.getChoiceA().length() > 200){
-                simpleChoiceMsgList.add("单选题"+ (i+1)+"行"+"选项A长度大于200");
-            }
-            if(vo.getChoiceB() == null){
-                simpleChoiceMsgList.add("单选题"+ (i+1)+"行"+"选项B内容为空");
-            }
-            if(vo.getChoiceB() != null && vo.getChoiceB().length() > 200){
-                simpleChoiceMsgList.add("单选题"+ (i+1)+"行"+"选项B长度大于200");
-            }
-            if(vo.getChoiceC() == null){
-                simpleChoiceMsgList.add("单选题"+ (i+1)+"行"+"选项C内容为空");
-            }
-            if(vo.getChoiceC() != null && vo.getChoiceC().length() > 200){
-                simpleChoiceMsgList.add("单选题"+ (i+1)+"行"+"选项C长度大于200");
-            }
-            if(vo.getChoiceD() == null){
-                simpleChoiceMsgList.add("单选题"+ (i+1)+"行"+"选项D内容为空");
-            }
-            if(vo.getChoiceD() != null && vo.getChoiceD().length() > 200){
-                simpleChoiceMsgList.add("单选题"+ (i+1)+"行"+"选项D长度大于200");
-            }
-            if(vo.getAnswer() == null){
-                simpleChoiceMsgList.add("单选题"+ (i+1)+"行"+"答案为空");
-            }else {
-                String anser = vo.getAnswer();
-                if (!(anser.equals("A") || anser.equals("B") || anser.equals("C") || anser.equals("D"))) {
-                    simpleChoiceMsgList.add("单选题" + (i + 1) + "行" + "答案非法");
+            if(vo.getAnswer() != null){
+                if(!"错误".equals(vo.getAnswer())){
+                    if(!"正确".equals(vo.getAnswer())){
+                        msgArr.add("正确答案必须为正确或错误");
+                    }
                 }
             }
             if(vo.getSource() == null){
-                simpleChoiceMsgList.add("单选题"+ (i+1)+"行"+"出处为空");
+                msgArr.add("出处为空");
             }
-            if(vo.getSource()!=null && vo.getSource().length() > 50){
-                simpleChoiceMsgList.add("单选题"+ (i+1)+"行"+"出处大于50");
+            if(vo.getSource() != null && vo.getSource().length() > 50){
+                msgArr.add("出处长度大于50");
+            }
+            if(msgArr!=null && msgArr.size() > 0) {
+                lineMsgMap.put(String.valueOf(i + 1), ((ArrayList<String>) msgArr).clone());
             }
         }
-        return simpleChoiceMsgList;
+        judgeMsgMap.put("type",4);
+        if(lineMsgMap.size() > 0) {
+            judgeMsgMap.put("errors", lineMsgMap);
+        }
+        return judgeMsgMap;
+    }
+    //校验填空题必填项的方法
+    private Object checkFillGapData(List<ExamExcelFillGapVo> fillGapList) {
+        Map<String,Object> fillGapMsgMap = new HashMap<>();
+        List<String> msgArr = new ArrayList<>();
+        Map<String,Object> lineMsgMap = new HashMap<>();
+        for (int i = 0; i < fillGapList.size(); i++) {
+            msgArr.clear();
+            ExamExcelFillGapVo vo = fillGapList.get(i);
+            if(vo.getContent() == null){
+                msgArr.add("题目内容为空");
+            }
+            if(vo.getContent() != null && vo.getContent().length() > 200){
+                msgArr.add("题目内容长度大于200");
+            }
+            if(vo.getAnswer() == null){
+                msgArr.add("正确答案为空");
+            }
+            if(vo.getAnswer() != null &&vo.getAnswer().length() > 255){
+                msgArr.add("正确答案长度大于255");
+            }
+            if(vo.getSource() == null){
+                msgArr.add("出处为空");
+            }
+            if(vo.getSource() != null && vo.getSource().length() > 50){
+                msgArr.add("出处长度大于50");
+            }
+           if(msgArr!=null && msgArr.size() > 0) {
+               lineMsgMap.put(String.valueOf(i + 1), ((ArrayList<String>) msgArr).clone());
+           }
+        }
+
+        fillGapMsgMap.put("type",3);
+        if(lineMsgMap.size() > 0) {
+            fillGapMsgMap.put("errors", lineMsgMap);
+        }
+      return fillGapMsgMap;
+    }
+    //校验多选题必填项的方法
+    private Object checkMutiChoiceData(List<ExamExcelMutiChoiceVo> mutiChoiceList) {
+        Map<String,Object> mutiChoiceMsgMap = new HashMap<>();
+        Map<String,Object> lineMsgMap = new HashMap<>();
+        List<String> msgArr = new ArrayList<>();
+        for (int i = 0; i < mutiChoiceList.size(); i++) {
+            msgArr.clear();
+            ExamExcelMutiChoiceVo vo = mutiChoiceList.get(i);
+            if(vo.getContent() == null){
+                msgArr.add("题目内容为空");
+            }
+            if(vo.getContent() != null && vo.getContent().length() > 200){
+                msgArr.add("题目内容长度大于200");
+            }
+            if(vo.getChoiceA() == null){
+                msgArr.add("选项A内容为空");
+            }
+            if(vo.getChoiceA() != null && vo.getChoiceA().length() > 200){
+                msgArr.add("选项A长度大于200");
+            }
+            if(vo.getChoiceB() == null){
+                msgArr.add("选项B内容为空");
+            }
+            if(vo.getChoiceB() != null && vo.getChoiceB().length() > 200){
+                msgArr.add("选项B长度大于200");
+            }
+            if(vo.getChoiceC() == null){
+                msgArr.add("选项C内容为空");
+            }
+            if(vo.getChoiceC() != null && vo.getChoiceC().length() > 200){
+                msgArr.add("选项C长度大于200");
+            }
+            if(vo.getChoiceD() == null){
+                msgArr.add("选项D内容为空");
+            }
+            if(vo.getChoiceD() != null && vo.getChoiceD().length() > 200){
+                msgArr.add("选项D长度大于200");
+            }
+            if(vo.getAnswer() == null){
+                msgArr.add("答案为空");
+            }
+            if(vo.getAnswer() != null && vo.getAnswer().length() >255){
+                msgArr.add("答案长度大于255");
+            }
+            if(vo.getSource() == null){
+                msgArr.add("出处为空");
+            }
+            if(vo.getSource()!=null && vo.getSource().length() > 50){
+                msgArr.add("出处长度大于50");
+            }
+            if(msgArr!=null && msgArr.size() > 0) {
+                lineMsgMap.put(String.valueOf(i + 1), ((ArrayList<String>) msgArr).clone());
+            }
+        }
+        mutiChoiceMsgMap.put("type",2);
+        if(lineMsgMap.size() > 0) {
+            mutiChoiceMsgMap.put("errors", lineMsgMap);
+        }
+        return mutiChoiceMsgMap;
+    }
+    //校验单选题必填项的方法
+    private Object checkSimpleChoiceData(List<ExamExcelSimpleChoiceVo> simpleChoiceList) {
+        Map<String,Object> simpleChoiceMsgMap = new HashMap<>();
+        Map<String,Object> lineMsgMap = new HashMap<>();
+        List<String> msgArr = new ArrayList<>();
+        for (int i = 0; i < simpleChoiceList.size(); i++) {
+            ExamExcelSimpleChoiceVo vo = simpleChoiceList.get(i);
+            msgArr.clear();
+            if(vo.getContent() == null){
+                msgArr.add("题目内容为空");
+            }
+            if(vo.getContent()!=null && vo.getContent().length() > 200){
+                msgArr.add("题目内容长度大于200");
+            }
+            if(vo.getChoiceA() == null){
+                msgArr.add("选项A内容为空");
+            }
+            if(vo.getChoiceA() != null && vo.getChoiceA().length() > 200){
+                msgArr.add("选项A长度大于200");
+            }
+            if(vo.getChoiceB() == null){
+                msgArr.add("选项B内容为空");
+            }
+            if(vo.getChoiceB() != null && vo.getChoiceB().length() > 200){
+                msgArr.add("选项B长度大于200");
+            }
+            if(vo.getChoiceC() == null){
+                msgArr.add("选项C内容为空");
+            }
+            if(vo.getChoiceC() != null && vo.getChoiceC().length() > 200){
+                msgArr.add("选项C长度大于200");
+            }
+            if(vo.getChoiceD() == null){
+                msgArr.add("选项D内容为空");
+            }
+            if(vo.getChoiceD() != null && vo.getChoiceD().length() > 200){
+                msgArr.add("选项D长度大于200");
+            }
+            if(vo.getAnswer() == null){
+                msgArr.add("答案为空");
+            }else {
+                String anser = vo.getAnswer();
+                if (!(anser.equals("A") || anser.equals("B") || anser.equals("C") || anser.equals("D"))) {
+                    msgArr.add("答案应为A,B,C,D");
+                }
+            }
+            if(vo.getSource() == null){
+                msgArr.add("出处为空");
+            }
+            if(vo.getSource()!=null && vo.getSource().length() > 50){
+                msgArr.add("出处长度大于50");
+            }
+            if(msgArr!=null && msgArr.size() > 0) {
+                lineMsgMap.put(String.valueOf(i + 1), ((ArrayList<String>) msgArr).clone());
+            }
+        }
+        simpleChoiceMsgMap.put("type",1);
+        if(lineMsgMap.size() > 0) {
+            simpleChoiceMsgMap.put("errors", lineMsgMap);
+        }
+        return simpleChoiceMsgMap;
     }
 
     private Object checkAnalysisData(List<ExamExcelCaseAnalysisVo> caseAnalysisList) {
-        List<String> checkAnalysisMsgList = new ArrayList<>();
+        Map<String,Object> caseAnalysisMsgMap = new HashMap<>();
+        Map<String,Object> lineMsgMap = new HashMap<>();
+        List<String> msgArr = new ArrayList<>();
         for (int i = 0; i < caseAnalysisList.size(); i++) {
+            msgArr.clear();
             ExamExcelCaseAnalysisVo vo = caseAnalysisList.get(i);
             if(vo.getContent() == null){
-                checkAnalysisMsgList.add("案例分析题"+ (i+1)+"行"+"题目内容为空");
+                msgArr.add("题目内容为空");
             }
             if(vo.getContent() != null && vo.getContent().length() > 1000){
-                checkAnalysisMsgList.add("案例分析题"+ (i+1)+"行"+"题目内容长度大于1000");
+                msgArr.add("题目内容长度大于1000");
             }
             if(vo.getSource() == null){
-                checkAnalysisMsgList.add("案例分析题"+(i+1)+"行"+"出处为空");
+                msgArr.add("出处为空");
             }
             if(vo.getSource() != null && vo.getSource().length() > 50){
-                checkAnalysisMsgList.add("案例分析题"+(i+1)+"行"+"出处长度大于50");
+                msgArr.add("出处长度大于50");
+            }
+            if(msgArr!=null && msgArr.size() > 0) {
+                lineMsgMap.put(String.valueOf(i + 1), msgArr);
             }
         }
-        return checkAnalysisMsgList;
+        caseAnalysisMsgMap.put("type",7);
+        if(lineMsgMap.size() > 0) {
+            caseAnalysisMsgMap.put("errors", lineMsgMap);
+        }
+        return caseAnalysisMsgMap;
     }
 
     private Object checkDiscussData(List<ExamExcelDiscussVo> discussList) {
-        List<String> discussMsgList = new ArrayList<>();
+        Map<String,Object> discussMsgMap = new HashMap<>();
+        Map<String,Object> lineMsgMap = new HashMap<>();
+        List<String> msgArr = new ArrayList<>();
         for (int i = 0; i < discussList.size(); i++) {
+            msgArr.clear();
             ExamExcelDiscussVo vo = discussList.get(i);
             if(vo.getContent() == null){
-                discussMsgList.add("论述题"+ (i+1)+"行"+"题目内容为空");
+                msgArr.add((i+1)+"题目内容为空");
             }
             if(vo.getContent() != null && vo.getContent().length() > 1000){
-                discussMsgList.add("论述题"+ (i+1)+"行"+"题目内容长度大于1000");
+                msgArr.add((i+1)+"题目内容长度大于1000");
             }
             if(vo.getSource() == null){
-                discussMsgList.add("论述题"+(i+1)+"行"+"出处为空");
+                msgArr.add((i+1)+"出处为空");
             }
             if(vo.getSource() != null && vo.getSource().length() > 50){
-                discussMsgList.add("论述题"+(i+1)+"行"+"出处长度大于50");
+                msgArr.add((i+1)+"出处长度大于50");
+            }
+            if(msgArr!=null && msgArr.size() > 0) {
+                lineMsgMap.put(String.valueOf(i + 1), ((ArrayList<String>) msgArr).clone());
             }
         }
-        return discussMsgList;
+        discussMsgMap.put("type",6);
+        if(lineMsgMap.size() > 0) {
+            discussMsgMap.put("errors", lineMsgMap);
+        }
+        return discussMsgMap;
     }
 
     private Object checkEasyQuestionData(List<ExamExcelEasyQuestionVo> easyQuestionList) {
-        List<String> easyQuestionMsgList = new ArrayList<>();
+        Map<String,Object> easyQuestionMsgMap = new HashMap<>();
+        Map<String,Object> lineMsgMap = new HashMap<>();
+        List<String> msgArr = new ArrayList<>();
         for (int i = 0; i < easyQuestionList.size(); i++) {
+            msgArr.clear();
             ExamExcelEasyQuestionVo vo = easyQuestionList.get(i);
             if(vo.getContent() == null){
-                easyQuestionMsgList.add("简答题"+ (i+1)+"行"+"题目内容为空");
+                msgArr.add("题目内容为空");
             }
             if(vo.getContent() != null && vo.getContent().length() > 1000){
-                easyQuestionMsgList.add("简答题"+ (i+1)+"行"+"题目内容长度大于1000");
+                msgArr.add("题目内容长度大于1000");
             }
             if(vo.getSource() == null){
-                easyQuestionMsgList.add("简答题"+(i+1)+"行"+"出处为空");
+                msgArr.add("出处为空");
             }
             if(vo.getSource() != null && vo.getSource().length() > 50){
-                easyQuestionMsgList.add("简答题"+(i+1)+"行"+"出处长度大于50");
+                msgArr.add("出处长度大于50");
             }
-
+            if(msgArr!=null && msgArr.size() > 0) {
+                lineMsgMap.put(String.valueOf(i + 1), ((ArrayList<String>) msgArr).clone());
+            }
         }
-        return easyQuestionMsgList;
+        easyQuestionMsgMap.put("type",5);
+        if(lineMsgMap.size() > 0) {
+            easyQuestionMsgMap.put("errors", lineMsgMap);
+        }
+        return easyQuestionMsgMap;
     }
-
-
-
 }
