@@ -38,7 +38,8 @@ public class ExamConstant {
   public static int CASEANALYSIS = 7;
   public static String CASEANALYSISNAME = "caseAnalysis";
 
-
+  public static String EXAMINATION_ID_ISNULL ="当前修改的考试信息主键不能为空";
+  public static String DATAERRORSTART ="开始日期必须小于结束日期";
   public static int questionNameToNum(String name) {
     if ("choices".equals(name)) {
       return CHOICES;
