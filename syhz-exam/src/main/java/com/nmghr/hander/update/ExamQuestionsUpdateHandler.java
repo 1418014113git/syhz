@@ -8,8 +8,6 @@ import com.nmghr.basic.core.service.handler.impl.AbstractUpdateHandler;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -22,6 +20,19 @@ public class ExamQuestionsUpdateHandler extends AbstractUpdateHandler {
     @Override
     public Object update(String id, Map<String, Object> requestBody) throws Exception {
         validParams(requestBody);
+        Map<String,Object> resultMap = new HashMap<>();
+        Map<String,Object> isInPaperParam = new HashMap();
+        isInPaperParam.put("questionsId", id);
+        //引用当前试题的所有正在考试的试卷,取距当前时间最近的试卷
+        LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMQUESTIONINPAPER");
+        Map<String,Object> map = (Map<String, Object>) baseService.get(isInPaperParam);
+        if(map!=null){
+            //存在正在考试的试卷
+            String paperName = String.valueOf(map.get("paperName"));
+            resultMap.put("type","1");
+            resultMap.put("paperName",paperName);
+            return resultMap;
+        }
 
         if("1".equals(String.valueOf(requestBody.get("type"))) || "2".equals(String.valueOf(requestBody.get("type")))) {
             //更新选择题
@@ -69,6 +80,30 @@ public class ExamQuestionsUpdateHandler extends AbstractUpdateHandler {
         return true;
     }
 
+//    private Object checkInPaper(String id) throws Exception {
+//        //判断是否有引用
+//        Map<String,Object> isInPaperParam = new HashMap();
+//        isInPaperParam.put("questionsId", id);
+//        //引用当前试题的所有正在考试的试卷,取距当前时间最近的试卷
+//        LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMQUESTIONINPAPER");
+//        Map<String,Object> map = (Map<String, Object>) baseService.get(isInPaperParam);
+//        if(map!=null){
+//            //存在正在考试的试卷
+//            String paperName = String.valueOf(map.get("paperName"));
+//            return Result.fail("998001","该试题已经被抽取到"+paperName+"试卷中，暂时不能编辑或删除！");
+//        }
+//        //引用当前试题的考过的试卷
+//        Map<String,Object> isInBeforePaperParam = new HashMap();
+//        isInBeforePaperParam.put("questionsId", id);
+//        LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMQUESTIONINPAPERBEFORE");
+//        List<Map<String,Object>> list = (List<Map<String,Object>>) baseService.list(isInBeforePaperParam);
+//        if(list!= null && list.size() > 0){
+//            //已经考过的卷子存在试题的引用
+//            return Result.fail("998001","该试题在已结束的考试试卷中有使用,如果修改或删除可能会影响到警员查看以往考试信息！");
+//        }
+//        return null;
+//    }
+
     private void validParams(Map<String, Object> requestBody) {
 
         if(requestBody.get("type") == null || "".equals(requestBody.get("type"))){
@@ -76,6 +111,15 @@ public class ExamQuestionsUpdateHandler extends AbstractUpdateHandler {
         }
         if(requestBody.get("subjectName") == null || "".equals(requestBody.get("subjectName"))){
             throw new GlobalErrorException("998001", "请输入题目内容!");
+        }
+        if(requestBody.get("creator") == null || "".equals(requestBody.get("creator"))){
+            throw new GlobalErrorException("998001", "创建人不能为空!");
+        }
+        if(requestBody.get("deptCode") == null || "".equals(requestBody.get("deptCode"))){
+            throw new GlobalErrorException("998001", "地区编号不能为空!");
+        }
+        if(requestBody.get("deptName") == null || "".equals(requestBody.get("deptName"))){
+            throw new GlobalErrorException("998001", "地区名称不能为空!");
         }
         String type = String.valueOf(requestBody.get("type"));
         {
