@@ -319,43 +319,61 @@ public class PaperController {
     if (paper == null) {
       return Result.fail(GlobalErrorEnum.PARAM_NOT_VALID.getCode(), "试卷不能为空");
     }
-    Map<String, Object> param = new HashMap<>();
-    param.put("paperId", id);
-    LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMPAPERINFOBYPID");
-    List<Map<String, Object>> infos = (List<Map<String, Object>>) baseService.list(param);
-    if (infos == null) {
-      return Result.fail(GlobalErrorEnum.PARAM_NOT_VALID.getCode(), "试卷为空");
+    if (paper.get("remark") == null) {
+      return Result.fail(GlobalErrorEnum.PARAM_NOT_VALID.getCode(), "试卷不完整");
     }
-
-    Map<String, Object> temp = new HashMap<>();
-    String remark = (String) paper.get("remark");
-    JSONObject json = JSONObject.parseObject(remark);
+    JSONObject json = null;
+    try {
+      json = JSONObject.parseObject(String.valueOf(paper.get("remark")));
+    } catch (Exception e) {
+      return Result.fail(GlobalErrorEnum.PARAM_NOT_VALID.getCode(), "试卷不完整");
+    }
     if (json == null) {
-      return Result.fail(GlobalErrorEnum.PARAM_NOT_VALID.getCode(), "试卷异常");
+      return Result.fail(GlobalErrorEnum.PARAM_NOT_VALID.getCode(), "试卷不完整");
     }
-    //整理各个类型试题
-    returnQuestions(temp, json.getString(ExamConstant.CHOICESNAME), ExamConstant.CHOICESNAME);
-    returnQuestions(temp, json.getString(ExamConstant.MULTISELECTNAME), ExamConstant.MULTISELECTNAME);
-    returnQuestions(temp, json.getString(ExamConstant.FILLGAPNAME), ExamConstant.FILLGAPNAME);
-    returnQuestions(temp, json.getString(ExamConstant.JUDGENAME), ExamConstant.JUDGENAME);
-    returnQuestions(temp, json.getString(ExamConstant.SHORTANSWERNAME), ExamConstant.SHORTANSWERNAME);
-    returnQuestions(temp, json.getString(ExamConstant.DISCUSSNAME), ExamConstant.DISCUSSNAME);
-    returnQuestions(temp, json.getString(ExamConstant.CASEANALYSISNAME), ExamConstant.CASEANALYSISNAME);
+    paper.put("json", json);
+    paper.put("from", "controller");
+    paper.put("operator", "detailView");
+    IQueryHandler queryHandler = SpringUtils.getBean("paperQuestionQueryHandler", IQueryHandler.class);
+    return Result.ok(queryHandler.list(paper));
 
-    // 将试题放入各个模块
-    for (Map<String, Object> map : infos) {
-      int num = Integer.parseInt(String.valueOf(map.get("type")));
-      Map<String, Object> bean = (Map<String, Object>) temp.get(ExamConstant.questionNumToName(num));
-      List<Map<String, Object>> list = (List<Map<String, Object>>) bean.get("data");
-      Map<String, Object> q = new HashMap<>();
-      q.put("id", map.get("id"));
-      q.put("subjectCategoryId", map.get("subjectCategoryId"));
-      q.put("questionsId", map.get("questionsId"));
-      list.add(q);
-    }
-    paper.putAll(temp);
-    paper.remove("remark");
-    return paper;
+//    Map<String, Object> param = new HashMap<>();
+//    param.put("paperId", id);
+//    LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMPAPERINFOBYPID");
+//    List<Map<String, Object>> infos = (List<Map<String, Object>>) baseService.list(param);
+//    if (infos == null) {
+//      return Result.fail(GlobalErrorEnum.PARAM_NOT_VALID.getCode(), "试卷为空");
+//    }
+
+//    Map<String, Object> temp = new HashMap<>();
+//    String remark = (String) paper.get("remark");
+//    JSONObject json = JSONObject.parseObject(remark);
+//    if (json == null) {
+//      return Result.fail(GlobalErrorEnum.PARAM_NOT_VALID.getCode(), "试卷异常");
+//    }
+//    //整理各个类型试题
+//    returnQuestions(temp, json.getString(ExamConstant.CHOICESNAME), ExamConstant.CHOICESNAME);
+//    returnQuestions(temp, json.getString(ExamConstant.MULTISELECTNAME), ExamConstant.MULTISELECTNAME);
+//    returnQuestions(temp, json.getString(ExamConstant.FILLGAPNAME), ExamConstant.FILLGAPNAME);
+//    returnQuestions(temp, json.getString(ExamConstant.JUDGENAME), ExamConstant.JUDGENAME);
+//    returnQuestions(temp, json.getString(ExamConstant.SHORTANSWERNAME), ExamConstant.SHORTANSWERNAME);
+//    returnQuestions(temp, json.getString(ExamConstant.DISCUSSNAME), ExamConstant.DISCUSSNAME);
+//    returnQuestions(temp, json.getString(ExamConstant.CASEANALYSISNAME), ExamConstant.CASEANALYSISNAME);
+//
+//    // 将试题放入各个模块
+//    for (Map<String, Object> map : infos) {
+//      int num = Integer.parseInt(String.valueOf(map.get("type")));
+//      Map<String, Object> bean = (Map<String, Object>) temp.get(ExamConstant.questionNumToName(num));
+//      List<Map<String, Object>> list = (List<Map<String, Object>>) bean.get("data");
+//      Map<String, Object> q = new HashMap<>();
+//      q.put("id", map.get("id"));
+//      q.put("subjectCategoryId", map.get("subjectCategoryId"));
+//      q.put("questionsId", map.get("questionsId"));
+//      list.add(q);
+//    }
+//    paper.putAll(temp);
+//    paper.remove("remark");
+//    return paper;
   }
 
   /**
