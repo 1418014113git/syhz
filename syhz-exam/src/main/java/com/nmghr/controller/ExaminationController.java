@@ -8,15 +8,6 @@
 
 package com.nmghr.controller;
 
-import java.util.Map;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
 import com.nmghr.basic.common.Constant;
 import com.nmghr.basic.common.Result;
 import com.nmghr.basic.common.exception.GlobalErrorEnum;
@@ -26,6 +17,11 @@ import com.nmghr.basic.core.service.IBaseService;
 import com.nmghr.basic.core.util.ValidationUtils;
 import com.nmghr.common.ExamConstant;
 import com.nmghr.util.DateUtil;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
 
 
 /**
@@ -48,26 +44,75 @@ public class ExaminationController {
   public Object save(@RequestBody Map<String, Object> requestBody) throws Exception {
     // 校验表单数据
     validParams(1, requestBody);
+    //考试名称查重
+    LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMINATIONCOUNTBYNAMEDEPT");
+    Map<String,Object> result = (Map<String, Object>) baseService.get(requestBody);
+    if (result != null && result.get("num") != null && Integer.parseInt(String.valueOf(result.get("num"))) > 0) {
+      return Result.fail(GlobalErrorEnum.PARAM_NOT_VALID.getCode(), "考试名称重复");
+    }
+
     LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMINATION");
     Object examinationId = baseService.save(requestBody);
     return Result.ok(examinationId);
   }
 
-
   @PostMapping("update")
   public Object update(@RequestBody Map<String, Object> requestBody) throws Exception {
 
-    if (requestBody.get("examinationId") == null || "".equals(requestBody.get("examinationId"))) {
-      Result.fail("99999999", ExamConstant.EXAMINATION_ID_ISNULL);
+    if (requestBody.get("id") == null || "".equals(requestBody.get("id"))) {
+      return Result.fail("99999999", ExamConstant.EXAMINATION_ID_ISNULL);
     }
     // 校验表单数据
     validParams(2, requestBody);
+    Result checkResult = (Result) checkExamination(requestBody);
+    if(checkResult!=null && !checkResult.isSuccess()){
+      //返回false
+      return checkResult;
+    }
+    //考试名称查重(除了当前记录)
+    LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMINATIONCOUNTBYNAMEIDDEPT");
+    Map<String,Object> result = (Map<String, Object>) baseService.get(requestBody);
+    if (result != null && result.get("num") != null && Integer.parseInt(String.valueOf(result.get("num"))) > 0) {
+      return Result.fail(GlobalErrorEnum.PARAM_NOT_VALID.getCode(), "考试名称重复");
+    }
+
     LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMINATION");
     Object examinationId = baseService.update(String.valueOf(requestBody.get("id")), requestBody);
     return Result.ok(examinationId);
   }
 
+
+  @GetMapping("checkexamination")
+  public Object checkExamination(@RequestParam Map<String, Object> requestBody) throws Exception {
+    ValidationUtils.notNull(requestBody.get("id"), "考试Id不能为空!");
+    LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMINATIONCHECK");
+    Map<String,Object> result = (Map<String, Object>) baseService.get(String.valueOf(requestBody.get("id")));
+    if (result != null && result.get("num") != null && Integer.parseInt(String.valueOf(result.get("num"))) > 0) {
+      return Result.fail(GlobalErrorEnum.PARAM_NOT_VALID.getCode(), "考试已经开始，暂不能修改或删除");
+    }
+    //无异常
+    return Result.ok(null);
+  }
+
+  @DeleteMapping("delete")
+  public Object delete(@RequestParam Map<String, Object> requestBody) throws Exception {
+    // 校验表单数据
+    ValidationUtils.notNull(requestBody.get("id"), "考试Id不能为空!");
+    Result checkResult = (Result) checkExamination(requestBody);
+    if(checkResult!=null && !checkResult.isSuccess()){
+      //返回false
+      return checkResult;
+    }
+    LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMINATION");
+    Object examinationId = baseService.update(String.valueOf(requestBody.get("id")),requestBody);
+    return Result.ok(examinationId);
+  }
+
+
+
+
   private void validParams(int status, Map<String, Object> requestBody) {
+
 
     /**
      * 
@@ -90,7 +135,6 @@ public class ExaminationController {
     } else {
       ValidationUtils.notNull(requestBody.get("modifier"), "修改人不能为空!");
     }
-
     ValidationUtils.notNull(requestBody.get("deptCode"), "创建部门编码不能为空!");
     ValidationUtils.notNull(requestBody.get("deptName"), "创建部门名称不能为空!");
     ValidationUtils.regexp(requestBody.get("examinationName"), "[\\u4e00-\\u9fa5_a-zA-Z0-9_]{1,50}",
@@ -101,5 +145,6 @@ public class ExaminationController {
       throw new GlobalErrorException(GlobalErrorEnum.PARAM_NOT_VALID.getCode(),
           ExamConstant.DATAERRORSTART);
     }
+
   }
 }
