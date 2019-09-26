@@ -12,6 +12,7 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Date;
 
 /**
  * <功能描述/>
@@ -56,5 +57,58 @@ public class DateUtil {
     }
     return result;
   }
+  
+ /* public static void main(String[] args) {
+    
+    DateUtil obj = new DateUtil();
+    
+    try {
+      
+      String stringData = obj.printDifference("2019-09-26 11:30:10", "2019-09-26 12:35:25");
+      System.out.println(stringData);
 
+    } catch (ParseException e) {
+      e.printStackTrace();
+    }
+
+  }*/
+
+  //1 minute = 60 seconds
+  //1 hour = 60 x 60 = 3600
+  //1 day = 3600 x 24 = 86400
+  public String printDifference(String startDate, String endDate) throws ParseException{
+      
+    SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    Date StartDate = simpleDateFormat.parse(startDate);
+    Date EndDate = simpleDateFormat.parse(endDate);
+      //milliseconds
+      long different = EndDate.getTime() - StartDate.getTime();
+
+   /*   System.out.println("startDate : " + startDate);
+      System.out.println("endDate : "+ endDate);
+      System.out.println("different : " + different);
+*/
+      long secondsInMilli = 1000;
+      long minutesInMilli = secondsInMilli * 60;
+      long hoursInMilli = minutesInMilli * 60;
+      long daysInMilli = hoursInMilli * 24;
+
+      /*long elapsedDays = different / daysInMilli;
+      different = different % daysInMilli;*/
+
+      long elapsedHours = different / hoursInMilli;
+      different = different % hoursInMilli;
+
+      long elapsedMinutes = different / minutesInMilli;
+      different = different % minutesInMilli;
+
+      long elapsedSeconds = different / secondsInMilli;
+
+      String dataString = elapsedHours +"小时"+ elapsedMinutes +"分钟" + elapsedSeconds+"秒";
+
+      //System.out.printf("%d小时%d分钟%d秒%n", elapsedHours, elapsedMinutes, elapsedSeconds);
+      
+      return dataString;
+
+  }
 }
