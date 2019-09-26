@@ -256,7 +256,6 @@ public class ExamExcelController {
             }
             questionsSaveHandler.save(easyQuestionMap);
         }
-
     }
 
     private void saveDiscuss(List<ExamExcelDiscussVo> discussVos, Map<String,Object> baseParamMap) throws Exception {
@@ -508,7 +507,6 @@ public class ExamExcelController {
                lineMsgMap.put(String.valueOf(i + 1), ((ArrayList<String>) msgArr).clone());
            }
         }
-
         fillGapMsgMap.put("type",3);
         if(lineMsgMap.size() > 0) {
             fillGapMsgMap.put("errors", lineMsgMap);
@@ -658,7 +656,7 @@ public class ExamExcelController {
                 msgArr.add("出处长度大于50");
             }
             if(msgArr!=null && msgArr.size() > 0) {
-                lineMsgMap.put(String.valueOf(i + 1), msgArr);
+                lineMsgMap.put(String.valueOf(i + 1), ((ArrayList<String>) msgArr).clone());
             }
         }
         caseAnalysisMsgMap.put("type",7);
