@@ -34,15 +34,19 @@ public class ExamSubmitRecordSaveHandler extends AbstractSaveHandler {
     }
     try {
       // 查询本地记录的所有answer 计算主观题分数
+      Map<String, Object> params = new HashMap<>();
+      params.put("id", String.valueOf(requestBody.get("recordId")));
+      params.put("type", "kg");
       LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMRECORDCOUNT");
-      Map<String, Object> count = (Map<String, Object>) baseService.get(String.valueOf(requestBody.get("recordId")));
+      Map<String, Object> count = (Map<String, Object>) baseService.get(params);
       if (count == null) {
         throw new GlobalErrorException("999997", "计算异常稍后重试");
       }
 
       String nowStr = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date());
-      Map<String, Object> params = new HashMap<>();
+      params = new HashMap<>();
       params.put("modifier", requestBody.get("creator"));
+      params.put("userId", requestBody.get("userId"));
       params.put("endTime", nowStr);
       params.put("score", count.get("score"));
       params.put("correctNumber", count.get("rightNum"));

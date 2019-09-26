@@ -41,25 +41,25 @@ public class ExamConstant {
   public static String EXAMINATION_ID_ISNULL ="当前修改的考试信息主键不能为空";
   public static String DATAERRORSTART ="开始日期必须小于结束日期";
   public static int questionNameToNum(String name) {
-    if ("choices".equals(name)) {
+    if (CHOICESNAME.equals(name)) {
       return CHOICES;
     }
-    if ("multiSelect".equals(name)) {
+    if (MULTISELECTNAME.equals(name)) {
       return MULTISELECT;
     }
-    if ("fillgap".equals(name)) {
+    if (FILLGAPNAME.equals(name)) {
       return FILLGAP;
     }
-    if ("judge".equals(name)) {
+    if (JUDGENAME.equals(name)) {
       return JUDGE;
     }
-    if ("shortAnswer".equals(name)) {
+    if (SHORTANSWERNAME.equals(name)) {
       return SHORTANSWER;
     }
-    if ("discuss".equals(name)) {
+    if (DISCUSSNAME.equals(name)) {
       return DISCUSS;
     }
-    if ("caseAnalysis".equals(name)) {
+    if (CASEANALYSISNAME.equals(name)) {
       return CASEANALYSIS;
     }
     return 0;

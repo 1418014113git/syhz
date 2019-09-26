@@ -6,6 +6,7 @@ import com.nmghr.basic.core.common.LocalThreadStorage;
 import com.nmghr.basic.core.service.IBaseService;
 import com.nmghr.basic.core.service.handler.IQueryHandler;
 import com.nmghr.basic.core.service.handler.ISaveHandler;
+import com.nmghr.basic.core.service.handler.IUpdateHandler;
 import com.nmghr.basic.core.util.SpringUtils;
 import com.nmghr.basic.core.util.ValidationUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -106,7 +107,7 @@ public class ExamController {
     // 校验表单数据
     validSaveAnswerParams(requestBody);
     requestBody.put("from", "controller");
-    requestBody.put("paperId", "2013");
+//    requestBody.put("paperId", "2013");
     ISaveHandler saveHandler = SpringUtils.getBean("examAnswerSaveHandler", ISaveHandler.class);
     return Result.ok(saveHandler.save(requestBody));
   }
@@ -121,6 +122,7 @@ public class ExamController {
   @PostMapping("/submitAnswer")
   public Object submitAnswer(@RequestBody Map<String, Object> requestBody) throws Exception {
     // 校验表单数据
+    ValidationUtils.notNull(requestBody.get("userId"), "userId不能为空!");
     ValidationUtils.notNull(requestBody.get("recordId"), "考试记录id不能为空!");
     ValidationUtils.notNull(requestBody.get("submitStatus"), "提交类型不能为空!");
     ValidationUtils.notNull(requestBody.get("creator"), "当前用户账号不能为空!");
@@ -140,6 +142,7 @@ public class ExamController {
   public Object systemTime() {
     return Result.ok(new Date().getTime());
   }
+
   /**
    * 考试记录
    * @return Object
@@ -155,6 +158,89 @@ public class ExamController {
     params.put("examId", param.get("examId"));
     LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMINATIONRECORDBYUID");
     return Result.ok(baseService.list(params));
+  }
+
+
+  /**
+   * 主观题阅卷获取试题
+   * @return Object
+   * @throws Exception e
+   */
+  @SuppressWarnings("unchecked")
+  @GetMapping("/subjectiveQuestions")
+  public Object subjectiveQuestions(@RequestParam Map<String, Object> param) throws Exception {
+    // 校验表单数据
+    validId(param.get("id"));
+    ValidationUtils.notNull(param.get("userId"), "用户id不能为空!");
+    ValidationUtils.notNull(param.get("recordId"), "考试记录id不能为空!");
+    Map<String, Object> params = new HashMap<>();
+    params.put("id", param.get("id"));
+    params.put("from", "controller");
+    params.put("userId", param.get("userId"));
+    params.put("recordId", param.get("recordId"));
+    params.put("operator", "judgeListView");
+    IQueryHandler queryHandler = SpringUtils.getBean("paperQuestionQueryHandler", IQueryHandler.class);
+    return Result.ok(queryHandler.list(params));
+  }
+  /**
+   * 主观题阅卷
+   * @return Object
+   * @throws Exception e
+   */
+  @SuppressWarnings("unchecked")
+  @PostMapping("/subjectiveJudge")
+  public Object subjectiveJudge(@RequestBody Map<String, Object> param) throws Exception {
+    //查询考试信息  判断分数不能
+
+    validId(param.get("recordId"));
+    ValidationUtils.notNull(param.get("userId"), "用户id不能为空!");
+    ValidationUtils.notNull(param.get("paperId"), "用户id不能为空!");
+    ValidationUtils.notNull(param.get("creator"), "用户id不能为空!");
+    Map<String, Object> params = new HashMap<>();
+
+    List<Map<String, Object>> list = (List<Map<String, Object>>) param.get("data");
+    if (list==null||list.size()==0) {
+      return Result.fail("999998", "阅卷信息不能为空");
+    }
+
+    LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMPAPERGETTYPESCORE");
+    params.put("paperId",param.get("paperId"));
+    List<Map<String, Object>> score = (List<Map<String, Object>>) baseService.list(params);
+    if (score==null||score.size()==0) {
+      return Result.fail("999998", "题型信息异常");
+    }
+    Map<String, Object> scoreMap = new HashMap<>();
+    for(Map<String, Object> map: list){
+      scoreMap.put(String.valueOf(map.get("type")), map.get("value"));
+    }
+
+    for(Map<String, Object> map: list){
+      if(map.get("answerId")==null||"".equals(String.valueOf(map.get("answerId")).trim())){
+        return Result.fail("999998", "answerId不能为空");
+      }
+      if(map.get("questionsId")==null||"".equals(String.valueOf(map.get("questionsId")).trim())){
+        return Result.fail("999998", "questionsId不能为空");
+      }
+      if(map.get("score")==null||"".equals(String.valueOf(map.get("score")).trim())){
+        return Result.fail("999998", "score不能为空");
+      }
+      if(map.get("type")==null||"".equals(String.valueOf(map.get("type")).trim())){
+        return Result.fail("999998", "type不能为空");
+      }
+      if((int)scoreMap.get(String.valueOf(map.get("type")))<(int)map.get("score")){
+        return Result.fail("999998", "分数设置过高，最多"+map.get("type")+"分");
+      }
+    }
+
+    params = new HashMap<>();
+    params.put("from", "controller");
+    params.put("userId", param.get("userId"));
+    params.put("recordId", param.get("recordId"));
+    params.put("paperId", param.get("paperId"));
+    params.put("creator", param.get("creator"));
+    params.put("operator", "judgeListView");
+    IUpdateHandler updateHandler = SpringUtils.getBean("examJudgeUpdateHandler", IUpdateHandler.class);
+    return Result.ok(updateHandler.update(String.valueOf(param.get("recordId")),params));
   }
 
   /**
@@ -180,6 +266,8 @@ public class ExamController {
   @SuppressWarnings("unchecked")
   private void validStartParams(Map<String, Object> requestBody) {
     ValidationUtils.notNull(requestBody.get("userId"), "用户id不能为空!");
+    ValidationUtils.notNull(requestBody.get("userName"), "用户账号不能为空!");
+    ValidationUtils.notNull(requestBody.get("realName"), "用户姓名不能为空!");
     ValidationUtils.notNull(requestBody.get("examId"), "考试id不能为空!");
     ValidationUtils.notNull(requestBody.get("creator"), "当前用户账号不能为空!");
     ValidationUtils.notNull(requestBody.get("deptCode"), "当前部门编号不能为空!");
