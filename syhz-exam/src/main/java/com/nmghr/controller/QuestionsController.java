@@ -63,7 +63,6 @@ public class QuestionsController {
       }
 
       Integer size = pageSize/7;
-
       //单选
       if("1".equals(type)){
         //查当前题库的所有单选
@@ -173,7 +172,7 @@ public class QuestionsController {
         }
         if("5".equals(String.valueOf(params.get("type"))) || "6".equals(String.valueOf(params.get("type")))
         || "7".equals(String.valueOf(params.get("type")))) {
-            //判断
+
             LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMDISCUSS");
             Map<String, Object> discusses = (Map<String, Object>) baseService.get(params);
             if(discusses!=null){
@@ -310,5 +309,4 @@ public class QuestionsController {
         LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMSUBJECTCATEGORYMAPPING");
         baseService.remove(mapping);
     }
-
 }
