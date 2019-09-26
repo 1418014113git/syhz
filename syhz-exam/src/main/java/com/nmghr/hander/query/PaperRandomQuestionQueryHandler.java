@@ -188,7 +188,9 @@ public class PaperRandomQuestionQueryHandler extends AbstractQueryHandler {
 
   private void getRemark(Map<String, Object> map, Map<String, Object> remark, String key){
     remark.put(key, String.valueOf(map.get("desc")) + ExamConstant.DESCFLAG + Integer.parseInt(String.valueOf(map.get("sort")))
-        + ExamConstant.DESCFLAG + Integer.parseInt(String.valueOf(map.get("score"))));
+        + ExamConstant.DESCFLAG + String.valueOf(map.get("value"))
+        + ExamConstant.DESCFLAG + String.valueOf(map.get("num"))
+        + ExamConstant.DESCFLAG + String.valueOf(map.get("cateIds")));
   }
 
   /**
@@ -199,18 +201,18 @@ public class PaperRandomQuestionQueryHandler extends AbstractQueryHandler {
    */
   private List<Map<String, Object>> getSaveParams(Map<String, Object> paramMap, int type) {
     int sort = Integer.parseInt(String.valueOf(paramMap.get("sort")));
-    int score = Integer.parseInt(String.valueOf(paramMap.get("score")));
+    int value = Integer.parseInt(String.valueOf(paramMap.get("value")));
     List<Map<String, Object>> rdList = new ArrayList<>();
     try {
       List<Map<String, Object>> list = (List<Map<String, Object>>) paramMap.get(Q_KEY);
       if (list != null && list.size() > 0) {
         for(Map<String, Object> map : list){
           Map<String, Object> bean = new HashMap<>();
-          bean.put("subjectCategoryId", map.get("subCategoryId"));
+          bean.put("subjectCategoryId", map.get("subjectCategoryId"));
           bean.put("questionsId", map.get("id"));
           bean.put("type", type);
           bean.put("sort", sort);
-          bean.put("value", score);
+          bean.put("value", value);
           rdList.add(bean);
         }
       }
@@ -230,7 +232,7 @@ public class PaperRandomQuestionQueryHandler extends AbstractQueryHandler {
     String cateIds = String.valueOf(paramMap.get("cateIds"));
     int num = Integer.parseInt(String.valueOf(paramMap.get("num")));
     int sort = Integer.parseInt(String.valueOf(paramMap.get("sort")));
-    int score = Integer.parseInt(String.valueOf(paramMap.get("score")));
+    int value = Integer.parseInt(String.valueOf(paramMap.get("value")));
     List<Map<String, Object>> rdList = new ArrayList<>();
     Map<String, Object> param = new HashMap<>();
     param.put("cateIds", cateIds);
@@ -241,6 +243,13 @@ public class PaperRandomQuestionQueryHandler extends AbstractQueryHandler {
       if (list != null && list.size() > 0) {
         if (list.size() < num) {
           log.error("EXAMPAPERQUESTION   by   cateIds :" + cateIds + " size 等于" + list.size() + "数据不够");
+          for (Map<String, Object> map: list){
+            map.put("subjectCategoryId", map.get("subCategoryId"));
+            map.put("questionsId", map.get("id"));
+            map.put("type", type);
+            map.put("sort", sort);
+            map.put("value", value);
+          }
           rdList = list;
         } else {
           List<Integer> idxs = new ArrayList<>();
@@ -254,7 +263,7 @@ public class PaperRandomQuestionQueryHandler extends AbstractQueryHandler {
               bean.put("questionsId", question.get("id"));
               bean.put("type", type);
               bean.put("sort", sort);
-              bean.put("value", score);
+              bean.put("value", value);
               rdList.add(bean);
               idxs.add(idx);
             }
@@ -277,7 +286,7 @@ public class PaperRandomQuestionQueryHandler extends AbstractQueryHandler {
     String cateIds = String.valueOf(paramMap.get("cateIds"));
     int num = Integer.parseInt(String.valueOf(paramMap.get("num")));
     int sort = Integer.parseInt(String.valueOf(paramMap.get("sort")));
-    int score = Integer.parseInt(String.valueOf(paramMap.get("score")));
+    int value = Integer.parseInt(String.valueOf(paramMap.get("value")));
     List<Map<String, Object>> rdList = new ArrayList<>();
     Map<String, Object> param = new HashMap<>();
     param.put("cateIds", cateIds);
@@ -298,11 +307,11 @@ public class PaperRandomQuestionQueryHandler extends AbstractQueryHandler {
               Map<String, Object> question = list.get(idx);
               Map<String, Object> bean = new HashMap<>();
               bean.put("name", question.get("name"));
-              bean.put("subCategoryId", question.get("subCategoryId"));
+              bean.put("subjectCategoryId", question.get("subCategoryId"));
               bean.put("id", question.get("id"));
               bean.put("type", type);
               bean.put("sort", sort);
-              bean.put("score", score);
+              bean.put("value", value);
               rdList.add(bean);
               idxs.add(idx);
             }
