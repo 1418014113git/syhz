@@ -119,6 +119,57 @@ public class ExaminationController {
     Object examinationId = baseService.update(String.valueOf(requestBody.get("id")),requestBody);
     return Result.ok(examinationId);
   }
+    /*
+  前20条成绩
+   */
+  @ResponseBody
+  @GetMapping("scorelist")
+  public Object scoreList(@RequestParam Map<String, Object> requestParam) throws Exception {
+    ValidationUtils.notNull(requestParam.get("examId"), "考试Id不能为空!");
+    LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMSCORELIST");
+    List<Map<String,Object>> scoreList = (List<Map<String, Object>>) baseService.list(requestParam);
+    if(scoreList!=null && scoreList.size() > 0){
+      for (Map<String, Object> score : scoreList) {
+        Timestamp start = (Timestamp) score.get("startTime");
+        Timestamp end = (Timestamp) score.get("endTime");
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        String dateStr = DateUtil.printDifference(sdf.format(start), sdf.format(end));
+        score.put("dateStr",dateStr);
+      }
+    }
+    return  scoreList;
+  }
+    /*
+    所有成绩列表
+     */
+  @ResponseBody
+  @GetMapping("allscorelist")
+  public Object allScoreList(@RequestParam Map<String, Object> requestParam) throws Exception {
+    int pageNum = 1, pageSize = 15;
+    if (requestParam.get("pageNum") != null && !"".equals(String.valueOf(requestParam.get("pageNum")).trim())) {
+      pageNum = Integer.parseInt(String.valueOf(requestParam.get("pageNum")));
+    }
+    if (requestParam.get("pageSize") != null && !"".equals(String.valueOf(requestParam.get("pageSize")).trim())) {
+      pageSize = Integer.parseInt(String.valueOf(requestParam.get("pageSize")));
+    }
+    ValidationUtils.notNull(requestParam.get("id"), "考试Id不能为空!");
+    LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMSCORELISTALL");
+    Paging paging = (Paging) baseService.page(requestParam,pageNum,pageSize);
+    if(paging!=null){
+      List<Map<String,Object>> scoreList = paging.getList();
+      if(scoreList!=null && scoreList.size() > 0){
+        for (Map<String, Object> score : scoreList) {
+          Timestamp start = (Timestamp) score.get("startTime");
+          Timestamp end = (Timestamp) score.get("endTime");
+          SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+          String dateStr = DateUtil.printDifference(sdf.format(start), sdf.format(end));
+          score.put("dateStr",dateStr);
+        }
+        paging.setList(scoreList);
+      }
+    }
+    return paging;
+  }
   @PostMapping("examinationList")
   public Object examinationList(@RequestBody Map<String, Object> requestBody) throws Exception {
     Integer currentPage = (Integer) requestBody.get("pageNum");
