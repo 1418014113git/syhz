@@ -100,12 +100,12 @@ public class ExamAnswerSaveHandler extends AbstractSaveHandler {
       LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMPAPERANSWER");
       List<Map<String, Object>> answers = (List<Map<String, Object>>) baseService.list(params);
       if (answers == null || answers.size() == 0) {
-        throw new GlobalErrorException("999001", "提交答案异常！");
+        throw new GlobalErrorException("999001", "试题不存在！");
       }
       Map<String, Object> answer = answers.get(0);
       saveParams.put("correctAnswer", answer.get("answer"));
       saveParams.put("answerType", String.valueOf(answer.get("answer")).equals(text) ? 0 : 1);
-      saveParams.put("score", answer.get("score"));
+      saveParams.put("score", String.valueOf(answer.get("answer")).equals(text) ? answer.get("score") : 0);
     } else {
       //主观题
       saveParams.put("correctAnswer", "");
