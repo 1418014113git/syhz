@@ -8,20 +8,32 @@
 
 package com.nmghr.controller;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.commons.collections.CollectionUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.nmghr.basic.common.Constant;
 import com.nmghr.basic.common.Result;
 import com.nmghr.basic.common.exception.GlobalErrorEnum;
 import com.nmghr.basic.common.exception.GlobalErrorException;
 import com.nmghr.basic.core.common.LocalThreadStorage;
+import com.nmghr.basic.core.page.Paging;
 import com.nmghr.basic.core.service.IBaseService;
 import com.nmghr.basic.core.util.ValidationUtils;
 import com.nmghr.common.ExamConstant;
 import com.nmghr.util.DateUtil;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.Map;
 
 
 /**
@@ -107,10 +119,36 @@ public class ExaminationController {
     Object examinationId = baseService.update(String.valueOf(requestBody.get("id")),requestBody);
     return Result.ok(examinationId);
   }
-
-
-
-
+  @PostMapping("examinationList")
+  public Object examinationList(@RequestBody Map<String, Object> requestBody) throws Exception {
+    Integer currentPage = (Integer) requestBody.get("pageNum");
+    Integer pageSize = (Integer) requestBody.get("pageSize");
+    if (currentPage == null) {
+        currentPage = 1;
+    }
+    if (pageSize == null) {
+        pageSize = 10;
+    }
+    LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMINATIONLIST");
+    
+    //查询到已经参加考试的记录信息
+    Paging obj = (Paging) baseService.page(requestBody, currentPage, pageSize);
+    if (obj != null && obj.getList() != null) {
+      List<Map<String, Object>> list = obj.getList();
+      List<Map<String, Object>> newlist = new ArrayList<>();
+      for (int i = 0; i < list.size(); i++) {
+        Map<String, Object> map = list.get(i);
+        String startTime = String.valueOf(map.get("startTime"));
+        String endTime = String.valueOf(map.get("endTime"));
+        String timeNumber = DateUtil.printDifference(startTime, endTime);
+        map.remove("startTime");
+        map.remove("endTime");
+        map.put("startTime", timeNumber);
+      }
+    }
+    //无异常
+    return Result.ok(obj);
+  }
   private void validParams(int status, Map<String, Object> requestBody) {
 
 
