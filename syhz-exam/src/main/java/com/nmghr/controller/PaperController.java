@@ -100,42 +100,6 @@ public class PaperController {
     return Result.ok(queryHandler.list(requestBody));
   }
 
-  @SuppressWarnings("unchecked")
-  @PutMapping("/random/preViewSave")
-  public Object preViewSave(@RequestBody Map<String, Object> requestBody) throws Exception {
-    //校验表单数据
-    randomValidParams(requestBody);
-
-    //根据题库查询题目试题， 根据设置 随机选择试题并返回预览，
-    Map<String, Object> param = new HashMap<>();
-    param.put("paperName", requestBody.get("paperName"));
-    LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMPAPERCHECK");
-    Map<String, Object> result = (Map<String, Object>) baseService.get(param);
-    if (result != null && result.get("num") != null && Integer.parseInt(String.valueOf(result.get("num"))) > 0) {
-      return Result.fail(GlobalErrorEnum.PARAM_NOT_VALID.getCode(), "试卷名称已存在");
-    }
-    requestBody.put("from", "controller");
-    requestBody.put("operator", "preViewSave");
-    IQueryHandler queryHandler = SpringUtils.getBean("paperRandomQuestionQueryHandler", IQueryHandler.class);
-    Map<String, Object> resData = (Map<String, Object>) queryHandler.list(requestBody);
-    if (resData == null) {
-      return Result.fail(GlobalErrorEnum.PARAM_NOT_VALID.getCode(), "试卷随机试题异常，请检查试题是否正确");
-    }
-    Map<String, Object> saveParam = new HashMap<>();
-    saveParam.put("paperName", requestBody.get("paperName"));
-    saveParam.put("paperType", requestBody.get("paperType"));
-    saveParam.put("creator", requestBody.get("creator"));
-    saveParam.put("deptCode", requestBody.get("deptCode"));
-    saveParam.put("deptName", requestBody.get("deptName"));
-    saveParam.put("paperStatus", requestBody.get("paperStatus"));
-    saveParam.put("remark", resData.get("remark"));
-    saveParam.put("sort", resData.get("sort"));
-    saveParam.put("questionList", resData.get("list"));
-    saveParam.put("from", "controller");
-    ISaveHandler saveHandler = SpringUtils.getBean("paperSaveHandler", ISaveHandler.class);
-    return Result.ok(saveHandler.save(saveParam));
-  }
-
   /**
    * 修改试卷
    *
@@ -186,6 +150,42 @@ public class PaperController {
     saveParam.put("from", "controller");
     IUpdateHandler updateHandler = SpringUtils.getBean("paperUpdateHandler", IUpdateHandler.class);
     return Result.ok(updateHandler.update(String.valueOf(requestBody.get("id")), saveParam));
+  }
+
+  @SuppressWarnings("unchecked")
+  @PutMapping("/random/preViewSave")
+  public Object preViewSave(@RequestBody Map<String, Object> requestBody) throws Exception {
+    //校验表单数据
+    randomValidParams(requestBody);
+
+    //根据题库查询题目试题， 根据设置 随机选择试题并返回预览，
+    Map<String, Object> param = new HashMap<>();
+    param.put("paperName", requestBody.get("paperName"));
+    LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMPAPERCHECK");
+    Map<String, Object> result = (Map<String, Object>) baseService.get(param);
+    if (result != null && result.get("num") != null && Integer.parseInt(String.valueOf(result.get("num"))) > 0) {
+      return Result.fail(GlobalErrorEnum.PARAM_NOT_VALID.getCode(), "试卷名称已存在");
+    }
+    requestBody.put("from", "controller");
+    requestBody.put("operator", "preViewSave");
+    IQueryHandler queryHandler = SpringUtils.getBean("paperRandomQuestionQueryHandler", IQueryHandler.class);
+    Map<String, Object> resData = (Map<String, Object>) queryHandler.list(requestBody);
+    if (resData == null) {
+      return Result.fail(GlobalErrorEnum.PARAM_NOT_VALID.getCode(), "试卷随机试题异常，请检查试题是否正确");
+    }
+    Map<String, Object> saveParam = new HashMap<>();
+    saveParam.put("paperName", requestBody.get("paperName"));
+    saveParam.put("paperType", requestBody.get("paperType"));
+    saveParam.put("creator", requestBody.get("creator"));
+    saveParam.put("deptCode", requestBody.get("deptCode"));
+    saveParam.put("deptName", requestBody.get("deptName"));
+    saveParam.put("paperStatus", requestBody.get("paperStatus"));
+    saveParam.put("remark", resData.get("remark"));
+    saveParam.put("sort", resData.get("sort"));
+    saveParam.put("questionList", resData.get("list"));
+    saveParam.put("from", "controller");
+    ISaveHandler saveHandler = SpringUtils.getBean("paperSaveHandler", ISaveHandler.class);
+    return Result.ok(saveHandler.save(saveParam));
   }
 
 

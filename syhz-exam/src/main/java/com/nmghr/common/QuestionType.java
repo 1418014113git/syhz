@@ -35,4 +35,20 @@ public enum QuestionType {
     throw new GlobalErrorException("999995", "试题类型异常");
   }
 
+  /**
+   * 查询详情时需要的数组
+   * @return
+   */
+  public static QuestionType[] getDetailValues() {
+    return new QuestionType[]{choices,fillGap,judge,discuss};
+  }
+  public static String getTypeArray(QuestionType type) {
+    if (type.equals(choices)) {
+      return choices.getType()+","+multiSelect.getType();
+    }
+    if (type.equals(discuss)) {
+      return shortAnswer.getType()+","+discuss.getType()+","+caseAnalysis.getType();
+    }
+    return String.valueOf(type.getType());
+  }
 }

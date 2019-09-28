@@ -181,9 +181,9 @@ public class ExaminationController {
     if (pageSize == null) {
         pageSize = 10;
     }
-    LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMINATIONLIST");
-    
+
     //查询到已经参加考试的记录信息
+    LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMINATIONLIST");
     Paging obj = (Paging) baseService.page(requestBody, currentPage, pageSize);
     if (obj != null && obj.getList() != null) {
       List<Map<String, Object>> list = obj.getList();
