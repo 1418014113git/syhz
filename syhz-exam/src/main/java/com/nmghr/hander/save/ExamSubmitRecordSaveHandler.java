@@ -32,6 +32,7 @@ public class ExamSubmitRecordSaveHandler extends AbstractSaveHandler {
     if (requestBody.get("from") == null) {
       throw new GlobalErrorException("999997", "参数不正确");
     }
+    // 查询试卷
     try {
       // 查询本地记录的所有answer 计算主观题分数
       Map<String, Object> params = new HashMap<>();

@@ -8,6 +8,7 @@ import com.nmghr.basic.core.common.LocalThreadStorage;
 import com.nmghr.basic.core.service.IBaseService;
 import com.nmghr.basic.core.service.handler.impl.AbstractQueryHandler;
 import com.nmghr.common.ExamConstant;
+import com.nmghr.common.QuestionType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -38,23 +39,17 @@ public class PaperQuestionQueryHandler extends AbstractQueryHandler {
     }
     String operator = String.valueOf(param.get("operator"));
     if ("listView".equals(operator)) {
-      //预览
-      return getListView(param, false);
+      return getListView(param, false);//预览
     } else if ("exam".equals(operator)) {
-      //考试试卷
-      return getExamQuestion(param);
+      return getExamQuestion(param);//考试试卷
     } else if ("examAnswer".equals(operator)) {
-      //考试答题试卷
-      return examedAnswer(param);
+      return examedAnswer(param);//考试答题试卷
     } else if ("detailView".equals(operator)) {
-      //人工组卷详情
-      return getDetailView(param);
+      return getDetailView(param); //人工组卷详情
     } else if ("randomDetailView".equals(operator)) {
-      // 随机组卷详情
-      return getRandomDetailView(param);
-    } else if ("judgeListView".equals(operator)){
-      //阅卷
-      return getJudgeListView(param);
+      return getRandomDetailView(param); // 随机组卷详情
+    } else if ("judgeListView".equals(operator)) {
+      return getJudgeListView(param);//阅卷
     }
     return new ArrayList();
   }
@@ -67,30 +62,28 @@ public class PaperQuestionQueryHandler extends AbstractQueryHandler {
    * @throws Exception
    */
   private Object getExamQuestion(Map<String, Object> param) throws Exception {
+    Map<String, Object> result = new HashMap<>();
     //查询考试相关信息
-    LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMINATION");
-    Map<String, Object> result = (Map<String, Object>) baseService.get(String.valueOf(param.get("id")));
-    //查询试题相关信息
-    if (result.get("paperRemark") == null) {
-      throw new GlobalErrorException("999997", "本次考试异常");
-    }
-    JSONObject json = null;
-    try {
-      json = JSONObject.parseObject(String.valueOf(result.get("paperRemark")));
-    } catch (Exception e) {
-      throw new GlobalErrorException("999997", "试卷不完整");
-    }
-    if (json == null) {
-      throw new GlobalErrorException("999997", "试卷不完整");
-    }
+    Map<String, Object> examInfo = getExamInfo(String.valueOf(param.get("id")));
+
+    //计算截止时间！！！
 
 //    checkExam(param, result);
 
+    result.put("id", examInfo.get("id"));
+    result.put("totalDate",examInfo.get("totalDate"));
+    result.put("examinationType",examInfo.get("examinationType"));
+    result.put("paperName",examInfo.get("paperName"));
+    result.put("paperId",examInfo.get("paperId"));
+    result.put("startDate",examInfo.get("startDate"));
+    result.put("endDate",examInfo.get("endDate"));
+    result.put("examinationName",examInfo.get("examinationName"));
+    result.put("permitNumber",examInfo.get("permitNumber"));
 
     Map<String, Object> paramMap = new HashMap<>();
-    paramMap.put("id", result.get("paperId"));
-    paramMap.put("paperName", result.get("paperName"));
-    paramMap.put("json", json);
+    paramMap.put("id", examInfo.get("paperId"));
+    paramMap.put("paperName", examInfo.get("paperName"));
+    paramMap.put("json", examInfo.get("json"));
     result.put("datas", getListView(paramMap, false));
     return result;
   }
@@ -103,20 +96,35 @@ public class PaperQuestionQueryHandler extends AbstractQueryHandler {
    * @throws Exception
    */
   private Object examedAnswer(Map<String, Object> param) throws Exception {
+    Map<String, Object> result = new HashMap<>();
     //查询考试相关信息
-    LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMINATION");
-    Map<String, Object> result = (Map<String, Object>) baseService.get(String.valueOf(param.get("id")));
-    //查询试题相关信息
-    if (result == null || result.get("paperRemark") == null) {
-      throw new GlobalErrorException("999997", "考试信息不存在");
-    }
-    JSONObject json = null;
-    try {
-      json = JSONObject.parseObject(String.valueOf(result.get("paperRemark")));
-    } catch (Exception e) {
-      throw new GlobalErrorException("999997", "试卷不完整");
-    }
+    Map<String, Object> examInfo = getExamInfo(String.valueOf(param.get("id")));
     //查询考试记录
+    result.putAll(getRecordByUid(param));
+
+    result.put("id", examInfo.get("id"));
+    result.put("totalDate",examInfo.get("totalDate"));
+    result.put("examinationType",examInfo.get("examinationType"));
+    result.put("paperName",examInfo.get("paperName"));
+    result.put("paperId",examInfo.get("paperId"));
+    result.put("startDate",examInfo.get("startDate"));
+    result.put("endDate",examInfo.get("endDate"));
+    result.put("examinationName",examInfo.get("examinationName"));
+    result.put("permitNumber",examInfo.get("permitNumber"));
+
+    //查询列表
+    Map<String, Object> paramMap = new HashMap<>();
+    paramMap.put("id", examInfo.get("paperId"));
+    paramMap.put("paperName", examInfo.get("paperName"));
+    paramMap.put("recordId", param.get("recordId"));
+    paramMap.put("json", examInfo.get("json"));
+    result.put("datas", getListView(paramMap, true));
+    result.remove("paperRemark");
+    return result;
+  }
+
+  private Map<String, Object> getRecordByUid(Map<String, Object> param) throws Exception {
+    Map<String, Object> result = new HashMap<>();
     Map<String, Object> params = new HashMap<>();
     params.put("userId", param.get("userId"));
     params.put("examId", param.get("id"));
@@ -138,15 +146,6 @@ public class PaperQuestionQueryHandler extends AbstractQueryHandler {
       int enableNum = Integer.parseInt(String.valueOf(result.get("permitNumber"))) - count;
       result.put("enableNum", enableNum >= 0 ? enableNum : 0);
     }
-
-    //查询列表
-    Map<String, Object> paramMap = new HashMap<>();
-    paramMap.put("id", result.get("paperId"));
-    paramMap.put("paperName", result.get("paperName"));
-    paramMap.put("recordId", param.get("recordId"));
-    paramMap.put("json", json);
-    result.put("datas", getListView(paramMap, true));
-    result.remove("paperRemark");
     return result;
   }
 
@@ -203,23 +202,23 @@ public class PaperQuestionQueryHandler extends AbstractQueryHandler {
     String ALIAS = "EXAMPAPERDETAIL";
     Map<String, Object> param = new HashMap<>();
     param.put("paperId", paper.get("id"));
-    param.put("type", ExamConstant.CHOICESNAME);
-    param.put("types", ExamConstant.CHOICES + "," + ExamConstant.MULTISELECT);
+    param.put("type", QuestionType.choices.name());
+    param.put("types", QuestionType.choices.getType() + "," + QuestionType.multiSelect.getType());
     LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, ALIAS);
     List<Map<String, Object>> choices = (List<Map<String, Object>>) baseService.list(param);
 
-    param.put("type", ExamConstant.FILLGAPNAME);
-    param.put("types", ExamConstant.FILLGAP);
+    param.put("type", QuestionType.fillGap.name());
+    param.put("types", QuestionType.fillGap.getType());
     LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, ALIAS);
     List<Map<String, Object>> fillGaps = (List<Map<String, Object>>) baseService.list(param);
 
-    param.put("type", ExamConstant.JUDGENAME);
-    param.put("types", ExamConstant.JUDGE);
+    param.put("type", QuestionType.judge.name());
+    param.put("types", QuestionType.judge.getType());
     LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, ALIAS);
     List<Map<String, Object>> judges = (List<Map<String, Object>>) baseService.list(param);
 
-    param.put("type", ExamConstant.DISCUSSNAME);
-    param.put("types", ExamConstant.SHORTANSWER + "," + ExamConstant.DISCUSS + "," + ExamConstant.CASEANALYSIS);
+    param.put("type", QuestionType.discuss.name());
+    param.put("types", QuestionType.shortAnswer.getType() + "," + QuestionType.discuss.getType() + "," + QuestionType.caseAnalysis.getType());
     LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, ALIAS);
     List<Map<String, Object>> discussList = (List<Map<String, Object>>) baseService.list(param);
 
@@ -270,7 +269,7 @@ public class PaperQuestionQueryHandler extends AbstractQueryHandler {
       bean.put("value", array[2]);
       bean.put("num", array[3]);
       bean.put("cateIds", array[4]);
-      bean.put("type", ExamConstant.questionNameToNum(category));
+      bean.put("type", QuestionType.valueOf(category).getType());
     }
     result.put(category, bean);
   }
@@ -310,69 +309,86 @@ public class PaperQuestionQueryHandler extends AbstractQueryHandler {
     if (answer) {
       param.put("recordId", paper.get("recordId"));
     }
+    JSONObject json = (JSONObject) paper.get("json");
+    JSONObject sort = json.getJSONObject("sort");
     param.put("paperId", paper.get("id"));
-    param.put("type", ExamConstant.CHOICESNAME);
-    param.put("types", ExamConstant.CHOICES + "," + ExamConstant.MULTISELECT);
+    param.put("type", QuestionType.choices.name());
+    param.put("types", QuestionType.choices.getType() + "," + QuestionType.multiSelect.getType());
     LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, ALIAS);
     List<Map<String, Object>> choices = (List<Map<String, Object>>) baseService.list(param);
+    result.putAll(settingChoices(choices, json, answer));
 
-    param.put("type", ExamConstant.FILLGAPNAME);
-    param.put("types", ExamConstant.FILLGAP);
+    param.put("type", QuestionType.fillGap.name());
+    param.put("types", QuestionType.fillGap.getType());
     LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, ALIAS);
     List<Map<String, Object>> fillGaps = (List<Map<String, Object>>) baseService.list(param);
+    json.put("sort", sort.get(QuestionType.fillGap.name()));
+    result.putAll(settingSort(fillGaps, json, true));
 
-    param.put("type", ExamConstant.JUDGENAME);
-    param.put("types", ExamConstant.JUDGE);
+    param.put("type", QuestionType.judge.name());
+    param.put("types", QuestionType.judge.getType());
     LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, ALIAS);
     List<Map<String, Object>> judges = (List<Map<String, Object>>) baseService.list(param);
+    json.put("sort", sort.get(QuestionType.judge.name()));
+    result.putAll(settingSort(judges, json, true));
 
-    param.put("type", ExamConstant.DISCUSSNAME);
-    param.put("types", ExamConstant.SHORTANSWER + "," + ExamConstant.DISCUSS + "," + ExamConstant.CASEANALYSIS);
+    param.put("type", QuestionType.discuss.name());
+    param.put("types", QuestionType.shortAnswer.getType() + "," + QuestionType.discuss.getType() + "," + QuestionType.caseAnalysis.getType());
     LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, ALIAS);
     List<Map<String, Object>> discussList = (List<Map<String, Object>>) baseService.list(param);
-
-    JSONObject json = (JSONObject) paper.get("json");
-
-    //查询试题及关联信息
-    result.putAll(settingChoices(choices, json, answer));
-    result.putAll(settingSort(fillGaps, json, true));
-    result.putAll(settingSort(judges, json, true));
+    json.put("sort", sort);
     result.putAll(settingDiscuss(discussList, json, true));
+
+
     return result;
   }
+
   /**
    * 列表预览
+   *
    * @param paper
    * @return
    * @throws Exception
    */
   private Object getJudgeListView(Map<String, Object> paper) throws Exception {
     //查询考试相关信息
-    LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMINATION");
-    Map<String, Object> exam = (Map<String, Object>) baseService.get(String.valueOf(paper.get("id")));
-    //查询试题相关信息
-    if (exam == null || exam.get("paperRemark") == null) {
-      throw new GlobalErrorException("999997", "考试信息不存在");
-    }
-    JSONObject json = null;
-    try {
-      json = JSONObject.parseObject(String.valueOf(exam.get("paperRemark")));
-    } catch (Exception e) {
-      throw new GlobalErrorException("999997", "试卷不完整");
-    }
+    Map<String, Object> examInfo = getExamInfo(String.valueOf(paper.get("id")));
     //查询各个试题
     String ALIAS = "EXAMPAPERQUESTIONANSWER";
     Map<String, Object> param = new HashMap<>();
     param.put("recordId", paper.get("recordId"));
-    param.put("paperId", exam.get("paperId"));
-    param.put("type", ExamConstant.DISCUSSNAME);
-    param.put("types", ExamConstant.SHORTANSWER + "," + ExamConstant.DISCUSS + "," + ExamConstant.CASEANALYSIS);
+    param.put("paperId", examInfo.get("paperId"));
+    param.put("type", QuestionType.discuss.name());
+    param.put("types", QuestionType.shortAnswer.getType() + "," + QuestionType.discuss.getType() + "," + QuestionType.caseAnalysis.getType());
     LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, ALIAS);
     List<Map<String, Object>> discussList = (List<Map<String, Object>>) baseService.list(param);
     //查询试题及关联信息
-    return settingDiscuss(discussList, json, true);
+    return settingDiscuss(discussList, (JSONObject) examInfo.get("json"), true);
   }
 
+  /**
+   * 获取试卷信息
+   * @param id
+   * @return
+   * @throws Exception
+   */
+  private Map<String, Object> getExamInfo(String id) throws Exception {
+    LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMINATION");
+    Map<String, Object> exam = (Map<String, Object>) baseService.get(id);
+    //查询试题相关信息
+    if (exam==null || exam.get("paperRemark") == null || exam.get("sort") == null) {
+      throw new GlobalErrorException("999997", "本次考试异常");
+    }
+    JSONObject json = null;
+    try {
+      json = JSONObject.parseObject(String.valueOf(exam.get("paperRemark")));
+      json.put("sort", JSONObject.parseObject(String.valueOf(exam.get("sort"))));
+    } catch (Exception e) {
+      throw new GlobalErrorException("999997", "试卷不完整");
+    }
+    exam.put("json", json);
+    return exam;
+  }
 
   /**
    * 整理选择题
@@ -408,14 +424,17 @@ public class PaperQuestionQueryHandler extends AbstractQueryHandler {
       List<Map<String, Object>> list1 = new ArrayList<>();
       List<Map<String, Object>> list2 = new ArrayList<>();
       for (String key : res.keySet()) {
-        if (key.contains(ExamConstant.DESCFLAG + ExamConstant.CHOICES)) {
+        if (key.contains(ExamConstant.DESCFLAG + QuestionType.choices.getType())) {
           list1.add((Map<String, Object>) res.get(key));
         }
-        if (key.contains(ExamConstant.DESCFLAG + ExamConstant.MULTISELECT)) {
+        if (key.contains(ExamConstant.DESCFLAG + QuestionType.multiSelect.getType())) {
           list2.add((Map<String, Object>) res.get(key));
         }
       }
+      JSONObject sort = json.getJSONObject("sort");
+      json.put("sort", sort.get(QuestionType.choices.name()));
       result.putAll(settingSort(list1, json, true));
+      json.put("sort", sort.get(QuestionType.multiSelect.name()));
       result.putAll(settingSort(list2, json, true));
     }
     return result;
@@ -432,7 +451,7 @@ public class PaperQuestionQueryHandler extends AbstractQueryHandler {
     if (discussList != null && discussList.size() > 0) {
       Map<String, Object> res = new HashMap<>();
       for (Map<String, Object> map : discussList) {
-        String key = String.valueOf(map.get("type"));
+        String key = QuestionType.byType(Integer.parseInt(String.valueOf(map.get("type")))).name();
         if (res.get(key) == null) {
           List<Map<String, Object>> list = new ArrayList<>();
           list.add(map);
@@ -443,33 +462,15 @@ public class PaperQuestionQueryHandler extends AbstractQueryHandler {
           res.put(key, list);
         }
       }
+      JSONObject sort = json.getJSONObject("sort");
       for (String key : res.keySet()) {
+        if(isSort){
+          json.put("sort", sort.get(key));
+        }
         result.putAll(settingSort((List<Map<String, Object>>) res.get(key), json, isSort));
       }
     }
     return result;
-
-//      Map<String, Object> res = new HashMap<>();
-//      for (Map<String, Object> map : discussList) {
-//        res.put(String.valueOf(map.get("id")) + ExamConstant.DESCFLAG + map.get("type"), map);
-//      }
-//      List<Map<String, Object>> list1 = new ArrayList<>();
-//      List<Map<String, Object>> list2 = new ArrayList<>();
-//      List<Map<String, Object>> list3 = new ArrayList<>();
-//      for (String key : res.keySet()) {
-//        if (key.contains(ExamConstant.DESCFLAG + ExamConstant.SHORTANSWER)) {
-//          list1.add((Map<String, Object>) res.get(key));
-//        }
-//        if (key.contains(ExamConstant.DESCFLAG + ExamConstant.DISCUSS)) {
-//          list2.add((Map<String, Object>) res.get(key));
-//        }
-//        if (key.contains(ExamConstant.DESCFLAG + ExamConstant.CASEANALYSIS)) {
-//          list3.add((Map<String, Object>) res.get(key));
-//        }
-//      }
-//      settingSort(result, list1, json);
-//      settingSort(result, list2, json);
-//      settingSort(result, list3, json);
   }
 
   /**
@@ -481,7 +482,7 @@ public class PaperQuestionQueryHandler extends AbstractQueryHandler {
     Map<String, Object> result = new HashMap<>();
     if (list != null && list.size() > 0) {
       Map<String, Object> map = list.get(0);
-      String str = json.getString(ExamConstant.questionNumToName(Integer.parseInt(String.valueOf(map.get("type")))));
+      String str = json.getString(QuestionType.byType(Integer.parseInt(String.valueOf(map.get("type")))).name());
       if (!str.contains(ExamConstant.DESCFLAG)) {
         throw new GlobalErrorException(GlobalErrorEnum.PARAM_NOT_VALID.getCode(), "试卷说明错误!");
       }
@@ -496,9 +497,9 @@ public class PaperQuestionQueryHandler extends AbstractQueryHandler {
       bean.put("value", arr[2]);
       bean.put("type", map.get("type"));
       if (isSort) {
-        result.put(ExamConstant.sortToText(Integer.parseInt(arr[1])), bean);
+        result.put(json.getString("sort"), bean);
       } else {
-        result.put(ExamConstant.questionNumToName(Integer.parseInt(String.valueOf(map.get("type")))), bean);
+        result.put(QuestionType.byType(Integer.parseInt(String.valueOf(map.get("type")))).name(), bean);
       }
     }
     return result;
