@@ -8,29 +8,21 @@
 
 package com.nmghr.controller;
 
-import cn.hutool.system.UserInfo;
 import com.nmghr.basic.common.Constant;
-import com.nmghr.basic.common.Result;
-import com.nmghr.basic.common.exception.GlobalErrorEnum;
-import com.nmghr.basic.common.exception.GlobalErrorException;
 import com.nmghr.basic.core.common.LocalThreadStorage;
 import com.nmghr.basic.core.page.Paging;
 import com.nmghr.basic.core.service.IBaseService;
-import com.nmghr.basic.core.util.ValidationUtils;
 import com.nmghr.basic.rmdb.datasource.TargetDataSource;
-import com.nmghr.common.ExamConstant;
 import com.nmghr.controller.vo.UserScoreInfo;
-import com.nmghr.hander.service.UserDeptService;
-import com.nmghr.util.DateUtil;
+import com.nmghr.service.UserDeptService;
 import org.apache.commons.collections.CollectionUtils;
-import org.omg.CORBA.OBJ_ADAPTER;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
-import javax.crypto.interfaces.PBEKey;
-import java.sql.Timestamp;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;

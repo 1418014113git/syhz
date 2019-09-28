@@ -8,26 +8,16 @@
  * limitations under the License.
  */
 
-package com.nmghr.hander.service;
+package com.nmghr.service;
 
-import com.nmghr.basic.common.Constant;
 import com.nmghr.basic.common.Result;
-import com.nmghr.basic.core.common.LocalThreadStorage;
 import com.nmghr.basic.core.service.IBaseService;
 import com.nmghr.basic.rmdb.datasource.TargetDataSource;
-
 import com.nmghr.hander.mapper.UserDeptMapper;
-import org.apache.commons.lang3.builder.ToStringExclude;
-import org.apache.ibatis.annotations.Mapper;
-import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
