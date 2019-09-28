@@ -24,6 +24,15 @@ import java.util.Date;
  */
 public class DateUtil {
 
+  public static String dateFormart(Date date, String dateFormatType){
+    DateFormat df = new SimpleDateFormat(dateFormatType);
+    return df.format(date);
+  }
+  public static Date strToDate(String date, String dateFormatType) throws ParseException {
+    DateFormat df = new SimpleDateFormat(dateFormatType);
+    return df.parse(date);
+  }
+
 
   /**
    * @description: 两个String类型，按照日期格式对比
