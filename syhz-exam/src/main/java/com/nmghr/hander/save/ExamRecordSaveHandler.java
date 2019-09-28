@@ -17,6 +17,7 @@ import java.util.*;
 /**
  * 考试记录添加
  */
+@SuppressWarnings("unchecked")
 @Service("examRecordSaveHandler")
 public class ExamRecordSaveHandler extends AbstractSaveHandler {
   private Logger log = LoggerFactory.getLogger(ExamRecordSaveHandler.class);
@@ -31,7 +32,6 @@ public class ExamRecordSaveHandler extends AbstractSaveHandler {
    * @param requestBody
    * @return
    */
-  @SuppressWarnings("unchecked")
   @Override
   @Transactional
   public Object save(Map<String, Object> requestBody) {

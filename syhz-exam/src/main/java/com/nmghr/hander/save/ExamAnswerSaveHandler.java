@@ -6,6 +6,7 @@ import com.nmghr.basic.core.common.LocalThreadStorage;
 import com.nmghr.basic.core.service.IBaseService;
 import com.nmghr.basic.core.service.handler.impl.AbstractSaveHandler;
 import com.nmghr.common.ExamConstant;
+import com.nmghr.common.QuestionType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -91,7 +92,7 @@ public class ExamAnswerSaveHandler extends AbstractSaveHandler {
   private void setAnswer(Object paperId, Object questionId, String text, int type,
                          Map<String, Object> saveParams) throws Exception {
     saveParams.put("type", type);
-    if (type == ExamConstant.CHOICES || type == ExamConstant.MULTISELECT || type == ExamConstant.FILLGAP || type == ExamConstant.JUDGE) {
+    if (type == QuestionType.choices.getType() || type == QuestionType.multiSelect.getType() || type == QuestionType.fillGap.getType() || type == QuestionType.judge.getType()) {
       // 客观题
       Map<String, Object> params = new HashMap<>();
       params.put("type", type);

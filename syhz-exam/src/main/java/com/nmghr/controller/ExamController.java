@@ -133,7 +133,7 @@ public class ExamController {
   }
 
   /**
-   * 提交试卷
+   * 获取系统时间
    * @return Object
    * @throws Exception e
    */
@@ -210,7 +210,7 @@ public class ExamController {
       return Result.fail("999998", "题型信息异常");
     }
     Map<String, Object> scoreMap = new HashMap<>();
-    for(Map<String, Object> map: list){
+    for(Map<String, Object> map: score){
       scoreMap.put(String.valueOf(map.get("type")), map.get("value"));
     }
 
@@ -227,8 +227,8 @@ public class ExamController {
       if(map.get("type")==null||"".equals(String.valueOf(map.get("type")).trim())){
         return Result.fail("999998", "type不能为空");
       }
-      if((int)scoreMap.get(String.valueOf(map.get("type")))<(int)map.get("score")){
-        return Result.fail("999998", "分数设置过高，最多"+map.get("type")+"分");
+      if(Integer.parseInt(String.valueOf(scoreMap.get(String.valueOf(map.get("type")))))<Integer.parseInt(String.valueOf(map.get("score")))){
+        return Result.fail("999998", "分数设置过高，最多"+scoreMap.get(String.valueOf(map.get("type")))+"分");
       }
     }
 
@@ -239,6 +239,7 @@ public class ExamController {
     params.put("paperId", param.get("paperId"));
     params.put("creator", param.get("creator"));
     params.put("operator", "judgeListView");
+    params.put("data", list);
     IUpdateHandler updateHandler = SpringUtils.getBean("examJudgeUpdateHandler", IUpdateHandler.class);
     return Result.ok(updateHandler.update(String.valueOf(param.get("recordId")),params));
   }

@@ -7,19 +7,18 @@ import com.nmghr.basic.core.common.LocalThreadStorage;
 import com.nmghr.basic.core.service.IBaseService;
 import com.nmghr.basic.core.service.handler.impl.AbstractSaveHandler;
 import com.nmghr.common.ExamConstant;
+import com.nmghr.common.QuestionType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * 保存试卷
  */
+@SuppressWarnings("unchecked")
 @Service("paperSaveHandler")
 public class PaperSaveHandler extends AbstractSaveHandler {
   private Logger log = LoggerFactory.getLogger(PaperSaveHandler.class);
@@ -29,7 +28,8 @@ public class PaperSaveHandler extends AbstractSaveHandler {
   }
 
   /**
-   * #{paperName}, #{paperType}, #{creator}, #{deptCode}, #{deptName}, #{remark}
+   * 保存试卷
+   * 类型
    *
    * @param requestBody
    * @return
@@ -42,16 +42,14 @@ public class PaperSaveHandler extends AbstractSaveHandler {
       throw new GlobalErrorException("999997", "参数不正确");
     }
     try {
-      if("1".equals(String.valueOf(requestBody.get("paperType")))){
+      if ("1".equals(String.valueOf(requestBody.get("paperType")))) {
         requestBody.put("remark", new JSONObject());
         requestBody.put("questionList", new ArrayList<>());
-        packageParams((Map<String, Object>) requestBody.get(ExamConstant.CHOICESNAME), requestBody, ExamConstant.CHOICESNAME, ExamConstant.CHOICES);
-        packageParams((Map<String, Object>) requestBody.get(ExamConstant.MULTISELECTNAME), requestBody, ExamConstant.MULTISELECTNAME, ExamConstant.MULTISELECT);
-        packageParams((Map<String, Object>) requestBody.get(ExamConstant.FILLGAPNAME), requestBody, ExamConstant.FILLGAPNAME, ExamConstant.FILLGAP);
-        packageParams((Map<String, Object>) requestBody.get(ExamConstant.JUDGENAME), requestBody, ExamConstant.JUDGENAME, ExamConstant.JUDGE);
-        packageParams((Map<String, Object>) requestBody.get(ExamConstant.SHORTANSWERNAME), requestBody, ExamConstant.SHORTANSWERNAME, ExamConstant.SHORTANSWER);
-        packageParams((Map<String, Object>) requestBody.get(ExamConstant.DISCUSSNAME), requestBody, ExamConstant.DISCUSSNAME, ExamConstant.DISCUSS);
-        packageParams((Map<String, Object>) requestBody.get(ExamConstant.CASEANALYSISNAME), requestBody, ExamConstant.CASEANALYSISNAME, ExamConstant.CASEANALYSIS);
+        List<Map<String, Object>> sortList = new ArrayList<>();
+        for (QuestionType qt : QuestionType.values()) {
+          packageParams(requestBody, qt, sortList);
+        }
+        requestBody.put("sort", ExamConstant.sortList(sortList));
       }
       Map<String, Object> params = new HashMap<>();
       params.put("paperName", requestBody.get("paperName"));
@@ -60,6 +58,7 @@ public class PaperSaveHandler extends AbstractSaveHandler {
       params.put("deptCode", requestBody.get("deptCode"));
       params.put("deptName", requestBody.get("deptName"));
       params.put("remark", JSONObject.toJSONString(requestBody.get("remark")));
+      params.put("sort", JSONObject.toJSONString(requestBody.get("sort")));
       if (requestBody.get("paperStatus") == null) {
         params.put("paperStatus", 1);
       } else {
@@ -70,6 +69,7 @@ public class PaperSaveHandler extends AbstractSaveHandler {
       if (paperObj == null) {
         throw new GlobalErrorException("999997", "保存数据异常");
       }
+      //批量保存试题
       if (batchSaveData(requestBody, paperObj)) {
         return paperObj;
       }
@@ -87,15 +87,14 @@ public class PaperSaveHandler extends AbstractSaveHandler {
    * @param requestBody body
    * @return boolean
    */
-  @SuppressWarnings("unchecked")
   private boolean batchSaveData(Map<String, Object> requestBody, Object paperId) {
     List<Map<String, Object>> list = (List<Map<String, Object>>) requestBody.get("questionList");
-    log.info("batch list size: " + list.size());
-    if (list ==null || list.size() ==0) {
+    if (list == null || list.size() == 0) {
       throw new GlobalErrorException("999997", "提交数据异常");
     }
+    log.info("batch list size: " + list.size());
     Long initId = null;
-    Map<String, Object> params = new HashMap<String, Object>();
+    Map<String, Object> params = new HashMap<>();
     params.put("num", list.size());
     params.put("seqName", "EXAMPAPERINFO");
     try {
@@ -135,26 +134,34 @@ public class PaperSaveHandler extends AbstractSaveHandler {
     }
   }
 
-  @SuppressWarnings("unchecked")
-  private void packageParams(Map<String, Object> bean, Map<String, Object> params, String key, int type) {
+  /**
+   * 人工组卷处理 封装参数
+   *
+   * @param params
+   * @param qType QuestionType
+   */
+  private void packageParams(Map<String, Object> params, QuestionType qType, List<Map<String, Object>> sorts) {
+    Map<String, Object> bean = (Map<String, Object>) params.get(qType.name());
     JSONObject remark = (JSONObject) params.get("remark");
     if (bean != null) {
-      remark.put(key, bean.get("desc") + ExamConstant.DESCFLAG + bean.get("sort") + ExamConstant.DESCFLAG + bean.get("value"));
+      remark.put(qType.name(), bean.get("desc") + ExamConstant.DESCFLAG + bean.get("sort") + ExamConstant.DESCFLAG + bean.get("value"));
       params.put("remark", remark);
+      sorts.add(ExamConstant.setQuestionSort(qType, String.valueOf(bean.get("sort"))));
       List<Map<String, Object>> list = (List<Map<String, Object>>) params.get("questionList");
       List<Map<String, Object>> datas = (List<Map<String, Object>>) bean.get("data");
       for (Map<String, Object> q : datas) {
         Map<String, Object> map = new HashMap<>();
         map.put("subjectCategoryId", q.get("subjectCategoryId"));
         map.put("questionsId", q.get("questionsId"));
-        map.put("type", type);
+        map.put("type", qType.getType());
         map.put("value", bean.get("value"));
         list.add(map);
       }
       params.put("questionList", list);
-      params.remove(key);
+      params.remove(qType.name());
     }
   }
+
 
 
 }
