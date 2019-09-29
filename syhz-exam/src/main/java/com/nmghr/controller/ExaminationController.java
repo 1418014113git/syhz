@@ -8,20 +8,33 @@
 
 package com.nmghr.controller;
 
+import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.nmghr.basic.common.Constant;
 import com.nmghr.basic.common.Result;
 import com.nmghr.basic.common.exception.GlobalErrorEnum;
 import com.nmghr.basic.common.exception.GlobalErrorException;
 import com.nmghr.basic.core.common.LocalThreadStorage;
+import com.nmghr.basic.core.page.Paging;
 import com.nmghr.basic.core.service.IBaseService;
 import com.nmghr.basic.core.util.ValidationUtils;
 import com.nmghr.common.ExamConstant;
 import com.nmghr.util.DateUtil;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.Map;
 
 
 /**
@@ -107,10 +120,87 @@ public class ExaminationController {
     Object examinationId = baseService.update(String.valueOf(requestBody.get("id")),requestBody);
     return Result.ok(examinationId);
   }
+    /*
+  前20条成绩
+   */
+  @ResponseBody
+  @GetMapping("scorelist")
+  public Object scoreList(@RequestParam Map<String, Object> requestParam) throws Exception {
+    ValidationUtils.notNull(requestParam.get("examId"), "考试Id不能为空!");
+    LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMSCORELIST");
+    List<Map<String,Object>> scoreList = (List<Map<String, Object>>) baseService.list(requestParam);
+    if(scoreList!=null && scoreList.size() > 0){
+      for (Map<String, Object> score : scoreList) {
+        Timestamp start = (Timestamp) score.get("startTime");
+        Timestamp end = (Timestamp) score.get("endTime");
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        String dateStr = DateUtil.printDifference(sdf.format(start), sdf.format(end));
+        score.put("dateStr",dateStr);
+      }
+    }
+    return  scoreList;
+  }
+    /*
+    所有成绩列表
+     */
+  @ResponseBody
+  @GetMapping("allscorelist")
+  public Object allScoreList(@RequestParam Map<String, Object> requestParam) throws Exception {
+    int pageNum = 1, pageSize = 15;
+    if (requestParam.get("pageNum") != null && !"".equals(String.valueOf(requestParam.get("pageNum")).trim())) {
+      pageNum = Integer.parseInt(String.valueOf(requestParam.get("pageNum")));
+    }
+    if (requestParam.get("pageSize") != null && !"".equals(String.valueOf(requestParam.get("pageSize")).trim())) {
+      pageSize = Integer.parseInt(String.valueOf(requestParam.get("pageSize")));
+    }
+    ValidationUtils.notNull(requestParam.get("id"), "考试Id不能为空!");
+    LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMSCORELISTALL");
+    Paging paging = (Paging) baseService.page(requestParam,pageNum,pageSize);
+    if(paging!=null){
+      List<Map<String,Object>> scoreList = paging.getList();
+      if(scoreList!=null && scoreList.size() > 0){
+        for (Map<String, Object> score : scoreList) {
+          Timestamp start = (Timestamp) score.get("startTime");
+          Timestamp end = (Timestamp) score.get("endTime");
+          SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+          String dateStr = DateUtil.printDifference(sdf.format(start), sdf.format(end));
+          score.put("dateStr",dateStr);
+        }
+        paging.setList(scoreList);
+      }
+    }
+    return paging;
+  }
+  @PostMapping("examinationList")
+  public Object examinationList(@RequestBody Map<String, Object> requestBody) throws Exception {
+    Integer currentPage = (Integer) requestBody.get("pageNum");
+    Integer pageSize = (Integer) requestBody.get("pageSize");
+    if (currentPage == null) {
+        currentPage = 1;
+    }
+    if (pageSize == null) {
+        pageSize = 10;
+    }
 
-
-
-
+    //查询到已经参加考试的记录信息
+    LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMINATIONLIST");
+    Paging obj = (Paging) baseService.page(requestBody, currentPage, pageSize);
+    if (obj != null && obj.getList() != null) {
+      List<Map<String, Object>> list = obj.getList();
+      List<Map<String, Object>> newlist = new ArrayList<>();
+      for (int i = 0; i < list.size(); i++) {
+        Map<String, Object> map = list.get(i);
+        String startTime = String.valueOf(map.get("startTime"));
+        String endTime = String.valueOf(map.get("endTime"));
+        String timeNumber = DateUtil.printDifference(startTime, endTime);
+        map.remove("startTime");
+        map.remove("endTime");
+        map.put("startTime", timeNumber);
+      }
+    }
+    //无异常
+    return Result.ok(obj);
+  }
   private void validParams(int status, Map<String, Object> requestBody) {
 
 

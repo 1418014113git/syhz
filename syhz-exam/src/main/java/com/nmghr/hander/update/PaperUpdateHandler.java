@@ -7,6 +7,7 @@ import com.nmghr.basic.core.common.LocalThreadStorage;
 import com.nmghr.basic.core.service.IBaseService;
 import com.nmghr.basic.core.service.handler.impl.AbstractUpdateHandler;
 import com.nmghr.common.ExamConstant;
+import com.nmghr.common.QuestionType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -38,13 +39,9 @@ public class PaperUpdateHandler extends AbstractUpdateHandler {
       if("1".equals(String.valueOf(requestBody.get("paperType")))){
         requestBody.put("remark", new JSONObject());
         requestBody.put("questionList", new ArrayList<>());
-        packageParams((Map<String, Object>) requestBody.get(ExamConstant.CHOICESNAME), requestBody, ExamConstant.CHOICESNAME, ExamConstant.CHOICES);
-        packageParams((Map<String, Object>) requestBody.get(ExamConstant.MULTISELECTNAME), requestBody, ExamConstant.MULTISELECTNAME, ExamConstant.MULTISELECT);
-        packageParams((Map<String, Object>) requestBody.get(ExamConstant.FILLGAPNAME), requestBody, ExamConstant.FILLGAPNAME, ExamConstant.FILLGAP);
-        packageParams((Map<String, Object>) requestBody.get(ExamConstant.JUDGENAME), requestBody, ExamConstant.JUDGENAME, ExamConstant.JUDGE);
-        packageParams((Map<String, Object>) requestBody.get(ExamConstant.SHORTANSWERNAME), requestBody, ExamConstant.SHORTANSWERNAME, ExamConstant.SHORTANSWER);
-        packageParams((Map<String, Object>) requestBody.get(ExamConstant.DISCUSSNAME), requestBody, ExamConstant.DISCUSSNAME, ExamConstant.DISCUSS);
-        packageParams((Map<String, Object>) requestBody.get(ExamConstant.CASEANALYSISNAME), requestBody, ExamConstant.CASEANALYSISNAME, ExamConstant.CASEANALYSIS);
+        for (QuestionType qt : QuestionType.values()) {
+          packageParams(requestBody, qt.name(), qt.getType());
+        }
       }
       Map<String, Object> params = new HashMap<String, Object>();
       params.put("paperName", requestBody.get("paperName"));
@@ -126,10 +123,11 @@ public class PaperUpdateHandler extends AbstractUpdateHandler {
   }
 
   @SuppressWarnings("unchecked")
-  private void packageParams(Map<String, Object> bean, Map<String, Object> params, String key, int type) {
+  private void packageParams(Map<String, Object> params, String category, int type) {
+    Map<String, Object> bean = (Map<String, Object>) params.get(category);
     JSONObject remark = (JSONObject) params.get("remark");
     if (bean != null) {
-      remark.put(key, bean.get("desc") + ExamConstant.DESCFLAG + bean.get("sort") + ExamConstant.DESCFLAG + bean.get("value"));
+      remark.put(category, bean.get("desc") + ExamConstant.DESCFLAG + bean.get("sort") + ExamConstant.DESCFLAG + bean.get("value"));
       params.put("remark", remark);
       List<Map<String, Object>> list = (List<Map<String, Object>>) params.get("questionList");
       List<Map<String, Object>> datas = (List<Map<String, Object>>) bean.get("data");
@@ -142,7 +140,7 @@ public class PaperUpdateHandler extends AbstractUpdateHandler {
         list.add(map);
       }
       params.put("questionList", list);
-      params.remove(key);
+      params.remove(category);
     }
   }
 }

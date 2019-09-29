@@ -17,6 +17,7 @@ import java.util.*;
 /**
  * 考试记录添加
  */
+@SuppressWarnings("unchecked")
 @Service("examRecordSaveHandler")
 public class ExamRecordSaveHandler extends AbstractSaveHandler {
   private Logger log = LoggerFactory.getLogger(ExamRecordSaveHandler.class);
@@ -31,7 +32,6 @@ public class ExamRecordSaveHandler extends AbstractSaveHandler {
    * @param requestBody
    * @return
    */
-  @SuppressWarnings("unchecked")
   @Override
   @Transactional
   public Object save(Map<String, Object> requestBody) {
@@ -64,6 +64,8 @@ public class ExamRecordSaveHandler extends AbstractSaveHandler {
       String nowStr = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date());
       Map<String, Object> params = new HashMap<>();
       params.put("userId", requestBody.get("userId"));
+      params.put("userName", requestBody.get("userName"));
+      params.put("realName", requestBody.get("realName"));
       params.put("examinationId", requestBody.get("examId"));
       params.put("startTime", nowStr);
       params.put("creator", requestBody.get("creator"));
@@ -95,7 +97,7 @@ public class ExamRecordSaveHandler extends AbstractSaveHandler {
           continue;
         }
         if (record.get("endTime") != null) {
-          autoSubmit(requestBody, record);// 已截止但状态 为0  ，自动提交
+          autoSubmit(requestBody, String.valueOf(record.get("id")));// 已截止但状态 为0  ，自动提交
           continue;
         }
         //异常考试信息 删除操作
@@ -144,15 +146,16 @@ public class ExamRecordSaveHandler extends AbstractSaveHandler {
    * 修改为已提交
    *
    * @param requestBody
-   * @param record
+   * @param id id
    * @throws Exception
    */
-  private void autoSubmit(Map<String, Object> requestBody, Map<String, Object> record) throws Exception {
+  private void autoSubmit(Map<String, Object> requestBody, String id) throws Exception {
     Map<String, Object> updParams = new HashMap<>();
     updParams.put("submitStatus", 2);
     updParams.put("modifier", requestBody.get("creator"));
+    updParams.put("userId", requestBody.get("userId"));
     LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMINATIONRECORD");
-    baseService.update(String.valueOf(record.get("id")), updParams);
+    baseService.update(id, updParams);
   }
 
 
