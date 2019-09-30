@@ -17,6 +17,7 @@ import java.util.*;
 /**
  * 考试记录添加
  */
+@SuppressWarnings("unchecked")
 @Service("examRecordSaveHandler")
 public class ExamRecordSaveHandler extends AbstractSaveHandler {
   private Logger log = LoggerFactory.getLogger(ExamRecordSaveHandler.class);
@@ -31,7 +32,6 @@ public class ExamRecordSaveHandler extends AbstractSaveHandler {
    * @param requestBody
    * @return
    */
-  @SuppressWarnings("unchecked")
   @Override
   @Transactional
   public Object save(Map<String, Object> requestBody) {
@@ -89,7 +89,6 @@ public class ExamRecordSaveHandler extends AbstractSaveHandler {
     LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMINATIONRECORDBYUID");
     List<Map<String, Object>> records = (List<Map<String, Object>>) baseService.list(params);
     if (records != null && records.size() > 0) {
-      //id, userId, examinationId, startTime, endTime,`submitStatus, `createDate
       int count = 0;
       for (Map<String, Object> record : records) {
         if (record.get("submitStatus") != null && !"0".equals(String.valueOf(record.get("submitStatus")))) {
@@ -108,7 +107,6 @@ public class ExamRecordSaveHandler extends AbstractSaveHandler {
       if (count >= permitNum) {
         throw new GlobalErrorException("999996", "本次考试次数已用完");
       }
-      //判断完成考试的次数，判断还能否继续考试。
     }
   }
 
@@ -132,9 +130,7 @@ public class ExamRecordSaveHandler extends AbstractSaveHandler {
       cal.setTime(new Date());
       cal.add(Calendar.HOUR_OF_DAY, -1);
       Date before = cal.getTime();
-
       return date.after(before);
-
     } catch (ParseException e) {
       e.printStackTrace();
     }
