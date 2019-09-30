@@ -62,7 +62,7 @@ public class QuestionsController {
           pageSize = Integer.parseInt(String.valueOf(params.get("pageSize")));
       }
 
-      Integer size = pageSize/7;
+      //Integer size = pageSize/7;
       //单选
       if("1".equals(type)){
         //查当前题库的所有单选
@@ -185,7 +185,6 @@ public class QuestionsController {
     /*
     查询试题的引用状态
      */
-
     @GetMapping("/checkinpaper")
     @ResponseBody
     public Object checkInpaper(@RequestParam Map<String, Object> params) throws Exception {
