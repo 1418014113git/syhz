@@ -235,7 +235,7 @@
             "query": {
                 "bool": {
                     "must": [
-                         
+                       
                    		{
 						"multi_match": {
 						        "query":  #[category],
@@ -278,7 +278,7 @@
             "query": {
                 "bool": {
                     "must": [
-                      
+                         
                    		{
 						"multi_match": {
 						        "query":  #[category],
@@ -372,6 +372,9 @@
         }]]>
 	</property>
 
+	<property name="update">
+        <![CDATA[{"doc":{"title":#{title},"articleType":#{articleType},"category":#{category},"content":#{content},"publishTime":#{publishTime}}}]]>
+	</property>
 
 <property name="audit">
         <![CDATA[{"doc":{"auditStatus":2}}]]>
@@ -379,10 +382,6 @@
 	
 		<property name="delete">
         <![CDATA[{"doc":{"delFlag":1}}]]>
-	</property>
-	
-	<property name="update">
-        <![CDATA[{"doc":{"title":#{title},"articleType":#{articleType},"category":#{category},"content":#{content},"publishTime":#{publishTime}}}]]>
 	</property>
 
 </properties>

@@ -19,11 +19,13 @@ public class StandardInfoQueryHandler extends AbstractQueryHandler {
 
 	private EsService EsService;
 	private static final String ALIAS_TRAINSTANDARDINFO = "TRAINSTANDARDINFO";
-	
+	private static String ALIAS_ENCLOSURE = "KNOWLEDGEENCLOSURE";
+	private static int belong_mode = 3;// 1 法律法规、2行业标准、3规则制度、4案例指引
+
 	public StandardInfoQueryHandler(IBaseService baseService) {
 		super(baseService);
 	}
-	
+
 	public Object list(Map<String, Object> requestBody) throws Exception {
 		List<Map> mapList = (List<Map>) requestBody.get("data");
 		int pageTotal = SyhzUtil.setDateInt(requestBody.get("pageTotal"));
@@ -38,11 +40,26 @@ public class StandardInfoQueryHandler extends AbstractQueryHandler {
 			List<Map<String, Object>> list = (List<Map<String, Object>>) baseService.list(paramMap);
 			requestBody.put("list", list);
 			requestBody.remove("data");
+			if (list == null || list.size() <= 0) {
+				requestBody.put("totalCount", 0);
+			}
 			return requestBody;
 		}
-		
+
 		return requestBody;
-		
+
+	}
+
+	public Object get(String id) throws Exception {
+		LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, ALIAS_TRAINSTANDARDINFO);
+		Map<String, Object> lawinfo = (Map<String, Object>) baseService.get(id);
+		lawinfo.put("tableId", id);
+		lawinfo.put("belongMode", belong_mode);// 法律法规
+		LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, ALIAS_ENCLOSURE);
+		List<Map<String, Object>> list = (List<Map<String, Object>>) baseService.list(lawinfo);
+		lawinfo.put("enclosure", list);
+		return lawinfo;
+
 	}
 
 }

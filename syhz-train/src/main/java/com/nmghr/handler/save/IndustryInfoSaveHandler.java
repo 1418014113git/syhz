@@ -17,39 +17,40 @@ import com.nmghr.handler.service.EsService;
 import com.nmghr.handler.service.TrainWorkorderService;
 import com.nmghr.util.SyhzUtil;
 
-@Service("lawinfoSaveHandler")
-public class LawInfoSaveHandler extends AbstractSaveHandler {
+@Service("industryinfoSaveHandler")
+public class IndustryInfoSaveHandler extends AbstractSaveHandler {
+
 	@Autowired
 	private TrainWorkorderService TrainWorkorderService;
 	@Autowired
 	private EnclosureAuditService EnclosureAuditService;
+
 	@Autowired
 	private EsService EsService;
-
-	private static String ALIAS_LAWINFO = "TRAINLAWINFO";// 法律法规
+	private static String ALIAS_TRAININDUSTRYINFO = "TRAININDUSTRYINFO";// 法律法规
 	private static int belong_sys = 1;// 所属系统(1 知识库 2网上培训)
-	private static int belong_mode = 1;// 1 法律法规、2行业标准、3规则制度、4案例指引
+	private static int belong_mode = 2;// 1 法律法规、2行业标准、3规则制度、4案例指引
 
-	public LawInfoSaveHandler(IBaseService baseService) {
+	public IndustryInfoSaveHandler(IBaseService baseService) {
 		super(baseService);
 	}
 
 	@Override
 	@Transactional
 	public Object save(Map<String, Object> requestBody) throws Exception {
-		Object lawInfoId = SyhzUtil.setDate(requestBody.get("lawInfoId"));// 是否已存为草稿
+		Object lawInfoId = SyhzUtil.setDate(requestBody.get("id"));// 是否已存为草稿
 		int draft = SyhzUtil.setDateInt(requestBody.get("draft"));// 是否为草稿
 		int adminFlag = SyhzUtil.setDateInt(requestBody.get("adminFlag"));// 是否为管理员
-			validation(requestBody);
-			LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, ALIAS_LAWINFO);
-			lawInfoId = baseService.save(requestBody);
-			EnclosureAuditService.enclouseSave(requestBody, lawInfoId, baseService, belong_mode);// 保存附件
-			requestBody.put("crouseId", lawInfoId);
-			Map<String, String> header = new HashMap<String, String>();
-			Map<String, Object> auditMap = EnclosureAuditService.audit(requestBody, belong_sys, belong_mode);
-			Object workId = TrainWorkorderService.createWorkflowData(baseService, header, auditMap);// 添加审批记录
-		if (draft == 1 && adminFlag == 0) {// 管理员默认审核通过
-				EnclosureAuditService.subimtaduit(workId, lawInfoId, belong_sys, belong_mode, requestBody, baseService);
+		validation(requestBody);
+		LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, ALIAS_TRAININDUSTRYINFO);
+		lawInfoId = baseService.save(requestBody);
+		EnclosureAuditService.enclouseSave(requestBody, lawInfoId, baseService, belong_mode);// 保存附件
+		requestBody.put("crouseId", lawInfoId);
+		Map<String, String> header = new HashMap<String, String>();
+		Map<String, Object> auditMap = EnclosureAuditService.audit(requestBody, belong_sys, belong_mode);
+		Object workId = TrainWorkorderService.createWorkflowData(baseService, header, auditMap);// 添加审批记录
+		if (draft == 1 && adminFlag == 0) {// 不是草稿管理员默认审核通过
+			EnclosureAuditService.subimtaduit(workId, lawInfoId, belong_sys, belong_mode, requestBody, baseService);
 		}
 		return requestBody;
 	}

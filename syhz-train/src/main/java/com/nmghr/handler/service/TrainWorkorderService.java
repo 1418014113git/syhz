@@ -140,7 +140,7 @@ public class TrainWorkorderService {
           parentDepCode = "0";
           // 本单位 在省级别
           saveWorkorderFlowDataMe(baseService, workId, parentWorkId, parentDepCode, workflowEntityBo,
-              myDeptBo);
+							myDeptBo, 2);
         } else {
           Object provinceWorkId =
               saveWorkorderFlowDataProvince(baseService, workId, workflowEntityBo, provinceDeptBo);
@@ -159,7 +159,7 @@ public class TrainWorkorderService {
         if (myDepCode.equals(cityDepCode)) { // 如果本部门code 与 市级code码相同 则直接调用本部门
           // 本单位 在市级别
           saveWorkorderFlowDataMe(baseService, workId, parentWorkId, parentDepCode,
-              workflowEntityBo, myDeptBo);
+							workflowEntityBo, myDeptBo, 1);
         } else {
           Object cityWorkId = saveWorkorderFlowDataCity(baseService, workId, parentWorkId,
               parentDepCode, workflowEntityBo, cityDeptBo);
@@ -168,7 +168,7 @@ public class TrainWorkorderService {
 
           // 本单位 在区级别
           saveWorkorderFlowDataMe(baseService, workId, parentWorkId, parentDepCode,
-              workflowEntityBo, myDeptBo);
+							workflowEntityBo, myDeptBo, 0);
         }
       }
     }
@@ -250,11 +250,11 @@ public class TrainWorkorderService {
    */
   private Object saveWorkorderFlowDataMe(IBaseService baseService, Object workId,
       Object parentWorkId, Object parentDepCode, WorkflowEntityBo workflowEntityBo,
-      DeptEntityBo myDeptBo) throws Exception {
+			DeptEntityBo myDeptBo, Object auditDeptNode) throws Exception {
     // 处理 保存市级审批节点数据
     Map<String, Object> workorderFlowMap = new HashMap<String, Object>();
     workorderFlowMap.put("workId", workId);
-    workorderFlowMap.put("auditDeptNode", 0); // 当前审核节点（0部门 1市级 2省级）
+		workorderFlowMap.put("auditDeptNode", auditDeptNode); // 当前审核节点（0部门 1市级 2省级）
     workorderFlowMap.put("auditAreaCode", myDeptBo.getDeptAreaCode());
     workorderFlowMap.put("auditDeptCode", myDeptBo.getDeptCode());
     workorderFlowMap.put("auditDeptName", myDeptBo.getDeptName());
