@@ -106,6 +106,7 @@ public class PaperQuestionQueryHandler extends AbstractQueryHandler {
     result.put("endDate", examInfo.get("endDate"));
     result.put("examinationName", examInfo.get("examinationName"));
     result.put("permitNumber", examInfo.get("permitNumber"));
+    result.put("remark", examInfo.get("remark"));
   }
 
   /**
