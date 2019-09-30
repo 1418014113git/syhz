@@ -6,6 +6,7 @@ import com.nmghr.basic.common.exception.GlobalErrorException;
 import com.nmghr.basic.core.common.LocalThreadStorage;
 import com.nmghr.basic.core.service.IBaseService;
 import com.nmghr.basic.core.service.handler.impl.AbstractSaveHandler;
+import com.nmghr.util.DateUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -52,11 +53,12 @@ public class ExamSubmitRecordSaveHandler extends AbstractSaveHandler {
         count.put("wrongNum",0);
       }
 
-      String nowStr = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date());
+      String endTime = getEndTimeStr(String.valueOf(requestBody.get("recordId")), Integer.parseInt(String.valueOf(exam.get("totalDate"))));
+
       params = new HashMap<>();
       params.put("modifier", requestBody.get("creator"));
       params.put("userId", requestBody.get("userId"));
-      params.put("endTime", nowStr);
+      params.put("endTime", endTime);
       params.put("score", count.get("score"));
       params.put("correctNumber", count.get("rightNum"));
       params.put("incorrectNumber", count.get("wrongNum"));
@@ -72,6 +74,30 @@ public class ExamSubmitRecordSaveHandler extends AbstractSaveHandler {
       log.error("submitRecordSaveHandler save Error: " + e.getMessage());
       throw new GlobalErrorException("999996", e.getMessage());
     }
+  }
+
+  /**
+   * 获取截止时间
+   * @param recordId String
+   * @param totalDate int
+   * @return String
+   * @throws ParseException e
+   */
+  private String getEndTimeStr(String recordId, int totalDate) throws Exception {
+    LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMRECORD");
+    Map<String, Object> record = (Map<String, Object>) baseService.get(recordId);
+    if (record==null || record.get("startTime") ==null || "".equals(String.valueOf(record.get("startTime")))) {
+      throw new GlobalErrorException("999993","考试记录信息异常");
+    }
+    Date startTime = DateUtil.strToDate(String.valueOf(record.get("startTime")), DateUtil.yyyyMMddHHmmss);
+    Calendar cal = Calendar.getInstance();
+    cal.setTime(startTime);
+    cal.add(Calendar.MINUTE, totalDate);
+    Date end = cal.getTime();
+    if(end.after(new Date())){
+      end = new Date();
+    }
+    return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(end);
   }
 
   private void validExamInfo(Map<String, Object> exam) throws ParseException {
