@@ -203,6 +203,9 @@ public class PaperRandomQuestionQueryHandler extends AbstractQueryHandler {
   private List<Map<String, Object>> getPreViewRandomList(Map<String, Object> paramMap, int type) {
     String cateIds = String.valueOf(paramMap.get("cateIds"));
     int num = Integer.parseInt(String.valueOf(paramMap.get("num")));
+    if(num<1){
+      return new ArrayList<>();
+    }
     int sort = Integer.parseInt(String.valueOf(paramMap.get("sort")));
     int value = Integer.parseInt(String.valueOf(paramMap.get("value")));
     List<Map<String, Object>> rdList = new ArrayList<>();

@@ -18,7 +18,6 @@ public class TrainCourseUpdateHandler extends AbstractUpdateHandler {
 
 	public TrainCourseUpdateHandler(IBaseService baseService) {
 		super(baseService);
-		// TODO Auto-generated constructor stub
 	}
 
 	@Override

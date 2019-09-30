@@ -58,9 +58,12 @@ public class ExamRecordSaveHandler extends AbstractSaveHandler {
       if (startDate.after(new Date())) {
         throw new GlobalErrorException("999996", "本次考试未开始");
       }
+      Integer times = Integer.parseInt(String.valueOf(map.get("totalDate")));
       //查询考试记录
-      checkRecord(requestBody, permitNum);
-      Map<String, Object> result = new HashMap<>();
+      Map<String, Object> result = checkRecord(requestBody, permitNum, times);
+      if(result!=null){
+        return result;
+      }
       String nowStr = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date());
       Map<String, Object> params = new HashMap<>();
       params.put("userId", requestBody.get("userId"));
@@ -73,6 +76,7 @@ public class ExamRecordSaveHandler extends AbstractSaveHandler {
       params.put("deptName", requestBody.get("deptName"));
       LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMINATIONRECORD");
       Object obj = baseService.save(params);
+      result = new HashMap<>();
       result.put("recordId", obj);
       result.put("startTime", nowStr);
       return result;
@@ -82,14 +86,13 @@ public class ExamRecordSaveHandler extends AbstractSaveHandler {
     }
   }
 
-  private void checkRecord(Map<String, Object> requestBody, int permitNum) throws Exception {
+  private Map<String, Object> checkRecord(Map<String, Object> requestBody, int permitNum, int times) throws Exception {
     Map<String, Object> params = new HashMap<>();
     params.put("userId", requestBody.get("userId"));
     params.put("examId", requestBody.get("examId"));
     LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMINATIONRECORDBYUID");
     List<Map<String, Object>> records = (List<Map<String, Object>>) baseService.list(params);
     if (records != null && records.size() > 0) {
-      //id, userId, examinationId, startTime, endTime,`submitStatus, `createDate
       int count = 0;
       for (Map<String, Object> record : records) {
         if (record.get("submitStatus") != null && !"0".equals(String.valueOf(record.get("submitStatus")))) {
@@ -101,15 +104,23 @@ public class ExamRecordSaveHandler extends AbstractSaveHandler {
           continue;
         }
         //异常考试信息 删除操作
-        if (isEnable(String.valueOf(record.get("startTime")))) {
+        if (isEnable(String.valueOf(record.get("startTime")), times)) {
+          // 小于5分钟返回上次记录
+          Map<String, Object> result = new HashMap<>();
+          result.put("recordId", record.get("id"));
+          result.put("startTime", record.get("startTime"));
+          return result;
+        } else {
+          // 大于5分钟 删除
           delErrorRecord(requestBody.get("examId"), requestBody.get("userId"), record.get("id"));
+
         }
       }
       if (count >= permitNum) {
         throw new GlobalErrorException("999996", "本次考试次数已用完");
       }
-      //判断完成考试的次数，判断还能否继续考试。
     }
+    return null;
   }
 
   private void delErrorRecord(Object examId, Object userId, Object recordId) throws Exception {
@@ -122,7 +133,7 @@ public class ExamRecordSaveHandler extends AbstractSaveHandler {
     baseService.remove(delParam);
   }
 
-  private boolean isEnable(String startTime) {
+  private boolean isEnable(String startTime, int times) {
     if (startTime == null || "".equals(startTime)) {
       return false;
     }
@@ -130,11 +141,9 @@ public class ExamRecordSaveHandler extends AbstractSaveHandler {
       Date date = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(startTime);
       Calendar cal = Calendar.getInstance();
       cal.setTime(new Date());
-      cal.add(Calendar.HOUR_OF_DAY, -1);
+      cal.add(Calendar.MINUTE, (-1*times));
       Date before = cal.getTime();
-
       return date.after(before);
-
     } catch (ParseException e) {
       e.printStackTrace();
     }
