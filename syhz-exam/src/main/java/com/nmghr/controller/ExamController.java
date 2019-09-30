@@ -157,11 +157,17 @@ public class ExamController {
   public Object examRecord(@RequestParam Map<String, Object> param) throws Exception {
     ValidationUtils.notNull(param.get("examId"), "考试信息Id不能为空!");
     ValidationUtils.notNull(param.get("userId"), "用户Id不能为空!");
-    Map<String, Object> params = new HashMap<>();
-    params.put("userId", param.get("userId"));
-    params.put("examId", param.get("examId"));
+    param.put("type","record");
     LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMINATIONRECORDBYUID");
-    return Result.ok(baseService.list(params));
+    List<Map<String,Object>> list = (List<Map<String, Object>>) baseService.list(param);
+    for (int i = 0; i < list.size(); i++) {
+      Map<String, Object> map = list.get(i);
+      if (map.get("startTime") == null || map.get("endTime") == null) {
+        continue;
+      }
+      map.put("totalTime", DateUtil.printDifference(String.valueOf(map.get("startTime")), String.valueOf(map.get("endTime"))));
+    }
+    return list;
   }
 
   /**

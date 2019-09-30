@@ -58,7 +58,7 @@ public class SubjectCategoryController {
     LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMSUBJECTCATEINSTCHECK");
     Map<String, Object> result = (Map<String, Object>) baseService.get(param);
     if (result != null && result.get("num") != null && Integer.parseInt(String.valueOf(result.get("num"))) > 0) {
-      return Result.fail(GlobalErrorEnum.PARAM_NOT_VALID.getCode(), "该名称已存在此父类中");
+      return Result.fail(GlobalErrorEnum.PARAM_NOT_VALID.getCode(), "当前试题模块该名称已存在，不能重复添加!");
     }
     LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMSUBJECTCATEGORY");
     return baseService.save(requestBody);
@@ -83,7 +83,7 @@ public class SubjectCategoryController {
     LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMSUBJECTCATEINSTCHECK");
     Map<String, Object> result = (Map<String, Object>) baseService.get(param);
     if (result != null && result.get("num") != null && Integer.parseInt(String.valueOf(result.get("num"))) > 0) {
-      return Result.fail(GlobalErrorEnum.PARAM_NOT_VALID.getCode(), "该名称已存在此父类中");
+      return Result.fail(GlobalErrorEnum.PARAM_NOT_VALID.getCode(), "当前试题模块该名称已存在，不能重复添加!");
     }
     LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMSUBJECTCATEGORY");
     return baseService.update(String.valueOf(requestBody.get("id")), requestBody);
@@ -126,7 +126,8 @@ public class SubjectCategoryController {
       return Result.fail(GlobalErrorEnum.PARAM_NOT_VALID.getCode(), "该名称下存在试卷");
     }
     LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMSUBJECTCATEGORYDEL");
-    return baseService.update(String.valueOf(requestBody.get("id")), new HashMap<>());
+    baseService.remove(String.valueOf(requestBody.get("id")));
+    return true;
   }
 
 
