@@ -15,25 +15,23 @@ import org.springframework.web.bind.annotation.RestController;
 import com.alibaba.fastjson.JSON;
 import com.nmghr.basic.common.Result;
 import com.nmghr.basic.core.service.handler.IQueryHandler;
-import com.nmghr.basic.core.service.handler.IRemoveHandler;
 import com.nmghr.basic.core.service.handler.ISaveHandler;
 import com.nmghr.basic.core.service.handler.IUpdateHandler;
 import com.nmghr.basic.core.util.SpringUtils;
 import com.nmghr.handler.service.EsService;
 import com.nmghr.handler.vo.IndustryInfo;
-import com.nmghr.handler.vo.Lawinfo;
 import com.nmghr.util.SyhzUtil;
 
 /**
- * 法律法规
+ * 行业标准
  * 
  * @author heijiantao
  * @date 2019年9月30日
  * @version 1.0
  */
 @RestController
-@RequestMapping("lawInfo")
-public class LawInfoController {
+@RequestMapping("industryInfo")
+public class IndustryInfoController {
 	@Autowired
 	private EsService esService;
 
@@ -46,12 +44,12 @@ public class LawInfoController {
 			String search = SyhzUtil.setDate(map.get("search"));
 			String category = SyhzUtil.setDate(map.get("category"));
 			searchType = "search" + toInt(articleType) + toInt(category) + toInt(search);
-			Map<String, Object> esMap = esService.query("lawinfo", map, searchType);// es查询documentId
-			IQueryHandler queryHandler = SpringUtils.getBean("lawinfoQueryHandler", IQueryHandler.class);
+			Map<String, Object> esMap = esService.query("industryinfo", map, searchType);// es查询documentId
+			IQueryHandler queryHandler = SpringUtils.getBean("industryinfoQueryHandler", IQueryHandler.class);
 			Map<String, Object> responseMap = (Map<String, Object>) queryHandler.list(esMap);
 			return responseMap;
 		} catch (Exception e) {
-			return Result.fail("000000", "暂无数据");
+			return Result.fail("888888", "暂无数据");
 		}
 	}
 
@@ -59,23 +57,23 @@ public class LawInfoController {
 	@ResponseBody
 	public Object save(@RequestBody Map<String, Object> map) {
 		UUID(map);// 生成documentId
-		Lawinfo lawinfo = JSON.parseObject(JSON.toJSONString(map), Lawinfo.class);
-		lawinfo.setEnable(0);// 启用
-		lawinfo.setDelFlag(0);// 正常
-		lawinfo.setAuditStatus(0);// 待审核
-		String documentId = esService.insert(map, "lawinfo", lawinfo);// 保存到es
+		IndustryInfo IndustryInfo = JSON.parseObject(JSON.toJSONString(map), IndustryInfo.class);
+		IndustryInfo.setEnable(0);// 启用
+		IndustryInfo.setDelFlag(0);// 正常
+		IndustryInfo.setAuditStatus(0);// 待审核
+		String documentId = esService.insert(map, "industryinfo", IndustryInfo);// 保存到es
 		if (!"false".equals(documentId)) {
 			try {
 				map.put("documentId", documentId);
-				ISaveHandler saveHandler = SpringUtils.getBean("lawinfoSaveHandler", ISaveHandler.class);
+				ISaveHandler saveHandler = SpringUtils.getBean("industryinfoSaveHandler", ISaveHandler.class);
 				Object object = saveHandler.save(map);// 保存到数据库s
 				if (1 == deptFlag(map)) {// 改变es审核状态
-					esService.auidt("lawinfo", documentId);
+					esService.auidt("industryinfo", documentId);
 				}
 				return Result.ok(object);
 			} catch (Exception e) {
 				e.printStackTrace();
-				esService.delete("lawinfo", documentId);// 删除本条数据
+				esService.delete("industryinfo", documentId);// 删除本条数据
 				return Result.fail();
 			}
 		} else {
@@ -90,8 +88,8 @@ public class LawInfoController {
 		String documnetId = SyhzUtil.setDate(map.get("documentId"));
 		try {
 			IndustryInfo IndustryInfo = JSON.parseObject(JSON.toJSONString(map), IndustryInfo.class);
-			esService.update(map, documnetId, "lawinfo", IndustryInfo);
-			IUpdateHandler IUpdateHandler = SpringUtils.getBean("lawInfoUpdateHandler", IUpdateHandler.class);
+			esService.update(map, documnetId, "industryinfo", IndustryInfo);
+			IUpdateHandler IUpdateHandler = SpringUtils.getBean("industryinfoUpdateHandler", IUpdateHandler.class);
 			return IUpdateHandler.update(id, map);
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -103,9 +101,23 @@ public class LawInfoController {
 	@ResponseBody
 	public Object delete(@RequestBody Map<String, Object> map) {
 		String documnetId = SyhzUtil.setDate(map.get("documentId"));
-		esService.delete("lawinfo", documnetId);
-		SpringUtils.getBean("lawInfoRemoveHandler", IRemoveHandler.class);
-		return Result.ok("000000");
+		int type = SyhzUtil.setDateInt(map.get("type"));
+		if (type == 1) {
+			esService.remove("lawinfo", documnetId);
+		} else if (type == 2) {
+			esService.remove("industryinfo", documnetId);
+		} else if (type == 2) {
+			esService.remove("standardinfo", documnetId);
+		} else if (type == 2) {
+			esService.remove("caseinfo", documnetId);
+		}
+		try {
+			IUpdateHandler IUpdateHandler = SpringUtils.getBean("KnowledgeRemoveUpdateHandler", IUpdateHandler.class);
+			return IUpdateHandler.update(documnetId, map);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return Result.fail();
+		}
 	}
 
 	private void UUID(Map<String, Object> map) {
