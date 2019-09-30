@@ -138,7 +138,7 @@ public class SubjectCategoryController {
     ValidationUtils.notNull(requestBody.get("parentId"), "上级id不能为空!");
     ValidationUtils.notNull(requestBody.get("deptCode"), "当前部门编号不能为空!");
     ValidationUtils.notNull(requestBody.get("deptName"), "当前部门名称不能为空!");
-    Matcher m = Pattern.compile("[！@#￥%…&*$]").matcher(String.valueOf(requestBody.get("categoryName")));
+    Matcher m = Pattern.compile("[!！@#￥%…&*$]").matcher(String.valueOf(requestBody.get("categoryName")));
     if (m.find()) {
       throw new GlobalErrorException(GlobalErrorEnum.PARAM_NOT_VALID.getCode(), "不能输入特殊字符！@#￥%……&*$");
     }
@@ -146,7 +146,7 @@ public class SubjectCategoryController {
 
   private void validId(Object id) {
     ValidationUtils.notNull(id, "id不能为空!");
-    ValidationUtils.regexp(id, "^\\d+$", "非法输入");
+//    ValidationUtils.regexp(id, "^\\d+$", "非法输入");
   }
 
 }

@@ -13,21 +13,18 @@ import com.nmghr.basic.core.service.IBaseService;
 import com.nmghr.basic.core.service.handler.impl.AbstractQueryHandler;
 import com.nmghr.util.SyhzUtil;
 
-/**
- * 法律法规
- * 
- * @author heijiantao
- * @date 2019年9月25日
- * @version 1.0
- */
-@Service("lawinfoQueryHandler")
-public class LawInfoQueryHandler extends AbstractQueryHandler {
-	private static String ALIAS_TRAINLAWINFO = "TRAINLAWINFO";
-	private static String ALIAS_ENCLOSURE = "KNOWLEDGEENCLOSURE";
-	private static int belong_mode = 1;// 1 法律法规、2行业标准、3规则制度、4案例指引
-	public LawInfoQueryHandler(IBaseService baseService) {
+@Service("caseinfoQueryHandler")
+public class CaseInfoQueryHandler extends AbstractQueryHandler {
+
+	public CaseInfoQueryHandler(IBaseService baseService) {
 		super(baseService);
 	}
+
+	private static String ALIAS_TRAINCASEINFO = "TRAINCASEINFO";
+	private static String ALIAS_ENCLOSURE = "KNOWLEDGEENCLOSURE";
+	private static int belong_mode = 4;// 1 法律法规、2行业标准、3规则制度、4案例指引
+
+
 
 	public Object list(Map<String, Object> requestBody) throws Exception {
 		List<Map> mapList = (List<Map>) requestBody.get("data");
@@ -37,15 +34,15 @@ public class LawInfoQueryHandler extends AbstractQueryHandler {
 			for (Map map : mapList) {
 				strArray.add(String.valueOf(map.get("documentId")));
 			}
-			LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, ALIAS_TRAINLAWINFO);
+			LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, ALIAS_TRAINCASEINFO);
 			Map<String, Object> paramMap = new HashMap<String, Object>();
 			paramMap.put("ids", strArray);
 			List<Map<String, Object>> list = (List<Map<String, Object>>) baseService.list(paramMap);
 			requestBody.put("list", list);
-			requestBody.remove("data");
 			if (list == null || list.size() <= 0) {
 				requestBody.put("totalCount", 0);
 			}
+			requestBody.remove("data");
 			return requestBody;
 		}
 
@@ -54,15 +51,16 @@ public class LawInfoQueryHandler extends AbstractQueryHandler {
 	}
 
 	public Object get(String id) throws Exception {
-		LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, ALIAS_TRAINLAWINFO);
+		LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, ALIAS_TRAINCASEINFO);
 		Map<String, Object> lawinfo = (Map<String, Object>) baseService.get(id);
 		lawinfo.put("tableId", id);
-		lawinfo.put("belongMode", belong_mode);// 法律法规
+		lawinfo.put("belongMode", belong_mode);// 案例指引
 		LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, ALIAS_ENCLOSURE);
 		List<Map<String, Object>> list = (List<Map<String, Object>>) baseService.list(lawinfo);
 		lawinfo.put("enclosure", list);
 		return lawinfo;
 
 	}
+
 
 }
