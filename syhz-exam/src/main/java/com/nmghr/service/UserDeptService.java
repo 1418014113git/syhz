@@ -18,7 +18,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -63,8 +62,8 @@ public class UserDeptService implements IBaseService {
 //查某一地区的应考人数
   @Override
   @TargetDataSource(value="hrupms")
-  public Object get(String deptCode) throws Exception {
-    Map<String,Object> userCountMap  = (Map<String, Object>) userDeptMapper.getCityChildTotalNumByDeptCode(deptCode);
+  public Object get(String deptId) throws Exception {
+    Map<String,Object> userCountMap  = (Map<String, Object>) userDeptMapper.getCityChildTotalNumByDeptId(deptId);
     return userCountMap;
   }
 
