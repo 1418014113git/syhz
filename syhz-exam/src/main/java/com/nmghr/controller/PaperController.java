@@ -1,6 +1,5 @@
 package com.nmghr.controller;
 
-import cn.hutool.json.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.nmghr.basic.common.Constant;
 import com.nmghr.basic.common.Result;
@@ -14,10 +13,7 @@ import com.nmghr.basic.core.service.handler.ISaveHandler;
 import com.nmghr.basic.core.service.handler.IUpdateHandler;
 import com.nmghr.basic.core.util.SpringUtils;
 import com.nmghr.basic.core.util.ValidationUtils;
-import com.nmghr.common.ExamConstant;
 import com.nmghr.common.QuestionType;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.web.bind.annotation.*;
