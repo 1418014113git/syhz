@@ -18,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -25,7 +26,7 @@ import java.util.Map;
  *
  * @author weber  
  * @date 2019年4月29日 下午3:19:43 
- * @version 1.0   
+ * @version 1.0
  */
 @Service("userdeptService")
 public class UserDeptService implements IBaseService {
@@ -59,11 +60,12 @@ public class UserDeptService implements IBaseService {
   public void remove(String id) throws Exception {
   }
 
-
+//查某一地区的应考人数
   @Override
-  public Object get(String id) throws Exception {
-
-    return null;
+  @TargetDataSource(value="hrupms")
+  public Object get(String deptCode) throws Exception {
+    Map<String,Object> userCountMap  = (Map<String, Object>) userDeptMapper.getCityChildTotalNumByDeptCode(deptCode);
+    return userCountMap;
   }
 
   @SuppressWarnings("unchecked")

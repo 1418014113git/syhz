@@ -28,7 +28,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-
 /**
  * <功能描述/> 考试管理
  *
@@ -92,15 +91,16 @@ public class ExaminationStatisticsController {
             }
 
         }
+        paging.setList(examinationList);
 
         //根据地市统计
-        List<List<Map<String, Object>>>  cityList = statisticsUserByCity(allPersons);
-        allReset.add(examinationList);
+        List<Map<String,Object>> cityList = statisticsUserByCity(allPersons);
+        allReset.add(paging);
         allReset.add(cityList);
         return allReset;
     }
 
-    private List<List<Map<String, Object>>> statisticsUserByCity(List<UserScoreInfo> info) throws Exception {
+    private List<Map<String, Object>> statisticsUserByCity(List<UserScoreInfo> info) throws Exception {
 
         Integer yscore = 0;
         Integer lscore = 0;
@@ -121,7 +121,11 @@ public class ExaminationStatisticsController {
                 list.add(cityChildList);
                 //所有子部门
                 for (Map<String, Object> childCity : cityChildList) {
-                        yscore = 0;
+                    //查该部门应考人数
+                    Map<String,Object> userCount = (Map<String, Object>) userdeptService.get(String.valueOf(childCity.get("deptCode")));
+                    Integer totalNum = Integer.valueOf(String.valueOf(userCount.get("userCount")));
+
+                    yscore = 0;
                         lscore = 0;
                         zscore = 0;
                         cscore = 0;
@@ -151,11 +155,16 @@ public class ExaminationStatisticsController {
                     childCity.put("z", zscore);
                     childCity.put("c", cscore);
                     childCity.put("realNum",realNum);
+                    childCity.put("totalNum",totalNum);
                 }
+
+                city.put("child",cityChildList);
+
             }
-            list.add(cityList);
+
+            //list.add(city);
         }
-        return list;
+        return cityList;
 }
 
 

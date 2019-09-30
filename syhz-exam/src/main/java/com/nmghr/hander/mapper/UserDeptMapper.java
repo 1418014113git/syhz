@@ -39,8 +39,20 @@ public interface UserDeptMapper {
           " 1011 and area_code <![CDATA[<> '610000']]> order by area_code</script>")
   List<Map<String,Object>> getCitys();
 
-  @Select("<script> select t.id deptId, t.depart_name deptName,t.area_code areaCode,t.depart_code deptCode from u_depart t where t.parent_depart_id = #{deptId}</script>")
+  @Select("<script> select t.id deptId,t.parent_depart_id parentId, t.depart_name deptName,t.area_code areaCode,t.depart_code deptCode from u_depart t where t.parent_depart_id = #{deptId}</script>")
   List<Map<String,Object>> getCityChild(@Param("deptId") String deptId);
+
+
+  /*
+  查某一地区的应考人数
+   */
+  /*
+  select t.id deptId, t.depart_name deptName,t.area_code areaCode,t.depart_code deptCode,
+(select count(1) from u_user_depart_rel r where r.depart_id = t.id) as userCode from u_depart t where depart_code = #{deptCode} order by area_code;
+   */
+  @Select("<script>select \n" +
+          "(select count(1) from u_user_depart_rel r where r.depart_id = t.id) as userCount from u_depart t where depart_code = #{deptCode} order by area_code </script>")
+  Map<String,Object> getCityChildTotalNumByDeptCode(@Param("deptCode") String deptCode);
 
 }
 
