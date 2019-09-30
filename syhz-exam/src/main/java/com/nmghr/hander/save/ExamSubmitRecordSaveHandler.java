@@ -1,5 +1,6 @@
 package com.nmghr.hander.save;
 
+import com.alibaba.fastjson.JSONObject;
 import com.nmghr.basic.common.Constant;
 import com.nmghr.basic.common.exception.GlobalErrorException;
 import com.nmghr.basic.core.common.LocalThreadStorage;
@@ -11,10 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @SuppressWarnings("unchecked")
 @Service("submitRecordSaveHandler")
@@ -33,14 +31,19 @@ public class ExamSubmitRecordSaveHandler extends AbstractSaveHandler {
       throw new GlobalErrorException("999997", "参数不正确");
     }
     try {
+      // 查询试卷
+      validExamInfo(String.valueOf(requestBody.get("examId")));
       // 查询本地记录的所有answer 计算主观题分数
       Map<String, Object> params = new HashMap<>();
       params.put("id", String.valueOf(requestBody.get("recordId")));
-      params.put("type", "kg");
+      params.put("types", "1,2,3,4");
       LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMRECORDCOUNT");
       Map<String, Object> count = (Map<String, Object>) baseService.get(params);
       if (count == null) {
-        throw new GlobalErrorException("999997", "计算异常稍后重试");
+        count = new HashMap<>();
+        count.put("score",0);
+        count.put("rightNum",0);
+        count.put("wrongNum",0);
       }
 
       String nowStr = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date());
@@ -51,7 +54,11 @@ public class ExamSubmitRecordSaveHandler extends AbstractSaveHandler {
       params.put("score", count.get("score"));
       params.put("correctNumber", count.get("rightNum"));
       params.put("incorrectNumber", count.get("wrongNum"));
-      params.put("submitStatus", requestBody.get("submitStatus"));
+      if (requestBody.get("examType")!=null && "nonexistent".equals(String.valueOf(requestBody.get("examType")))) {
+        params.put("submitStatus", 3);//不需要阅卷
+      } else {
+        params.put("submitStatus", requestBody.get("submitStatus"));
+      }
       LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMINATIONRECORD");
       baseService.update(String.valueOf(requestBody.get("recordId")), params);
       return true;
@@ -61,4 +68,34 @@ public class ExamSubmitRecordSaveHandler extends AbstractSaveHandler {
     }
   }
 
+  /**
+   * 验证考试信息
+   * @param id
+   * @throws Exception
+   */
+  private void validExamInfo(String id) throws Exception {
+    LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMINATION");
+    Map<String, Object> exam = (Map<String, Object>) baseService.get(id);
+    //查询试题相关信息
+    if (exam.get("endDate") == null || "".equals(String.valueOf(exam.get("endDate")).trim())) {
+      throw new GlobalErrorException("999996", "考试截止信息异常");
+    }
+    if (exam.get("startDate") == null || "".equals(String.valueOf(exam.get("startDate")).trim())) {
+      throw new GlobalErrorException("999996", "考试开始信息异常");
+    }
+    Date endDate = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(String.valueOf(exam.get("endDate")));
+    //截止提交时间延后5分钟
+    Calendar cal = Calendar.getInstance();
+    cal.setTime(endDate);
+    cal.add(Calendar.MINUTE,5);
+    endDate = cal.getTime();
+
+    Date startDate = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(String.valueOf(exam.get("startDate")));
+    if(endDate.before(new Date())){
+      throw new GlobalErrorException("999996", "本次考试已截止");
+    }
+    if(startDate.after(new Date())){
+      throw new GlobalErrorException("999996", "本次考试未开始");
+    }
+  }
 }
