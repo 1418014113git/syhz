@@ -15,15 +15,16 @@ import com.nmghr.basic.core.util.ValidationUtils;
 import com.nmghr.handler.service.EnclosureAuditService;
 import com.nmghr.util.SyhzUtil;
 
-@Service("lawInfoUpdateHandler")
-public class LawInfoUpdateHandler extends AbstractUpdateHandler {
+@Service("standardInfoUpdateHandler")
+public class StandardInfoUpdateHandler extends AbstractUpdateHandler {
 	@Autowired
 	private EnclosureAuditService EnclosureAuditService;
-	private static String ALIAS_LAWINFO = "TRAINLAWINFO";// 法律法规
-	private static String ALIAS_KNOWLEDGEENCLOSURE = "KNOWLEDGEENCLOSURE";// 附件
+	private static String ALIAS_KNOWLEDGEENCLOSURE = "KNOWLEDGEENCLOSURE";// 行业标准
+	private static String ALIAS_TRAINSTANDARDINFO = "TRAINSTANDARDINFO";
 	private static int belong_sys = 1;// 所属系统(1 知识库 2网上培训)
-	private static int belong_mode = 1;// 1 法律法规、2行业标准、3规则制度、4案例指引
-	public LawInfoUpdateHandler(IBaseService baseService) {
+	private static int belong_mode = 3;// 1 法律法规、2行业标准、3规则制度、4案例指引
+
+	public StandardInfoUpdateHandler(IBaseService baseService) {
 		super(baseService);
 	}
 
@@ -40,7 +41,7 @@ public class LawInfoUpdateHandler extends AbstractUpdateHandler {
 		LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, ALIAS_KNOWLEDGEENCLOSURE);
 		baseService.remove(requestBody);// 删除之前的附件
 		EnclosureAuditService.enclouseSave(requestBody, id, baseService, belong_mode);// 添加附件
-		LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, ALIAS_LAWINFO);
+		LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, ALIAS_TRAINSTANDARDINFO);
 		baseService.update(id, requestBody);
 		if ("1".equals(subType) && authorId.equals(creationId)) {
 			EnclosureAuditService.subimtaduit(workId, id, belong_sys, belong_mode, requestBody, baseService);

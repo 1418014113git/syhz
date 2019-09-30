@@ -106,6 +106,7 @@ public class PaperQuestionQueryHandler extends AbstractQueryHandler {
     result.put("endDate", examInfo.get("endDate"));
     result.put("examinationName", examInfo.get("examinationName"));
     result.put("permitNumber", examInfo.get("permitNumber"));
+    result.put("remark", examInfo.get("remark"));
   }
 
   /**
@@ -196,7 +197,7 @@ public class PaperQuestionQueryHandler extends AbstractQueryHandler {
     //查询考试记录
     Map<String, Object> params = new HashMap<>();
     params.put("userId", param.get("userId"));
-    params.put("examinationId", param.get("id"));
+    params.put("examId", param.get("id"));
     LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMINATIONRECORDBYUID");
     List<Map<String, Object>> records = (List<Map<String, Object>>) baseService.list(params);
     if (records != null && records.size() > 0) {

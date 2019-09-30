@@ -13,19 +13,14 @@ import com.nmghr.basic.core.service.IBaseService;
 import com.nmghr.basic.core.service.handler.impl.AbstractQueryHandler;
 import com.nmghr.util.SyhzUtil;
 
-/**
- * 法律法规
- * 
- * @author heijiantao
- * @date 2019年9月25日
- * @version 1.0
- */
-@Service("lawinfoQueryHandler")
-public class LawInfoQueryHandler extends AbstractQueryHandler {
-	private static String ALIAS_TRAINLAWINFO = "TRAINLAWINFO";
+@Service("industryinfoQueryHandler")
+public class IndustryInfoQueryHandler extends AbstractQueryHandler {
+
+	private static String ALIAS_TRAININDUSTRYINFO = "TRAININDUSTRYINFO";
 	private static String ALIAS_ENCLOSURE = "KNOWLEDGEENCLOSURE";
-	private static int belong_mode = 1;// 1 法律法规、2行业标准、3规则制度、4案例指引
-	public LawInfoQueryHandler(IBaseService baseService) {
+	private static int belong_mode = 2;// 1 法律法规、2行业标准、3规则制度、4案例指引
+
+	public IndustryInfoQueryHandler(IBaseService baseService) {
 		super(baseService);
 	}
 
@@ -37,7 +32,7 @@ public class LawInfoQueryHandler extends AbstractQueryHandler {
 			for (Map map : mapList) {
 				strArray.add(String.valueOf(map.get("documentId")));
 			}
-			LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, ALIAS_TRAINLAWINFO);
+			LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, ALIAS_TRAININDUSTRYINFO);
 			Map<String, Object> paramMap = new HashMap<String, Object>();
 			paramMap.put("ids", strArray);
 			List<Map<String, Object>> list = (List<Map<String, Object>>) baseService.list(paramMap);
@@ -48,13 +43,12 @@ public class LawInfoQueryHandler extends AbstractQueryHandler {
 			}
 			return requestBody;
 		}
-
 		return requestBody;
 
 	}
 
 	public Object get(String id) throws Exception {
-		LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, ALIAS_TRAINLAWINFO);
+		LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, ALIAS_TRAININDUSTRYINFO);
 		Map<String, Object> lawinfo = (Map<String, Object>) baseService.get(id);
 		lawinfo.put("tableId", id);
 		lawinfo.put("belongMode", belong_mode);// 法律法规
