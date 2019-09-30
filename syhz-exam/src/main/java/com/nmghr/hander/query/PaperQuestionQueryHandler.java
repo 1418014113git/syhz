@@ -71,9 +71,9 @@ public class PaperQuestionQueryHandler extends AbstractQueryHandler {
   /**
    * 在线考试
    *
-   * @param param
-   * @return
-   * @throws Exception
+   * @param param Map
+   * @return Object
+   * @throws Exception Exception
    */
   private Object getExamQuestion(Map<String, Object> param) throws Exception {
     Map<String, Object> result = new HashMap<>();
@@ -117,15 +117,16 @@ public class PaperQuestionQueryHandler extends AbstractQueryHandler {
    */
   private Object examedAnswer(Map<String, Object> param) throws Exception {
     Map<String, Object> result = new HashMap<>();
-    //查询考试相关信息
+    // 查询考试相关信息
     Map<String, Object> examInfo = getExamInfo(String.valueOf(param.get("id")));
-    //查询考试记录
+    // 查询考试记录
+    param.put("permitNumber", examInfo.get("permitNumber"));
     result.putAll(getRecordByUid(param));
 
-    //保存考试信息
+    // 保存考试信息
     setExamInfo(result, examInfo);
 
-    //查询列表
+    // 查询列表
     Map<String, Object> paramMap = new HashMap<>();
     paramMap.put("id", examInfo.get("paperId"));
     paramMap.put("paperName", examInfo.get("paperName"));
@@ -138,6 +139,7 @@ public class PaperQuestionQueryHandler extends AbstractQueryHandler {
 
   /**
    * 获取用户考试记录
+   *
    * @param param Map
    * @return Map Map
    * @throws Exception e
@@ -162,7 +164,7 @@ public class PaperQuestionQueryHandler extends AbstractQueryHandler {
           result.put("examEndTime", record.get("endTime"));
         }
       }
-      int enableNum = Integer.parseInt(String.valueOf(result.get("permitNumber"))) - count;
+      int enableNum = Integer.parseInt(String.valueOf(param.get("permitNumber"))) - count;
       result.put("enableNum", enableNum >= 0 ? enableNum : 0);
     }
     return result;
@@ -170,6 +172,7 @@ public class PaperQuestionQueryHandler extends AbstractQueryHandler {
 
   /**
    * 检查考试信息
+   *
    * @param param
    * @param result
    * @throws Exception
@@ -184,26 +187,26 @@ public class PaperQuestionQueryHandler extends AbstractQueryHandler {
     }
     Date endDate = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(String.valueOf(result.get("endDate")));
     Date startDate = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(String.valueOf(result.get("startDate")));
-    if(endDate.before(new Date())){
+    if (endDate.before(new Date())) {
       throw new GlobalErrorException("999996", "本次考试已截止");
     }
-    if(startDate.after(new Date())){
+    if (startDate.after(new Date())) {
       throw new GlobalErrorException("999996", "本次考试未开始");
     }
     //查询考试记录
     Map<String, Object> params = new HashMap<>();
-    params.put("userId",param.get("userId"));
-    params.put("examinationId",param.get("id"));
+    params.put("userId", param.get("userId"));
+    params.put("examinationId", param.get("id"));
     LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMINATIONRECORDBYUID");
     List<Map<String, Object>> records = (List<Map<String, Object>>) baseService.list(params);
-    if (records!=null && records.size()>0) {
+    if (records != null && records.size() > 0) {
       int count = 0;
-      for(Map<String, Object> record : records){
-        if (record.get("submitStatus")!=null && !"0".equals(String.valueOf(record.get("submitStatus")))) {
-          count ++ ;
+      for (Map<String, Object> record : records) {
+        if (record.get("submitStatus") != null && !"0".equals(String.valueOf(record.get("submitStatus")))) {
+          count++;
         }
       }
-      if(count>=permitNum){
+      if (count >= permitNum) {
         throw new GlobalErrorException("999996", "本次考试次数已用完");
       }
     }
@@ -221,16 +224,16 @@ public class PaperQuestionQueryHandler extends AbstractQueryHandler {
     JSONObject json = (JSONObject) paper.get("json");
     Map<String, Object> param = new HashMap<>();
     param.put("paperId", paper.get("id"));
-    for(QuestionType qt: QuestionType.getDetailValues()){
+    for (QuestionType qt : QuestionType.getDetailValues()) {
       param.put("type", qt.name());
       param.put("types", QuestionType.getTypeArray(qt));
       LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMPAPERDETAIL");
       List<Map<String, Object>> datas = (List<Map<String, Object>>) baseService.list(param);
-      if(qt.equals(QuestionType.choices)){
+      if (qt.equals(QuestionType.choices)) {
         paper.putAll(settingDiscuss(datas, json, false));
-      } else if(qt.equals(QuestionType.discuss)){
+      } else if (qt.equals(QuestionType.discuss)) {
         paper.putAll(settingDiscuss(datas, json, false));
-      }else{
+      } else {
         paper.putAll(settingSort(datas, json, false));
       }
     }
@@ -318,18 +321,18 @@ public class PaperQuestionQueryHandler extends AbstractQueryHandler {
     JSONObject sort = json.getJSONObject("sort");
     param.put("paperId", paper.get("id"));
 
-    for(QuestionType qt: QuestionType.getDetailValues()){
+    for (QuestionType qt : QuestionType.getDetailValues()) {
       param.put("type", qt.name());
       param.put("types", QuestionType.getTypeArray(qt));
       LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, ALIAS);
       List<Map<String, Object>> datas = (List<Map<String, Object>>) baseService.list(param);
-      if(qt.equals(QuestionType.choices)){
+      if (qt.equals(QuestionType.choices)) {
         json.put("sort", sort);
         result.putAll(settingChoices(datas, json, answer));
-      } else if(qt.equals(QuestionType.discuss)){
+      } else if (qt.equals(QuestionType.discuss)) {
         json.put("sort", sort);
         result.putAll(settingDiscuss(datas, json, true));
-      }else{
+      } else {
         json.put("sort", sort.get(qt.name()));
         result.putAll(settingSort(datas, json, true));
       }
