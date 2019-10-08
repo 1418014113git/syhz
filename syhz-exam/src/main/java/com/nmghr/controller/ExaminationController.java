@@ -39,7 +39,7 @@ import com.nmghr.util.DateUtil;
 
 /**
  * <功能描述/> 考试管理
- * 
+ *
  * @author wangpengwei
  * @date 2019年9月24日 下午4:44:51
  * @version 1.0
@@ -205,11 +205,11 @@ public class ExaminationController {
 
 
     /**
-     * 
-     * 
+     *
+     *
      * ${id}, ${examinationName}, ${type}, ${paperId}, ${examinationType},${totaldate}, ${permitNumber}, ${startDate},
      * //${endDate}, ${open_depts}, ${remark}, ${creator}, NULL, NULL, ${deptCode}, ${deptName}
-     * 
+     *
      **/
     ValidationUtils.notNull(requestBody.get("examinationName"), "考试名称不能为空!");
     ValidationUtils.notNull(requestBody.get("type"), "组卷方式不能为空!");
