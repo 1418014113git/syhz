@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Service("examquestionUpdateHandler")
@@ -35,6 +36,32 @@ public class ExamQuestionsUpdateHandler extends AbstractUpdateHandler {
         }
 
         if("1".equals(String.valueOf(requestBody.get("type"))) || "2".equals(String.valueOf(requestBody.get("type")))) {
+            if("1".equals(String.valueOf(requestBody.get("type")))) {
+                //检查试题名称是否重复,单选
+                LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMSIMPLECHOICEBYSUB");
+                Map<String, Object> checkRepeatMap = new HashMap<>();
+                checkRepeatMap.put("subjectName", String.valueOf(requestBody.get("subjectName")));
+                checkRepeatMap.put("subjectCategoryId", requestBody.get("subjectCategoryId"));
+                List<Map<String, Object>> list = (List<Map<String, Object>>) baseService.list(checkRepeatMap);
+                if (list != null && list.size() > 0) {
+                    if(!(list.get(0).get("id").equals(id)))
+                    throw new GlobalErrorException("998001", "试题名称重复!");
+                }
+            }
+            if("2".equals(String.valueOf(requestBody.get("type")))){
+                //检查试题名称是否重复,多选
+                LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMMUTICHOICEBYSUB");
+                Map<String, Object> checkRepeatMap = new HashMap<>();
+                checkRepeatMap.put("subjectName", String.valueOf(requestBody.get("subjectName")));
+                checkRepeatMap.put("subjectCategoryId", requestBody.get("subjectCategoryId"));
+                List<Map<String, Object>> list = (List<Map<String, Object>>) baseService.list(checkRepeatMap);
+                if (list != null && list.size() > 0) {
+                    throw new GlobalErrorException("998001", "试题名称重复!");
+                }
+
+            }
+
+
             //更新选择题
             LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMCHOICES");
             Object updateInfo = baseService.update(id,requestBody);

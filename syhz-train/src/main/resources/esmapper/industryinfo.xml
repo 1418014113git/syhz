@@ -1,0 +1,387 @@
+<properties>
+
+	<property name="createlawInfoIndice">
+        <![CDATA[{
+  "mappings": {
+            "properties": {
+                "documentId": {
+                    "type": "text"
+                },
+                "title": {
+                    "type": "text"
+                },
+                "articleType": {
+                    "type": "long"
+                },
+                "category": {
+                    "type": "long"
+                },
+                "delFlag": {
+                    "type": "long"
+                },
+                "content": {
+                    "type": "text"
+                },
+                "enable": {
+                    "type": "long"
+                },
+                "auditStatus": {
+                    "type": "long"
+                },
+                "auditTime": {
+                    "type": "date"
+                 
+                },
+                "remark": {
+                    "type": "text"
+                },
+                "viewNumber": {
+                    "type": "long"
+                },
+                "creation_time": {
+                    "type": "date"
+                },
+                "lats_time": {
+                    "type": "date"
+                }
+            }
+        },
+  "settings": {
+    "analysis": {
+      "analyzer": {
+        "hanlp": {
+          "type": "hanlp",
+          "algorithm": "viterbi",
+          "enableIndexMode": "true",
+          "enableCustomDictionary": "true",
+          "customDictionaryPath": "",
+          "enableCustomDictionaryForcing": "false",
+          "enableStopWord": "true",
+          "stopWordDictionaryPath": "",
+          "enableNumberQuantifierRecognize": "true",
+          "enableNameRecognize": "true",
+          "enableTranslatedNameRecognize": "true",
+          "enableJapaneseNameRecognize": "true",
+          "enableOrganizationRecognize": "true",
+          "enablePlaceRecognize": "true",
+          "enableTraditionalChineseMode": "false"
+        }
+      }
+    }
+  }
+}]]>
+	</property>
+	
+	
+	<property name="search111">
+        <![CDATA[{
+            "query": {
+                "bool": {
+                    "must": [
+                        {  ## 多值检索，查找多个应用名称对应的文档记录
+                            "term": {
+                                "articleType":#[articleType]
+                            }
+                         } ,
+                   		{
+						"multi_match": {
+						        "query":  #[category],
+						        "fields": ["category"]
+						    }
+                   		},
+                        {	"term": {
+                                "delFlag":0
+                            }
+                        },
+                        {	"term": {
+                                "enable":0
+                            }
+                        },
+                        {	"term": {
+                                "auditStatus":2
+                            }
+                        },
+                   		{
+						"multi_match": {
+						        "query":  #[search],
+						        "fields": [ "title", "content"]
+						    }
+                   		} 
+                    ]
+                }
+            },
+           "sort":{ "publishTime":{ "order": "desc"   }},
+            ## 分页起点
+            "from":#[num],
+            ## 最多返回size条记录
+            "size":#[pageSize]
+        }]]>
+	</property>
+	
+	<property name="search110">
+        <![CDATA[{
+            "query": {
+                "bool": {
+                    "must": [
+                        {  ## 多值检索，查找多个应用名称对应的文档记录
+                            "term": {
+                                "articleType":#[articleType]
+                            }
+                         } ,
+                   		{
+						"multi_match": {
+						        "query":  #[category],
+						        "fields": ["category"]
+						    }
+                   		},
+                        {	"term": {
+                                "delFlag":0
+                            }
+                        },
+                        {	"term": {
+                                "enable":0
+                            }
+                        },
+                        {	"term": {
+                                "auditStatus":2
+                            }
+                        }
+                    ]
+                }
+            },
+           "sort":{ "publishTime":{ "order": "desc"   }},
+            ## 分页起点
+            "from":#[num],
+            ## 最多返回size条记录
+            "size":#[pageSize]
+        }]]>
+	</property>
+	
+	<property name="search101">
+        <![CDATA[{
+            "query": {
+                "bool": {
+                    "must": [
+                        {  ## 多值检索，查找多个应用名称对应的文档记录
+                            "term": {
+                                "articleType":#[articleType]
+                            }
+                         },
+                        {	"term": {
+                                "delFlag":0
+                            }
+                        },
+                        {	"term": {
+                                "enable":0
+                            }
+                        },
+                        {	"term": {
+                                "auditStatus":2
+                            }
+                        },
+                   		{
+						"multi_match": {
+						        "query":  #[search],
+						        "fields": [ "title", "content"]
+						    }
+                   		} 
+                    ]
+                }
+            },
+           "sort":{ "publishTime":{ "order": "desc"   }},
+            ## 分页起点
+            "from":#[num],
+            ## 最多返回size条记录
+            "size":#[pageSize]
+        }]]>
+	</property>
+	
+	
+	<property name="search100">
+        <![CDATA[{
+            "query": {
+                "bool": {
+                    "must": [
+                        {  ## 多值检索，查找多个应用名称对应的文档记录
+                            "term": {
+                                "articleType":#[articleType]
+                            }
+                         },
+                        {	"term": {
+                                "delFlag":0
+                            }
+                        },
+                        {	"term": {
+                                "enable":0
+                            }
+                        },
+                        {	"term": {
+                                "auditStatus":2
+                            }
+                        }
+                    ]
+                }
+            },
+           "sort":{ "publishTime":{ "order": "desc"   }},
+            ## 分页起点
+            "from":#[num],
+            ## 最多返回size条记录
+            "size":#[pageSize]
+        }]]>
+	</property>
+	
+	<property name="search011">
+        <![CDATA[{
+            "query": {
+                "bool": {
+                    "must": [
+                       
+                   		{
+						"multi_match": {
+						        "query":  #[category],
+						        "fields": ["category"]
+						    }
+                   		},
+                        {	"term": {
+                                "delFlag":0
+                            }
+                        },
+                        {	"term": {
+                                "enable":0
+                            }
+                        },
+                        {	"term": {
+                                "auditStatus":2
+                            }
+                        },
+                   		{
+						"multi_match": {
+						        "query":  #[search],
+						        "fields": [ "title", "content"]
+						    }
+                   		} 
+                    ]
+                }
+            },
+           "sort":{ "publishTime":{ "order": "desc"   }},
+            ## 分页起点
+            "from":#[num],
+            ## 最多返回size条记录
+            "size":#[pageSize]
+        }]]>
+	</property>
+	
+	
+	
+	<property name="search010">
+        <![CDATA[{
+            "query": {
+                "bool": {
+                    "must": [
+                         
+                   		{
+						"multi_match": {
+						        "query":  #[category],
+						        "fields": ["category"]
+						    }
+                   		},
+                        {	"term": {
+                                "delFlag":0
+                            }
+                        },
+                        {	"term": {
+                                "enable":0
+                            }
+                        },
+                        {	"term": {
+                                "auditStatus":2
+                            }
+                        }
+                    ]
+                }
+            },
+           "sort":{ "publishTime":{ "order": "desc"   }},
+            ## 分页起点
+            "from":#[num],
+            ## 最多返回size条记录
+            "size":#[pageSize]
+        }]]>
+	</property>
+	
+	<property name="search001">
+        <![CDATA[{
+            "query": {
+                "bool": {
+                    "must": [
+                        {	"term": {
+                                "delFlag":0
+                            }
+                        },
+                        {	"term": {
+                                "enable":0
+                            }
+                        },
+                        {	"term": {
+                                "auditStatus":2
+                            }
+                        },
+                   		{
+						"multi_match": {
+						        "query":  #[search],
+						        "fields": [ "title", "content"]
+						    }
+                   		} 
+                    ]
+                }
+            },
+           "sort":{ "publishTime":{ "order": "desc"   }},
+            ## 分页起点
+            "from":#[num],
+            ## 最多返回size条记录
+            "size":#[pageSize]
+        }]]>
+	</property>
+	
+	
+	<property name="search000">
+        <![CDATA[{
+            "query": {
+                "bool": {
+                    "must": [
+                       
+                        {	"term": {
+                                "delFlag":0
+                            }
+                        },
+                        {	"term": {
+                                "enable":0
+                            }
+                        },
+                        {	"term": {
+                                "auditStatus":2
+                            }
+                        }
+                    ]
+                }
+            },
+           "sort":{ "publishTime":{ "order": "desc"   }},
+            ## 分页起点
+            "from":#[num],
+            ## 最多返回size条记录
+            "size":#[pageSize]
+        }]]>
+	</property>
+
+	<property name="update">
+        <![CDATA[{"doc":{"title":#{title},"articleType":#{articleType},"category":#{category},"content":#{content},"publishTime":#{publishTime}}}]]>
+	</property>
+
+<property name="audit">
+        <![CDATA[{"doc":{"auditStatus":2}}]]>
+	</property>
+	
+		<property name="delete">
+        <![CDATA[{"doc":{"delFlag":1}}]]>
+	</property>
+
+</properties>

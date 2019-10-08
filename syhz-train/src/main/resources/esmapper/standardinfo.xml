@@ -89,7 +89,7 @@
                             }
                         },
                         {	"term": {
-                                "auditStatus":0
+                                "auditStatus":2
                             }
                         },
                    		{
@@ -101,7 +101,7 @@
                     ]
                 }
             },
-            ##"sort": "creationTime.sort",
+           "sort":{ "publishTime":{ "order": "desc"   }},
             ## 分页起点
             "from":#[num],
             ## 最多返回size条记录
@@ -128,13 +128,13 @@
                             }
                         },
                         {	"term": {
-                                "auditStatus":0
+                                "auditStatus":2
                             }
                         }
                     ]
                 }
             },
-            ##"sort": "creationTime.sort",
+           "sort":{ "publishTime":{ "order": "desc"   }},
             ## 分页起点
             "from":#[num],
             ## 最多返回size条记录
@@ -157,7 +157,7 @@
                             }
                         },
                         {	"term": {
-                                "auditStatus":0
+                                "auditStatus":2
                             }
                         },
                    		{
@@ -169,7 +169,7 @@
                     ]
                 }
             },
-            ##"sort": "creationTime.sort",
+           "sort":{ "publishTime":{ "order": "desc"   }},
             ## 分页起点
             "from":#[num],
             ## 最多返回size条记录
@@ -194,17 +194,26 @@
                             }
                         },
                         {	"term": {
-                                "auditStatus":0
+                                "auditStatus":2
                             }
                         }
                     ]
                 }
             },
-            ##"sort": "creationTime.sort",
+           "sort":{ "publishTime":{ "order": "desc"   }},
             ## 分页起点
             "from":#[num],
             ## 最多返回size条记录
             "size":#[pageSize]
         }]]>
+	</property>
+	
+	<property name="audit">
+        <![CDATA[{"doc":{"auditStatus":2}}]]>
+	</property>
+	
+	
+		<property name="update">
+        <![CDATA[{"doc":{"title":#{title},"articleType":#{articleType},"content":#{content},"publishTime":#{publishTime}}}]]>
 	</property>
 </properties>
