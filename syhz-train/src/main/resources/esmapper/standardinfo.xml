@@ -101,7 +101,7 @@
                     ]
                 }
             },
-            ##"sort": "publishTime.sort",
+           "sort":{ "publishTime":{ "order": "desc"   }},
             ## 分页起点
             "from":#[num],
             ## 最多返回size条记录
@@ -134,7 +134,7 @@
                     ]
                 }
             },
-            ##"sort": "publishTime.sort",
+           "sort":{ "publishTime":{ "order": "desc"   }},
             ## 分页起点
             "from":#[num],
             ## 最多返回size条记录
@@ -169,7 +169,7 @@
                     ]
                 }
             },
-            ##"sort": "publishTime.sort",
+           "sort":{ "publishTime":{ "order": "desc"   }},
             ## 分页起点
             "from":#[num],
             ## 最多返回size条记录
@@ -200,7 +200,7 @@
                     ]
                 }
             },
-            ##"sort": "publishTime.sort",
+           "sort":{ "publishTime":{ "order": "desc"   }},
             ## 分页起点
             "from":#[num],
             ## 最多返回size条记录
