@@ -28,7 +28,7 @@
                 "auditStatus": {
                     "type": "long"
                 },
-                "auditTime": {
+                "publishTime": {
                     "type": "date"
                  
                 },
@@ -107,10 +107,11 @@
 						        "fields": [ "title", "content"]
 						    }
                    		} 
+
                     ]
                 }
             },
-            ##"sort": "creationTime.sort",
+            ##"sort": "publishTime.sort",
             ## 分页起点
             "from":#[num],
             ## 最多返回size条记录
@@ -149,7 +150,7 @@
                     ]
                 }
             },
-            ##"sort": "creationTime.sort",
+            ##"sort": "publishTime.sort",
             ## 分页起点
             "from":#[num],
             ## 最多返回size条记录
@@ -188,7 +189,7 @@
                     ]
                 }
             },
-            ##"sort": "creationTime.sort",
+            ##"sort": "publishTime.sort",
             ## 分页起点
             "from":#[num],
             ## 最多返回size条记录
@@ -222,7 +223,7 @@
                     ]
                 }
             },
-            ##"sort": "creationTime.sort",
+            ##"sort": "publishTime.sort",
             ## 分页起点
             "from":#[num],
             ## 最多返回size条记录
@@ -263,7 +264,7 @@
                     ]
                 }
             },
-            ##"sort": "creationTime.sort",
+            ##"sort": "publishTime.sort",
             ## 分页起点
             "from":#[num],
             ## 最多返回size条记录
@@ -278,7 +279,7 @@
             "query": {
                 "bool": {
                     "must": [
-                      
+                       
                    		{
 						"multi_match": {
 						        "query":  #[category],
@@ -300,7 +301,7 @@
                     ]
                 }
             },
-            ##"sort": "creationTime.sort",
+            ##"sort": "publishTime.sort",
             ## 分页起点
             "from":#[num],
             ## 最多返回size条记录
@@ -334,7 +335,7 @@
                     ]
                 }
             },
-            ##"sort": "creationTime.sort",
+            ##"sort": "publishTime.sort",
             ## 分页起点
             "from":#[num],
             ## 最多返回size条记录
@@ -364,7 +365,9 @@
                     ]
                 }
             },
-            ##"sort": "creationTime.sort",
+            "sort": [{"publishTime":{
+        					"order": "asc"
+      		}}],
             ## 分页起点
             "from":#[num],
             ## 最多返回size条记录
@@ -373,16 +376,16 @@
 	</property>
 
 
-<property name="audit">
+	<property name="update">
+        <![CDATA[{"doc":{"title":#{title},"articleType":#{articleType},"category":#{category},"content":#{content},"publishTime":#{publishTime}}}]]>
+	</property>
+
+	<property name="audit">
         <![CDATA[{"doc":{"auditStatus":2}}]]>
 	</property>
 	
-		<property name="delete">
+	<property name="delete">
         <![CDATA[{"doc":{"delFlag":1}}]]>
-	</property>
-	
-	<property name="update">
-        <![CDATA[{"doc":{"title":#{title},"articleType":#{articleType},"category":#{category},"content":#{content},"publishTime":#{publishTime}}}]]>
 	</property>
 
 </properties>
