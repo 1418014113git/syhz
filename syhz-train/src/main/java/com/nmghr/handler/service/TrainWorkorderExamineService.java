@@ -67,9 +67,12 @@ public class TrainWorkorderExamineService {
 		String[] tableId = tableIds.split(",");
 		String workIds = SyhzUtil.setDate(requestBody.get("workId"));
 		String[] workId = workIds.split(",");
+		String belongType = SyhzUtil.setDate(requestBody.get("belongType"));
+		String[] belongTypes = belongType.split(",");
 		for (int i = 0; i < tableId.length; i++) {
 			requestBody.put("tableId", tableId[i]);
 			requestBody.put("workId", workId[i]);
+			requestBody.put("belongType", belongTypes[i]);
 			WorkflowExamineEntityBo workflowExamineEntityBo = verifyData(headers, requestBody);
 			if (workflowExamineEntityBo != null) {
 				saveWorkorder(baseService, workflowExamineEntityBo);
