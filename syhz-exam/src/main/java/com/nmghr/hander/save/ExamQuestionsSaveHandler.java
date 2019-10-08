@@ -74,7 +74,7 @@ public class ExamQuestionsSaveHandler extends AbstractSaveHandler {
                 if ("3".equals(String.valueOf(requestBody.get("type")))) {
 
                     //检查试题名称是否重复,填空
-                    LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMFILLGAPSBYSUB");
+                        LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMFILLGAPSBYSUB");
                     Map<String, Object> checkRepeatMap = new HashMap<>();
                     checkRepeatMap.put("subjectName", String.valueOf(requestBody.get("subjectName")));
                     checkRepeatMap.put("subjectCategoryId", requestBody.get("subjectCategoryId"));
