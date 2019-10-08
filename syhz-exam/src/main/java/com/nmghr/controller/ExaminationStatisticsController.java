@@ -98,7 +98,6 @@ public class ExaminationStatisticsController {
         return paging;
     }
 
-
     @GetMapping("statisticsOne")
     public Object statisticsOne(@RequestParam Map<String, Object> requestParam) throws Exception {
         if (requestParam.get("examinationIds") == null) {
@@ -139,7 +138,6 @@ public class ExaminationStatisticsController {
             }
             List<Map<String, Object>> cityList = statisticsUserByCity(allPersons,String.valueOf(requestParam.get("examinationIds")));
             return cityList;
-
         }else
             {
             return new ArrayList<>();
@@ -149,7 +147,6 @@ public class ExaminationStatisticsController {
 
 
     private List<Map<String, Object>> statisticsUserByCity(List<UserScoreInfo> info,String examinationIds) throws Exception {
-
         List<Map<String,Object>> childCityList = new ArrayList<>();
         Integer yscore = 0;
         Integer lscore = 0;
@@ -163,9 +160,6 @@ public class ExaminationStatisticsController {
         Map<String,Object> depts = (Map<String, Object>) baseService.get(param);
         String deptsStr = (String) depts.get("depts");
         String[] deptArr = deptsStr.split(",");
-
-
-
 
         Map<String, Object> map = new HashMap<String, Object>();
         for (String str : deptArr) {
@@ -190,9 +184,6 @@ public class ExaminationStatisticsController {
 //                LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMDISTINCTDEPTID");
 //                Map<String,Object> deptIds = new HashMap<>();
 //                deptIds.put("deptStr",deptsStr);
-
-
-
                 //List<Map<String,Object>> childDpetIds = (List<Map<String, Object>>) baseService.list(deptIds);
 
                 for (int i = 0;i < newArrStr.length;i++ ) {
@@ -242,7 +233,6 @@ public class ExaminationStatisticsController {
                 city.put("child",cityChildList);
                 }
             }
-
         return cityList;
 }
 
@@ -272,10 +262,10 @@ private int judgeRange(Long score,List<Map<String, Object>> scoreCodeList) throw
     if (score >= yscore) {
        return 1;
     }
-    if (score > lscore && score < yscore) {
+    if (score >= lscore && score < yscore) {
        return 2;
     }
-    if (score > zscore && score < lscore) {
+    if (score >= zscore && score < lscore) {
         return 3;
     }
     if (score <= cscore) {
@@ -299,7 +289,6 @@ private int judgeRange(Long score,List<Map<String, Object>> scoreCodeList) throw
             Long totalScore = (Long) userScore.get("totalScore");
             info.setDeptCode(userScore.get("deptCode") +"");
             if (Long.valueOf(judgeRange(totalScore,scoreCodeList)) == 1) {
-
                 info.setFlag("1");
                 ycount++;
             }
