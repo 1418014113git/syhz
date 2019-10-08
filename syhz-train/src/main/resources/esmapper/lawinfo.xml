@@ -10,10 +10,10 @@
                 "title": {
                     "type": "text"
                 },
-                "articleType": {
-                    "type": "long"
-                },
                 "category": {
+                    "type": "text"
+                },
+                "articleType": {
                     "type": "long"
                 },
                 "delFlag": {
@@ -28,21 +28,10 @@
                 "auditStatus": {
                     "type": "long"
                 },
-                "auditTime": {
+                "publishTime": {
                     "type": "date"
-                 
-                },
-                "remark": {
-                    "type": "text"
-                },
-                "viewNumber": {
-                    "type": "long"
-                },
-                "creation_time": {
-                    "type": "date"
-                },
-                "lats_time": {
-                    "type": "date"
+                 ,"format":"yyyy-MM-dd HH:mm:ss.SSS||yyyy-MM-dd'T'HH:mm:ss.SSS||yyyy-MM-dd HH:mm:ss||epoch_millis"
+
                 }
             }
         },
@@ -110,7 +99,7 @@
                     ]
                 }
             },
-            ##"sort": "creationTime.sort",
+            "sort":{ "publishTime":{ "order": "desc"   }},
             ## 分页起点
             "from":#[num],
             ## 最多返回size条记录
@@ -149,7 +138,7 @@
                     ]
                 }
             },
-            ##"sort": "creationTime.sort",
+            "sort":{ "publishTime":{ "order": "desc"   }},
             ## 分页起点
             "from":#[num],
             ## 最多返回size条记录
@@ -188,7 +177,7 @@
                     ]
                 }
             },
-            ##"sort": "creationTime.sort",
+           "sort":{ "publishTime":{ "order": "desc"   }},
             ## 分页起点
             "from":#[num],
             ## 最多返回size条记录
@@ -222,7 +211,7 @@
                     ]
                 }
             },
-            ##"sort": "creationTime.sort",
+            "sort":{ "publishTime":{ "order": "desc"   }},
             ## 分页起点
             "from":#[num],
             ## 最多返回size条记录
@@ -263,7 +252,7 @@
                     ]
                 }
             },
-            ##"sort": "creationTime.sort",
+            "sort":{ "publishTime":{ "order": "desc"   }},
             ## 分页起点
             "from":#[num],
             ## 最多返回size条记录
@@ -300,7 +289,7 @@
                     ]
                 }
             },
-            ##"sort": "creationTime.sort",
+            "sort":{ "publishTime":{ "order": "desc"   }},
             ## 分页起点
             "from":#[num],
             ## 最多返回size条记录
@@ -334,7 +323,7 @@
                     ]
                 }
             },
-            ##"sort": "creationTime.sort",
+            "sort":{ "publishTime":{ "order": "desc"   }},
             ## 分页起点
             "from":#[num],
             ## 最多返回size条记录
@@ -364,7 +353,7 @@
                     ]
                 }
             },
-            ##"sort": "creationTime.sort",
+            "sort":{ "publishTime":{ "order": "desc"   }},
             ## 分页起点
             "from":#[num],
             ## 最多返回size条记录
