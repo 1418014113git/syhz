@@ -371,7 +371,7 @@ public class TrainWorkorderExamineService {
 		// 获取 审批节点表 本部门是 审批节点信息
 		Map<String, Object> workorderExamineMap = new HashMap<String, Object>();
 		workorderExamineMap.put("workId", workflowExamineEntityBo.getWorkId());
-		workorderExamineMap.put("auditDeptNode", "0"); // 本部门
+		// workorderExamineMap.put("auditDeptNode", "0"); // 本部门
 		Map<String, Object> workNodedataMap = getWorkNode(baseService, workorderExamineMap);
 
 		// 审核不通 初始化 审核主题表的 总状态为 1待审核 当前节点审核为1
