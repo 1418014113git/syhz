@@ -212,7 +212,6 @@ public class ExaminationStatisticsController {
                 Map<String, Object> cityChildMap = new HashMap<>();
                 cityChildMap.put("cityId", deptId);
                 List<Map<String, Object>> cityChildList = (List<Map<String, Object>>) userdeptService.page(cityChildMap, 0, 0);
-
                 //去重deptId
 //                LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMDISTINCTDEPTID");
 //                Map<String,Object> deptIds = new HashMap<>();
@@ -260,26 +259,29 @@ public class ExaminationStatisticsController {
                         childCity.put("realNum", realNum);
                         childCity.put("totalNum", totalNum);
                     }
-
                 }
                 city.put("child", cityChildList);
             }
         }
         return cityList;
     }
-
     //首页统计
     private List<Map<String, Object>> statisticsIndexByCity(List<Map<String, Object>> info, List<Map<String, Object>> examinationList) throws Exception {
         //select max(r.score + r.artificial_score) as totalScore,user_id as userId,dept_code as deptCode
         List<Map<String, Object>> childCityList = new ArrayList<>();
         int realNum = 0;
         int examCount = 0;
+        int cityRealNum = 0;
+        int cityExamCount = 0;
         //查所有地区,包括省厅
         //List<Map<String, Object>> cityList = (List<Map<String, Object>>) getCitys();
         List<Map<String, Object>> cityList = (List<Map<String, Object>>) getAllCitys();
 
         if (CollectionUtils.isNotEmpty(cityList)) {
             for (Map<String, Object> city : cityList) {
+                cityRealNum = 0;
+                cityExamCount = 0;
+
                 String deptId = String.valueOf(city.get("deptId"));
                 Map<String, Object> cityChildMap = new HashMap<>();
                 cityChildMap.put("cityId", deptId);
@@ -289,7 +291,7 @@ public class ExaminationStatisticsController {
                     realNum = 0;
                     examCount = 0;
                     for (Map<String, Object> scoreInfo : info) {
-                        if (childCity.get("deptCode").equals(scoreInfo.get("deptCode"))) {
+                        if (String.valueOf(childCity.get("deptCode")).equals(String.valueOf(scoreInfo.get("deptCode")))) {
                             realNum++;
                         }
                     }
@@ -301,8 +303,14 @@ public class ExaminationStatisticsController {
                     }
                     childCity.put("realNum", realNum);
                     childCity.put("examCount", examCount);
+                    cityRealNum+=realNum;
+                    cityExamCount+=examCount;
                 }
-                city.put("child", cityChildList);
+                //city.put("child", cityChildList);
+
+                city.put("examCount",cityExamCount);
+                city.put("realNum",cityRealNum);
+
             }
         }
         return cityList;
@@ -384,7 +392,6 @@ public class ExaminationStatisticsController {
         }
         return userInfoList;
     }
-
     //查所有地市
     @TargetDataSource(value = "hrupms")
     private Object getCitys() throws Exception {

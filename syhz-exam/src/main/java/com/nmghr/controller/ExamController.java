@@ -308,7 +308,7 @@ public class ExamController {
     ValidationUtils.notNull(requestBody.get("recordId"), "考试记录Id不能为空!");
     ValidationUtils.notNull(requestBody.get("questionsId"), "试题Id不能为空!");
     ValidationUtils.notNull(requestBody.get("type"), "考题类型不能为空!");
-    ValidationUtils.notNull(requestBody.get("answer"), "用户答案不能为空!");
+//    ValidationUtils.notNull(requestBody.get("answer"), "用户答案不能为空!");
     ValidationUtils.notNull(requestBody.get("creator"), "当前用户账号不能为空!");
     ValidationUtils.notNull(requestBody.get("deptCode"), "当前部门编号不能为空!");
     ValidationUtils.notNull(requestBody.get("deptName"), "当前部门名称不能为空!");
