@@ -44,7 +44,7 @@ public class ExamQuestionsUpdateHandler extends AbstractUpdateHandler {
                 checkRepeatMap.put("subjectCategoryId", requestBody.get("subjectCategoryId"));
                 List<Map<String, Object>> list = (List<Map<String, Object>>) baseService.list(checkRepeatMap);
                 if (list != null && list.size() > 0) {
-                    if(!(list.get(0).get("id").equals(id)))
+                    if(!(String.valueOf(list.get(0).get("id")).equals(id)))
                     throw new GlobalErrorException("998001", "试题名称重复!");
                 }
             }
@@ -56,7 +56,7 @@ public class ExamQuestionsUpdateHandler extends AbstractUpdateHandler {
                 checkRepeatMap.put("subjectCategoryId", requestBody.get("subjectCategoryId"));
                 List<Map<String, Object>> list = (List<Map<String, Object>>) baseService.list(checkRepeatMap);
                 if (list != null && list.size() > 0) {
-                    if(!(list.get(0).get("id").equals(id)))
+                    if(!(String.valueOf(list.get(0).get("id")).equals(id)))
                         throw new GlobalErrorException("998001", "试题名称重复!");
                 }
             }
@@ -92,7 +92,7 @@ public class ExamQuestionsUpdateHandler extends AbstractUpdateHandler {
                     checkRepeatMap.put("subjectCategoryId", requestBody.get("subjectCategoryId"));
                     List<Map<String, Object>> list = (List<Map<String, Object>>) baseService.list(checkRepeatMap);
                     if (list != null && list.size() > 0) {
-                        if(!(list.get(0).get("id").equals(id)))
+                        if(!(String.valueOf(list.get(0).get("id")).equals(id)))
                             throw new GlobalErrorException("998001", "试题名称重复!");
                     }
 
@@ -109,7 +109,7 @@ public class ExamQuestionsUpdateHandler extends AbstractUpdateHandler {
                     checkRepeatMap.put("subjectCategoryId", requestBody.get("subjectCategoryId"));
                     List<Map<String, Object>> list = (List<Map<String, Object>>) baseService.list(checkRepeatMap);
                     if (list != null && list.size() > 0) {
-                        if(!(list.get(0).get("id").equals(id)))
+                        if(!(String.valueOf(list.get(0).get("id")).equals(id)))
                             throw new GlobalErrorException("998001", "试题名称重复!");
                     }
                     LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMJUDGE");
@@ -128,7 +128,7 @@ public class ExamQuestionsUpdateHandler extends AbstractUpdateHandler {
                     checkRepeatMap.put("type",requestBody.get("type"));
                     List<Map<String, Object>> list = (List<Map<String, Object>>) baseService.list(checkRepeatMap);
                     if (list != null && list.size() > 0) {
-                        if(!(list.get(0).get("id").equals(id)))
+                        if(!(String.valueOf(list.get(0).get("id")).equals(id)))
                             throw new GlobalErrorException("998001", "试题名称重复!");
                     }
 

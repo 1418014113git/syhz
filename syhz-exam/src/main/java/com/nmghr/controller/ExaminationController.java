@@ -75,20 +75,24 @@ public class ExaminationController {
     if (requestBody.get("id") == null || "".equals(requestBody.get("id"))) {
       return Result.fail("99999999", ExamConstant.EXAMINATION_ID_ISNULL);
     }
-    // 校验表单数据
-    validParams(2, requestBody);
-    Result checkResult = (Result) checkExamination(requestBody);
-    if(checkResult!=null && !checkResult.isSuccess()){
-      //返回false
-      return checkResult;
-    }
-    //考试名称查重(除了当前记录)
-    LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMINATIONCOUNTBYNAMEIDDEPT");
-    Map<String,Object> result = (Map<String, Object>) baseService.get(requestBody);
-    if (result != null && result.get("num") != null && Integer.parseInt(String.valueOf(result.get("num"))) > 0) {
-      return Result.fail(GlobalErrorEnum.PARAM_NOT_VALID.getCode(), "考试名称重复");
-    }
+    //不是发布考试，则校验
+    if(!"1".equals(String.valueOf(requestBody.get("status")))) {
+      // 校验表单数据
+      validParams(2, requestBody);
 
+
+      Result checkResult = (Result) checkExamination(requestBody);
+      if (checkResult != null && !checkResult.isSuccess()) {
+        //返回false
+        return checkResult;
+      }
+      //考试名称查重(除了当前记录)
+      LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMINATIONCOUNTBYNAMEIDDEPT");
+      Map<String, Object> result = (Map<String, Object>) baseService.get(requestBody);
+      if (result != null && result.get("num") != null && Integer.parseInt(String.valueOf(result.get("num"))) > 0) {
+        return Result.fail(GlobalErrorEnum.PARAM_NOT_VALID.getCode(), "考试名称重复");
+      }
+    }
     LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMINATION");
     Object examinationId = baseService.update(String.valueOf(requestBody.get("id")), requestBody);
     return Result.ok(examinationId);
@@ -129,7 +133,7 @@ public class ExaminationController {
     ValidationUtils.notNull(requestParam.get("examId"), "考试Id不能为空!");
     LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMSCORELIST");
     List<Map<String,Object>> scoreList = (List<Map<String, Object>>) baseService.list(requestParam);
-    if(scoreList!=null && scoreList.size() > 0){
+    if(scoreList!=null && scoreList.size() > 0) {
       for (Map<String, Object> score : scoreList) {
         Timestamp start = (Timestamp) score.get("startTime");
         Timestamp end = (Timestamp) score.get("endTime");
