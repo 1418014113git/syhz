@@ -223,18 +223,23 @@ public class PaperQuestionQueryHandler extends AbstractQueryHandler {
   private Object getDetailView(Map<String, Object> paper) throws Exception {
     //查询各个试题
     JSONObject json = (JSONObject) paper.get("json");
+    JSONObject sort = json.getJSONObject("sort");
     Map<String, Object> param = new HashMap<>();
     param.put("paperId", paper.get("id"));
     for (QuestionType qt : QuestionType.getDetailValues()) {
       param.put("type", qt.name());
       param.put("types", QuestionType.getTypeArray(qt));
       LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMPAPERDETAIL");
+//      LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMPAPERINFOQUESTION");
       List<Map<String, Object>> datas = (List<Map<String, Object>>) baseService.list(param);
       if (qt.equals(QuestionType.choices)) {
-        paper.putAll(settingDiscuss(datas, json, false));
+        json.put("sort", sort);
+        paper.putAll(settingChoices(datas, json, false, false));
       } else if (qt.equals(QuestionType.discuss)) {
+        json.put("sort", sort);
         paper.putAll(settingDiscuss(datas, json, false));
       } else {
+        json.put("sort", sort.get(qt.name()));
         paper.putAll(settingSort(datas, json, false));
       }
     }
@@ -329,7 +334,7 @@ public class PaperQuestionQueryHandler extends AbstractQueryHandler {
       List<Map<String, Object>> datas = (List<Map<String, Object>>) baseService.list(param);
       if (qt.equals(QuestionType.choices)) {
         json.put("sort", sort);
-        result.putAll(settingChoices(datas, json, answer));
+        result.putAll(settingChoices(datas, json, answer, true));
       } else if (qt.equals(QuestionType.discuss)) {
         json.put("sort", sort);
         result.putAll(settingDiscuss(datas, json, true));
@@ -397,20 +402,14 @@ public class PaperQuestionQueryHandler extends AbstractQueryHandler {
    *
    * @param choices
    */
-  private Map<String, Object> settingChoices(List<Map<String, Object>> choices, JSONObject json, boolean answer) {
+  private Map<String, Object> settingChoices(List<Map<String, Object>> choices, JSONObject json, boolean answer, boolean isSort) {
     Map<String, Object> result = new HashMap<>();
     if (choices != null && choices.size() > 0) {
       Map<String, Object> res = new HashMap<>();
       for (Map<String, Object> map : choices) {
         Map<String, Object> bean = new HashMap<>();
         bean.put("items", new HashMap<>());
-        bean.put("id", map.get("id"));
-        bean.put("type", map.get("type"));
-        bean.put("name", map.get("name"));
-        if (answer) {
-          bean.put("rightAnswer", map.get("rightAnswer"));
-          bean.put("answer", map.get("answer"));
-        }
+        bean.putAll(map);
         res.put(String.valueOf(map.get("id")) + ExamConstant.DESCFLAG + map.get("type"), bean);
       }
       for (Map<String, Object> map : choices) {
@@ -435,9 +434,9 @@ public class PaperQuestionQueryHandler extends AbstractQueryHandler {
       }
       JSONObject sort = json.getJSONObject("sort");
       json.put("sort", sort.get(QuestionType.choices.name()));
-      result.putAll(settingSort(list1, json, true));
+      result.putAll(settingSort(list1, json, isSort));
       json.put("sort", sort.get(QuestionType.multiSelect.name()));
-      result.putAll(settingSort(list2, json, true));
+      result.putAll(settingSort(list2, json, isSort));
     }
     return result;
   }

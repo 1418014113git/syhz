@@ -76,7 +76,7 @@ public class PaperRandomQuestionQueryHandler extends AbstractQueryHandler {
   /**
    * 添加时随机试题
    *
-   * @param reqMap m
+   * @param reqMap    m
    * @param isProView isProView
    * @return Map
    */
@@ -149,47 +149,46 @@ public class PaperRandomQuestionQueryHandler extends AbstractQueryHandler {
   private List<Map<String, Object>> getRandomList(Map<String, Object> paramMap, int type) {
     String cateIds = String.valueOf(paramMap.get("cateIds"));
     int num = Integer.parseInt(String.valueOf(paramMap.get("num")));
+    if (num < 1) {
+      return new ArrayList<>();
+    }
     int sort = Integer.parseInt(String.valueOf(paramMap.get("sort")));
     int value = Integer.parseInt(String.valueOf(paramMap.get("value")));
     List<Map<String, Object>> rdList = new ArrayList<>();
     Map<String, Object> param = new HashMap<>();
     param.put("cateIds", cateIds);
     param.put("type", type);
+    String text = QuestionType.byType(type).getText();
     try {
       LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMPAPERQUESTION");
       List<Map<String, Object>> list = (List<Map<String, Object>>) baseService.list(param);
-      if (list != null && list.size() > 0) {
-        if (list.size() < num) {
-          log.error("EXAMPAPERQUESTION   by   cateIds :" + cateIds + " size 等于" + list.size() + "数据不够");
-          for (Map<String, Object> map : list) {
-            map.put("subjectCategoryId", map.get("subCategoryId"));
-            map.put("questionsId", map.get("id"));
-            map.put("type", type);
-            map.put("sort", sort);
-            map.put("value", value);
+      if (list == null || list.size() == 0) {
+        throw new GlobalErrorException("999665", "您" + text + "，选择的题库中试题数量为0，请重新选择分类");
+      }
+      if (list.size() < num) {
+        log.error("EXAMPAPERQUESTION   by   cateIds :" + cateIds + " size 等于" + list.size() + "数据不够");
+        throw new GlobalErrorException("999665", "您" + text + "，选择的题库中试题总数量为" + list.size() + "，请重新选择分类");
+      } else {
+        List<Integer> idxs = new ArrayList<>();
+        Random random = new Random();
+        do {
+          int idx = random.nextInt(list.size());
+          if (!idxs.contains(idx)) {
+            Map<String, Object> question = list.get(idx);
+            Map<String, Object> bean = new HashMap<>();
+            bean.put("subjectCategoryId", question.get("subCategoryId"));
+            bean.put("questionsId", question.get("id"));
+            bean.put("type", type);
+            bean.put("sort", sort);
+            bean.put("value", value);
+            rdList.add(bean);
+            idxs.add(idx);
           }
-          rdList = list;
-        } else {
-          List<Integer> idxs = new ArrayList<>();
-          Random random = new Random();
-          do {
-            int idx = random.nextInt(list.size());
-            if (!idxs.contains(idx)) {
-              Map<String, Object> question = list.get(idx);
-              Map<String, Object> bean = new HashMap<>();
-              bean.put("subjectCategoryId", question.get("subCategoryId"));
-              bean.put("questionsId", question.get("id"));
-              bean.put("type", type);
-              bean.put("sort", sort);
-              bean.put("value", value);
-              rdList.add(bean);
-              idxs.add(idx);
-            }
-          } while (rdList.size() < num);
-        }
+        } while (rdList.size() < num);
       }
     } catch (Exception e) {
-      //log
+      log.error(e.getMessage() + "随机试题时异常");
+      throw new GlobalErrorException("999664", "随机试题时异常");
     }
     return rdList;
   }
@@ -203,7 +202,7 @@ public class PaperRandomQuestionQueryHandler extends AbstractQueryHandler {
   private List<Map<String, Object>> getPreViewRandomList(Map<String, Object> paramMap, int type) {
     String cateIds = String.valueOf(paramMap.get("cateIds"));
     int num = Integer.parseInt(String.valueOf(paramMap.get("num")));
-    if(num<1){
+    if (num < 1) {
       return new ArrayList<>();
     }
     int sort = Integer.parseInt(String.valueOf(paramMap.get("sort")));
@@ -212,38 +211,41 @@ public class PaperRandomQuestionQueryHandler extends AbstractQueryHandler {
     Map<String, Object> param = new HashMap<>();
     param.put("cateIds", cateIds);
     param.put("type", type);
+    String text = QuestionType.byType(type).getText();
     try {
       LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMPAPERQUESTION");
       List<Map<String, Object>> list = (List<Map<String, Object>>) baseService.list(param);
-      if (list != null && list.size() > 0) {
-        if (list.size() < num) {
-          log.error("EXAMPAPERQUESTION   by   cateIds :" + cateIds + " size 等于" + list.size() + "数据不够");
-          rdList = list;
-        } else {
-          List<Integer> idxs = new ArrayList<>();
-          Random random = new Random();
-          do {
-            int idx = random.nextInt(list.size());
-            if (!idxs.contains(idx)) {
-              Map<String, Object> question = list.get(idx);
-              Map<String, Object> bean = new HashMap<>();
-              bean.put("name", question.get("name"));
-              bean.put("subjectCategoryId", question.get("subCategoryId"));
-              bean.put("id", question.get("id"));
-              bean.put("type", type);
-              bean.put("sort", sort);
-              bean.put("value", value);
-              rdList.add(bean);
-              idxs.add(idx);
-            }
-          } while (rdList.size() < num);
-          if (type == 1 || type == 2) {
-            rdList = settingChoices(rdList);
+      if (list == null || list.size() == 0) {
+        throw new GlobalErrorException("999665", "您" + text + "，选择的模块中试题数量为0，请重新选择模块");
+      }
+      if (list.size() < num) {
+        log.error("EXAMPAPERQUESTION   by   cateIds :" + cateIds + " size 等于" + list.size() + "数据不够");
+        throw new GlobalErrorException("999665", "您" + text + "，选择的模块中试题总数量为" + list.size() + "，请重新选择模块");
+      } else {
+        List<Integer> idxs = new ArrayList<>();
+        Random random = new Random();
+        do {
+          int idx = random.nextInt(list.size());
+          if (!idxs.contains(idx)) {
+            Map<String, Object> question = list.get(idx);
+            Map<String, Object> bean = new HashMap<>();
+            bean.put("name", question.get("name"));
+            bean.put("subjectCategoryId", question.get("subCategoryId"));
+            bean.put("id", question.get("id"));
+            bean.put("type", type);
+            bean.put("sort", sort);
+            bean.put("value", value);
+            rdList.add(bean);
+            idxs.add(idx);
           }
+        } while (rdList.size() < num);
+        if (type == 1 || type == 2) {
+          rdList = settingChoices(rdList);
         }
       }
     } catch (Exception e) {
-      //log
+      log.error(e.getMessage() + "随机试题时异常");
+      throw new GlobalErrorException("999664", e.getMessage());
     }
     return rdList;
   }

@@ -18,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -63,17 +64,17 @@ public class UserDeptService implements IBaseService {
 //查某一地区的应考人数
   @Override
   @TargetDataSource(value="hrupms")
-  public Object get(String deptCode) throws Exception {
-    Map<String,Object> userCountMap  = (Map<String, Object>) userDeptMapper.getCityChildTotalNumByDeptCode(deptCode);
+  public Object get(String deptId) throws Exception {
+    Map<String,Object> userCountMap  = (Map<String, Object>) userDeptMapper.getCityChildTotalNumByDeptId(deptId);
     return userCountMap;
   }
 
   @SuppressWarnings("unchecked")
-
+//查询地市
   @Override
   @TargetDataSource(value="hrupms")
   public Object list(Map<String, Object> map) throws Exception {
-      return userDeptMapper.getCitys();
+    return userDeptMapper.getCitys();
   }
 
   @Override
@@ -99,16 +100,13 @@ public class UserDeptService implements IBaseService {
     else
       return null;
   }
-
+//查询所有部门包括总队
   @Override
+  @TargetDataSource(value="hrupms")
   public Object findAll() throws Exception {
-    return null;
+    return userDeptMapper.getAllCitys();
   }
 
-
-  public Object findAll(String deptId) throws Exception {
-   return  null;
-  }
 
   @Override
   public Object getSequence(String seqName) throws Exception {

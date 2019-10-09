@@ -13,7 +13,6 @@ package com.nmghr.hander.mapper;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
-import org.omg.CORBA.OBJ_ADAPTER;
 
 import java.util.List;
 import java.util.Map;
@@ -50,9 +49,17 @@ public interface UserDeptMapper {
   select t.id deptId, t.depart_name deptName,t.area_code areaCode,t.depart_code deptCode,
 (select count(1) from u_user_depart_rel r where r.depart_id = t.id) as userCode from u_depart t where depart_code = #{deptCode} order by area_code;
    */
-  @Select("<script>select \n" +
-          "(select count(1) from u_user_depart_rel r where r.depart_id = t.id) as userCount from u_depart t where depart_code = #{deptCode} order by area_code </script>")
-  Map<String,Object> getCityChildTotalNumByDeptCode(@Param("deptCode") String deptCode);
+  @Select("<script>select t.depart_code as departCode,count(1) as totalNum from u_depart t \n" +
+          "inner join u_user_depart_rel r on r.depart_id = t.id where t.id = #{deptId}</script>")
+  Map<String,Object> getCityChildTotalNumByDeptId(@Param("deptId") String deptId);
+
+
+
+
+  @Select("<script>select t.id deptId, t.depart_name deptName,t.area_code areaCode,t.depart_code deptCode,\n" +
+          "          (select count(1) from u_user_depart_rel r where r.depart_id = t.id) as userCount,t.area_name as areaName from u_depart t  where t.parent_depart_id in\n" +
+          "           (1011,-1)  order by area_code</script>")
+  List<Map<String,Object>> getAllCitys();
 
 }
 
