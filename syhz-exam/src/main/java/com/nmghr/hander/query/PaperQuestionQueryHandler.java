@@ -127,7 +127,16 @@ public class PaperQuestionQueryHandler extends AbstractQueryHandler {
     // 保存考试信息
     setExamInfo(result, examInfo);
 
-    // 查询列表
+    //判断是否可以考试
+    Date endDate = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(String.valueOf(examInfo.get("endDate")));
+    Date startDate = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(String.valueOf(examInfo.get("startDate")));
+    if (endDate.before(new Date()) || startDate.after(new Date()) || "1".equals(String.valueOf(examInfo.get("examStatus")))) {
+      result.put("unable", true);
+    }else {
+      result.put("unable", false);
+    }
+
+    // 封装信息
     Map<String, Object> paramMap = new HashMap<>();
     paramMap.put("id", examInfo.get("paperId"));
     paramMap.put("paperName", examInfo.get("paperName"));
@@ -167,6 +176,7 @@ public class PaperQuestionQueryHandler extends AbstractQueryHandler {
       }
       int enableNum = Integer.parseInt(String.valueOf(param.get("permitNumber"))) - count;
       result.put("enableNum", enableNum >= 0 ? enableNum : 0);
+      result.put("unable", enableNum==0);
     }
     return result;
   }
