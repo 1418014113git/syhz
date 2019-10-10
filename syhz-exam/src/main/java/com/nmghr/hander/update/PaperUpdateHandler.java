@@ -46,10 +46,11 @@ public class PaperUpdateHandler extends AbstractUpdateHandler {
       Map<String, Object> params = new HashMap<String, Object>();
       params.put("paperName", requestBody.get("paperName"));
       params.put("paperType", requestBody.get("paperType"));
-      params.put("modifier", requestBody.get("modifier"));
+      params.put("modifier", requestBody.get("creator"));
 //      params.put("deptCode", requestBody.get("deptCode"));
 //      params.put("deptName", requestBody.get("deptName"));
       params.put("remark", JSONObject.toJSONString(requestBody.get("remark")));
+      params.put("sort", JSONObject.toJSONString(requestBody.get("sort")));
       // 修改试卷主表
       LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMPAPER");
       Object paperObj = baseService.update(id, params);
