@@ -6,11 +6,8 @@ import java.util.Map;
 
 import org.springframework.stereotype.Service;
 
-import com.github.pagehelper.Page;
-import com.github.pagehelper.PageHelper;
 import com.nmghr.basic.common.Constant;
 import com.nmghr.basic.core.common.LocalThreadStorage;
-import com.nmghr.basic.core.page.Paging;
 import com.nmghr.basic.core.service.IBaseService;
 import com.nmghr.basic.core.service.handler.impl.AbstractQueryHandler;
 import com.nmghr.util.SyhzUtil;
@@ -35,6 +32,8 @@ public class FractionLogQueryHandler extends AbstractQueryHandler {
 	}
 
 	public Object list(Map<String, Object> requestBody) throws Exception {
+		Map<String, Object> responseMap = new HashMap<String, Object>();
+
 		int pageNum = 1;
 		if (requestBody.get("pageNum") != null) {
 			pageNum = Integer.parseInt(requestBody.get("pageNum").toString());
@@ -47,21 +46,14 @@ public class FractionLogQueryHandler extends AbstractQueryHandler {
 		LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, ALIAS_FRACTIONLOG);
 		Map<String, Object> fraction = (Map<String, Object>) baseService.get(id);// 我的积分
 		Map<String, Object> param = new HashMap<String, Object>();
-		List<Map<String, Object>> systemRank = (List<Map<String, Object>>) baseService.list(param);// 总排行
+		responseMap.put("systemRank", baseService.page(param, pageNum, pageSize));
 		param.put("months", month);
-		List<Map<String, Object>> monthRank = (List<Map<String, Object>>) baseService.list(param);// 月排行
-
+		responseMap.put("monthRank", baseService.page(param, pageNum, pageSize));
 		param.put("userId", id);
 		LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, ALIAS_DAYFRACTIONLOG);
 		List<Map<String, Object>> dayFraction = (List<Map<String, Object>>) baseService.list(param);// 赚取积分
-		param.clear();
-		param.put("fraction", fraction);
-		Page page = PageHelper.startPage(pageNum, pageSize);
-		LocalThreadStorage.put(Constant.CONTROLLER_PAGE_TOTALCOUNT, systemRank.size());
-		param.put("systemRank", new Paging(pageSize, pageNum, systemRank.size(), systemRank));
-		LocalThreadStorage.put(Constant.CONTROLLER_PAGE_TOTALCOUNT, monthRank.size());
-		param.put("monthRank", new Paging(pageSize, pageNum, monthRank.size(), monthRank));
-		param.put("dayFraction", dayFraction);
-		return param;
+		responseMap.put("fraction", fraction);
+		responseMap.put("dayFraction", dayFraction);
+		return responseMap;
 	}
 }
