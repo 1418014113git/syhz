@@ -85,8 +85,6 @@ public class ExaminationController {
     if(!"1".equals(String.valueOf(requestBody.get("status")))) {
       // 校验表单数据
       validParams(2, requestBody);
-
-
       Result checkResult = (Result) checkExamination(requestBody);
       if (checkResult != null && !checkResult.isSuccess()) {
         //返回false
@@ -104,7 +102,6 @@ public class ExaminationController {
     return Result.ok(examinationId);
   }
 
-
   @GetMapping("checkexamination")
   public Object checkExamination(@RequestParam Map<String, Object> requestBody) throws Exception {
     ValidationUtils.notNull(requestBody.get("id"), "考试Id不能为空!");
@@ -116,7 +113,6 @@ public class ExaminationController {
     //无异常
     return Result.ok(null);
   }
-
   @DeleteMapping("delete")
   public Object delete(@RequestParam Map<String, Object> requestBody) throws Exception {
     // 校验表单数据
@@ -197,11 +193,14 @@ public class ExaminationController {
 
       if(scoreList!=null && scoreList.size() > 0){
         for (Map<String, Object> score : scoreList) {
-          Timestamp start = (Timestamp) score.get("startTime");
-          Timestamp end = (Timestamp) score.get("endTime");
-          SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-          String dateStr = DateUtil.printDifference(sdf.format(start), sdf.format(end));
-          score.put("dateStr",dateStr);
+            String start = String.valueOf(score.get("startTime"));
+            String end = String.valueOf(score.get("endTime"));
+          //String dateStr = "";
+           if(end == null || end.equals("null")){
+             score.put("dateStr","--");
+           }else{
+             score.put("dateStr",DateUtil.printDifference(start,end));
+           }
         }
         return  scoreList;
       }
@@ -218,7 +217,6 @@ public class ExaminationController {
     if (pageSize == null) {
         pageSize = 10;
     }
-
     //查询到已经参加考试的记录信息
     LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMINATIONLIST");
     Paging obj = (Paging) baseService.page(requestBody, currentPage, pageSize);
@@ -235,9 +233,50 @@ public class ExaminationController {
         map.put("startTime", timeNumber);
       }
     }
+
     //无异常
     return Result.ok(obj);
   }
+
+   /*
+ 考试列表
+  */
+  @ResponseBody
+  @GetMapping("findAllExamination")
+  public Object findAllExam(@RequestParam Map<String, Object> requestParam) throws Exception {
+
+    int pageNum = 1, pageSize = 15;
+    if (requestParam.get("pageNum") != null && !"".equals(String.valueOf(requestParam.get("pageNum")).trim())) {
+      pageNum = Integer.parseInt(String.valueOf(requestParam.get("pageNum")));
+    }
+    if (requestParam.get("pageSize") != null && !"".equals(String.valueOf(requestParam.get("pageSize")).trim())) {
+      pageSize = Integer.parseInt(String.valueOf(requestParam.get("pageSize")));
+    }
+    //ValidationUtils.notNull(requestParam.get("deptCode"), "部门Id!");
+    ArrayList<String> deptCodesArr = new ArrayList<>();
+
+    String deptCode = (String) requestParam.get("deptCode");
+    deptCodesArr.add(deptCode);
+    Map<String,Object> par = new HashMap<>();
+    par.put("deptCode",deptCode);
+    //根据deptCode查询子部门
+    List<Map<String,Object>> childDept = (List<Map<String, Object>>) userdeptService.save(par);
+    //获取子部门的部门编号
+    if(childDept!=null && childDept.size() > 0) {
+      for (Map<String, Object> child : childDept) {
+        if (child.get("deptCode") != null) {
+          deptCodesArr.add(String.valueOf(child.get("deptCode")));
+        }
+      }
+    }
+    String deptCodes = StringUtils.collectionToDelimitedString(deptCodesArr, ",");
+    requestParam.put("deptCodes",deptCodes);
+    LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMINATION");
+
+      Paging paging = (Paging) baseService.page(requestParam,pageNum,pageSize);
+      return paging;
+  }
+
   private void validParams(int status, Map<String, Object> requestBody) {
 
 
