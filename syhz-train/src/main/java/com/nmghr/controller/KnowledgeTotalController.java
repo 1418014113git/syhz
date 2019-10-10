@@ -44,7 +44,12 @@ public class KnowledgeTotalController {
 			List<Map<String, Object>> cityCodeList = (List<Map<String, Object>>) GetCityCodeService.get("1");
 			for (Map<String, Object> city : cityCodeList) {
 				String cityCode = String.valueOf(city.get("areaCode"));
-				city.put("areaCode", cityCode.substring(0, 4));
+				if ("610403".equals(cityCode)) {
+					city.put("areaCodeSpe", cityCode);
+
+				} else {
+					city.put("areaCode", cityCode.substring(0, 4));
+				}
 				LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, ALIAS_KNOWLEDGETOTAL);
 				map.putAll(city);
 				Map<String, Object> cityTotal = (Map<String, Object>) baseService.get(map);
@@ -106,7 +111,11 @@ public class KnowledgeTotalController {
 			List<Map<String, Object>> cityCodeList = (List<Map<String, Object>>) GetCityCodeService.get("1");
 			for (Map<String, Object> city : cityCodeList) {
 				String cityCode = String.valueOf(city.get("areaCode"));
-				city.put("areaCode", cityCode.substring(0, 4));
+				if ("610403".equals(cityCode)) {
+					city.put("areaCodeSpe", cityCode);
+				} else {
+					city.put("areaCode", cityCode.substring(0, 4));
+				}
 				LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, ALIAS_KNOWLEDGEUSETOTAL);
 				map.putAll(city);
 				Map<String, Object> cityTotal = (Map<String, Object>) baseService.get(map);
@@ -137,7 +146,12 @@ public class KnowledgeTotalController {
 			List<Map<String, Object>> cityCodeList = (List<Map<String, Object>>) GetCityCodeService.get("1");
 			for (Map<String, Object> city : cityCodeList) {
 				String cityCode = String.valueOf(city.get("areaCode"));
-				city.put("areaCode", cityCode.substring(0, 4));
+				if ("610403".equals(cityCode)) {
+					city.put("areaCodeSpe", cityCode);
+
+				} else {
+					city.put("areaCode", cityCode.substring(0, 4));
+				}
 				LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, ALIAS_TRAINCOURSELOGSTATISTICS);
 				map.putAll(city);
 				Map<String, Object> cityTotal = (Map<String, Object>) baseService.get(map);
