@@ -11,11 +11,14 @@ package com.nmghr.controller;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.nmghr.service.UserDeptService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -51,6 +54,9 @@ public class ExaminationController {
   @Autowired
   @Qualifier("baseService")
   private IBaseService baseService;
+  @Autowired
+  @Qualifier("userdeptService")
+  private UserDeptService userdeptService;
 
 
   @PostMapping("save")
@@ -174,7 +180,34 @@ public class ExaminationController {
       }
     }
     return paging;
+    //return  scoreList;
   }
+
+
+  /*
+   所有成绩列表无分页
+    */
+  @ResponseBody
+  @GetMapping("allscorelistnopage")
+  public Object allScoreListNoPage(@RequestParam Map<String, Object> requestParam) throws Exception {
+
+    ValidationUtils.notNull(requestParam.get("id"), "考试Id不能为空!");
+    LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMSCORELISTALL");
+    List<Map<String,Object>> scoreList = (List<Map<String, Object>>) baseService.list(requestParam);
+
+      if(scoreList!=null && scoreList.size() > 0){
+        for (Map<String, Object> score : scoreList) {
+          Timestamp start = (Timestamp) score.get("startTime");
+          Timestamp end = (Timestamp) score.get("endTime");
+          SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+          String dateStr = DateUtil.printDifference(sdf.format(start), sdf.format(end));
+          score.put("dateStr",dateStr);
+        }
+        return  scoreList;
+      }
+    return new ArrayList<>();
+  }
+
   @PostMapping("examinationList")
   public Object examinationList(@RequestBody Map<String, Object> requestBody) throws Exception {
     Integer currentPage = (Integer) requestBody.get("pageNum");

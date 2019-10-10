@@ -36,13 +36,20 @@ public class UserDeptService implements IBaseService {
   @Resource
   UserDeptMapper userDeptMapper;
 
+
   @Override
+  @TargetDataSource(value="hrupms")
   public Object save(Map<String, Object> requestMap) throws Exception {
-    return null;
+    if (requestMap.get("deptCode") == null) {
+      return Result.fail("880088", "父级部门编号不能为空");
+    }
+    return userDeptMapper.getChildByDeptCode(String.valueOf(requestMap.get("deptCode")));
   }
 
   @Override
   public Object update(String id, Map<String, Object> requestBody) throws Exception {
+
+
     return null;
   }
 
