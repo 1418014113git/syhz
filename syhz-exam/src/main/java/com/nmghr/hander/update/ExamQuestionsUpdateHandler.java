@@ -44,7 +44,7 @@ public class ExamQuestionsUpdateHandler extends AbstractUpdateHandler {
                 checkRepeatMap.put("subjectCategoryId", requestBody.get("subjectCategoryId"));
                 List<Map<String, Object>> list = (List<Map<String, Object>>) baseService.list(checkRepeatMap);
                 if (list != null && list.size() > 0) {
-                    if(!(list.get(0).get("id").equals(id)))
+                    if(!(String.valueOf(list.get(0).get("id")).equals(id)))
                     throw new GlobalErrorException("998001", "试题名称重复!");
                 }
             }
@@ -56,12 +56,10 @@ public class ExamQuestionsUpdateHandler extends AbstractUpdateHandler {
                 checkRepeatMap.put("subjectCategoryId", requestBody.get("subjectCategoryId"));
                 List<Map<String, Object>> list = (List<Map<String, Object>>) baseService.list(checkRepeatMap);
                 if (list != null && list.size() > 0) {
-                    throw new GlobalErrorException("998001", "试题名称重复!");
+                    if(!(String.valueOf(list.get(0).get("id")).equals(id)))
+                        throw new GlobalErrorException("998001", "试题名称重复!");
                 }
-
             }
-
-
             //更新选择题
             LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMCHOICES");
             Object updateInfo = baseService.update(id,requestBody);
@@ -87,11 +85,33 @@ public class ExamQuestionsUpdateHandler extends AbstractUpdateHandler {
         }
         else{
                 if("3".equals(String.valueOf(requestBody.get("type")))) {
+                    //检查试题名称是否重复,填空
+                    LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMFILLGAPSBYSUB");
+                    Map<String, Object> checkRepeatMap = new HashMap<>();
+                    checkRepeatMap.put("subjectName", String.valueOf(requestBody.get("subjectName")));
+                    checkRepeatMap.put("subjectCategoryId", requestBody.get("subjectCategoryId"));
+                    List<Map<String, Object>> list = (List<Map<String, Object>>) baseService.list(checkRepeatMap);
+                    if (list != null && list.size() > 0) {
+                        if(!(String.valueOf(list.get(0).get("id")).equals(id)))
+                            throw new GlobalErrorException("998001", "试题名称重复!");
+                    }
+
                     LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMFILLGAPS");
                     Object updateInfo = baseService.update(id,requestBody);
                     return updateInfo;
                 }
                 if("4".equals(String.valueOf(requestBody.get("type")))) {
+
+                    //检查试题名称是否重复,判断
+                    LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMJUDGEBYSUB");
+                    Map<String, Object> checkRepeatMap = new HashMap<>();
+                    checkRepeatMap.put("subjectName", String.valueOf(requestBody.get("subjectName")));
+                    checkRepeatMap.put("subjectCategoryId", requestBody.get("subjectCategoryId"));
+                    List<Map<String, Object>> list = (List<Map<String, Object>>) baseService.list(checkRepeatMap);
+                    if (list != null && list.size() > 0) {
+                        if(!(String.valueOf(list.get(0).get("id")).equals(id)))
+                            throw new GlobalErrorException("998001", "试题名称重复!");
+                    }
                     LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMJUDGE");
                     Object updateInfo = baseService.update(id,requestBody);
                     return updateInfo;
@@ -99,6 +119,19 @@ public class ExamQuestionsUpdateHandler extends AbstractUpdateHandler {
                 if("5".equals(String.valueOf(requestBody.get("type")))
                         ||"6".equals(String.valueOf(requestBody.get("type")))
                         ||"7".equals(String.valueOf(requestBody.get("type")))) {
+
+                    //检查试题名称是否重复,简答论述案例分析
+                    LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMDISCUSSBYSUBANDTYPE");
+                    Map<String, Object> checkRepeatMap = new HashMap<>();
+                    checkRepeatMap.put("subjectName", String.valueOf(requestBody.get("subjectName")));
+                    checkRepeatMap.put("subjectCategoryId", requestBody.get("subjectCategoryId"));
+                    checkRepeatMap.put("type",requestBody.get("type"));
+                    List<Map<String, Object>> list = (List<Map<String, Object>>) baseService.list(checkRepeatMap);
+                    if (list != null && list.size() > 0) {
+                        if(!(String.valueOf(list.get(0).get("id")).equals(id)))
+                            throw new GlobalErrorException("998001", "试题名称重复!");
+                    }
+
                 LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMDISCUSS");
                 Object updateInfo = baseService.update(id,requestBody);
                 return updateInfo;
@@ -138,6 +171,9 @@ public class ExamQuestionsUpdateHandler extends AbstractUpdateHandler {
         }
         if(requestBody.get("subjectName") == null || "".equals(requestBody.get("subjectName"))){
             throw new GlobalErrorException("998001", "请输入题目内容!");
+        }
+        if(requestBody.get("subjectCategoryId") == null || "".equals(requestBody.get("subjectCategoryId"))){
+            throw new GlobalErrorException("998001", "模块Id不能为空!");
         }
         if(requestBody.get("creator") == null || "".equals(requestBody.get("creator"))){
             throw new GlobalErrorException("998001", "创建人不能为空!");

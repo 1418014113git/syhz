@@ -33,8 +33,8 @@ import java.util.Map;
  * <功能描述/> 考试管理
  *
  * @author wangpengwei
- * @date 2019年9月24日 下午4:44:51
  * @version 1.0
+ * @date 2019年9月24日 下午4:44:51
  */
 @RestController
 @RequestMapping("/examination")
@@ -86,7 +86,7 @@ public class ExaminationStatisticsController {
                     //查到实考人员
                     examination.put("realNum", userScoreList.size());
                     //根据考试统计，确定考试对应人的成绩状态：优、良、中、差
-                    List<UserScoreInfo> list = statisticsUser(userScoreList, examination,scoreCodeList);
+                    List<UserScoreInfo> list = statisticsUser(userScoreList, examination, scoreCodeList);
                     allPersons.addAll(list);
                 } else {
                     examination.put("realNum", 0);
@@ -131,23 +131,57 @@ public class ExaminationStatisticsController {
                         //查到实考人员
                         examination.put("realNum", userScoreList.size());
                         //根据考试统计，确定单场考试对应人的成绩状态：优、良、中、差（Id确定的某次考试）
-                        List<UserScoreInfo> list = statisticsUser(userScoreList, examination,scoreCodeList);
+                        List<UserScoreInfo> list = statisticsUser(userScoreList, examination, scoreCodeList);
                         allPersons.addAll(list);
                     }
                 }
             }
-            List<Map<String, Object>> cityList = statisticsUserByCity(allPersons,String.valueOf(requestParam.get("examinationIds")));
+            List<Map<String, Object>> cityList = statisticsUserByCity(allPersons, String.valueOf(requestParam.get("examinationIds")));
             return cityList;
-        }else
-            {
+        } else {
             return new ArrayList<>();
         }
     }
 
 
+    @GetMapping("statisticsIndex")
+    public Object statisticsIndex(@RequestParam Map<String, Object> requestParam) throws Exception {
 
-    private List<Map<String, Object>> statisticsUserByCity(List<UserScoreInfo> info,String examinationIds) throws Exception {
-        List<Map<String,Object>> childCityList = new ArrayList<>();
+        List<Map<String, Object>> allscores = new ArrayList<>();
+        //查所有考试
+        LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMSTATISTICS");
+        List<Map<String, Object>> examinationList = (List<Map<String, Object>>) baseService.list(requestParam);
+        //取当前考试
+        if (examinationList != null && examinationList.size() > 0) {
+            for (Map<String, Object> examination : examinationList) {
+                //查应考人数
+                if (examination != null) {
+                    String openDepts = (String) examination.get("openDepts");
+                    Map<String, Object> totalNumParMap = new HashMap<>();
+                    totalNumParMap.put("depts", openDepts);
+                    Object totalNum = userdeptService.get(totalNumParMap);
+                    if (totalNum != null) {
+                        examination.put("totalNum", totalNum);
+                    }
+                    LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMUSERSCORE");
+                    Map<String, Object> para = new HashMap<>();
+                    para.put("examId", examination.get("examinationId"));
+                    List<Map<String, Object>> userScoreList = (List<Map<String, Object>>) baseService.list(para);
+                    if (userScoreList != null && userScoreList.size() > 0) {
+                        allscores.addAll(userScoreList);
+                    }
+                }
+            }
+            List<Map<String, Object>> cityList = statisticsIndexByCity(allscores, examinationList);
+            return cityList;
+        } else {
+            return new ArrayList<>();
+        }
+    }
+
+
+    private List<Map<String, Object>> statisticsUserByCity(List<UserScoreInfo> info, String examinationIds) throws Exception {
+        List<Map<String, Object>> childCityList = new ArrayList<>();
         Integer yscore = 0;
         Integer lscore = 0;
         Integer zscore = 0;
@@ -155,9 +189,9 @@ public class ExaminationStatisticsController {
         Integer realNum = 0;
         //所有考试的开放部门
         LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMCHILDCITYSBYEXAMID");
-        Map<String,Object> param = new HashMap<>();
-        param.put("examinationIds",examinationIds);
-        Map<String,Object> depts = (Map<String, Object>) baseService.get(param);
+        Map<String, Object> param = new HashMap<>();
+        param.put("examinationIds", examinationIds);
+        Map<String, Object> depts = (Map<String, Object>) baseService.get(param);
         String deptsStr = (String) depts.get("depts");
         String[] deptArr = deptsStr.split(",");
 
@@ -166,36 +200,33 @@ public class ExaminationStatisticsController {
             map.put(str, str);
         }
         //返回一个包含所有对象的指定类型的数组
-        String[] newArrStr =  map.keySet().toArray(new String[1]);
+        String[] newArrStr = map.keySet().toArray(new String[1]);
 
         //Map<String,Object> map = new HashMap<String,Object>();
-
         //考试的人
-        List<Map<String,Object>> cityList = (List<Map<String, Object>>) getCitys();
+        List<Map<String, Object>> cityList = (List<Map<String, Object>>) getCitys();
 
-        if(CollectionUtils.isNotEmpty(cityList)){
+        if (CollectionUtils.isNotEmpty(cityList)) {
             for (Map<String, Object> city : cityList) {
                 String deptId = String.valueOf(city.get("deptId"));
                 Map<String, Object> cityChildMap = new HashMap<>();
                 cityChildMap.put("cityId", deptId);
                 List<Map<String, Object>> cityChildList = (List<Map<String, Object>>) userdeptService.page(cityChildMap, 0, 0);
-
                 //去重deptId
 //                LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMDISTINCTDEPTID");
 //                Map<String,Object> deptIds = new HashMap<>();
 //                deptIds.put("deptStr",deptsStr);
                 //List<Map<String,Object>> childDpetIds = (List<Map<String, Object>>) baseService.list(deptIds);
 
-                for (int i = 0;i < newArrStr.length;i++ ) {
-
+                for (int i = 0; i < newArrStr.length; i++) {
                     //查当前去重后的子部门
-                    Map<String,Object> childDept = (Map<String, Object>) userdeptService.get(newArrStr[i]);
+                    Map<String, Object> childDept = (Map<String, Object>) userdeptService.get(newArrStr[i]);
                     //查到去重后应考部门及人数
                     for (Map<String, Object> childCity : cityChildList) {
                         //查该部门应考人数
                         int totalNum = 0;
 
-                        if(childDept.get("departCode") !=null && childDept.get("departCode").equals(childCity.get("deptCode"))){
+                        if (childDept.get("departCode") != null && childDept.get("departCode").equals(childCity.get("deptCode"))) {
                             totalNum = Integer.valueOf(String.valueOf(childDept.get("totalNum")));
                         }
                         yscore = 0;
@@ -204,19 +235,19 @@ public class ExaminationStatisticsController {
                         cscore = 0;
                         realNum = 0;
                         for (UserScoreInfo scoreInfo : info) {
-                            if(childCity.get("deptCode").equals(scoreInfo.getDeptCode())){
+                            if (childCity.get("deptCode").equals(scoreInfo.getDeptCode())) {
                                 realNum++;
                             }
-                            if(childCity.get("deptCode").equals(scoreInfo.getDeptCode()) && "1".equals(scoreInfo.getFlag())) {
+                            if (childCity.get("deptCode").equals(scoreInfo.getDeptCode()) && "1".equals(scoreInfo.getFlag())) {
                                 yscore++;
                             }
-                            if(childCity.get("deptCode").equals(scoreInfo.getDeptCode()) && "2".equals(scoreInfo.getFlag())) {
+                            if (childCity.get("deptCode").equals(scoreInfo.getDeptCode()) && "2".equals(scoreInfo.getFlag())) {
                                 lscore++;
                             }
-                            if(childCity.get("deptCode").equals(scoreInfo.getDeptCode()) && "3".equals(scoreInfo.getFlag())) {
+                            if (childCity.get("deptCode").equals(scoreInfo.getDeptCode()) && "3".equals(scoreInfo.getFlag())) {
                                 zscore++;
                             }
-                            if(childCity.get("deptCode").equals(scoreInfo.getDeptCode()) && "4".equals(scoreInfo.getFlag())) {
+                            if (childCity.get("deptCode").equals(scoreInfo.getDeptCode()) && "4".equals(scoreInfo.getFlag())) {
                                 cscore++;
                             }
 
@@ -225,57 +256,106 @@ public class ExaminationStatisticsController {
                         childCity.put("l", lscore);
                         childCity.put("z", zscore);
                         childCity.put("c", cscore);
-                        childCity.put("realNum",realNum);
-                        childCity.put("totalNum",totalNum);
+                        childCity.put("realNum", realNum);
+                        childCity.put("totalNum", totalNum);
                     }
-
                 }
-                city.put("child",cityChildList);
-                }
+                city.put("child", cityChildList);
             }
+        }
         return cityList;
-}
+    }
+    //首页统计
+    private List<Map<String, Object>> statisticsIndexByCity(List<Map<String, Object>> info, List<Map<String, Object>> examinationList) throws Exception {
+        //select max(r.score + r.artificial_score) as totalScore,user_id as userId,dept_code as deptCode
+        List<Map<String, Object>> childCityList = new ArrayList<>();
+        int realNum = 0;
+        int examCount = 0;
+        int cityRealNum = 0;
+        int cityExamCount = 0;
+        //查所有地区,包括省厅
+        //List<Map<String, Object>> cityList = (List<Map<String, Object>>) getCitys();
+        List<Map<String, Object>> cityList = (List<Map<String, Object>>) getAllCitys();
 
-private int judgeRange(Long score,List<Map<String, Object>> scoreCodeList) throws Exception {
+        if (CollectionUtils.isNotEmpty(cityList)) {
+            for (Map<String, Object> city : cityList) {
+                cityRealNum = 0;
+                cityExamCount = 0;
 
-    Integer yscore = 0;
-    Integer lscore = 0;
-    Integer zscore = 0;
-    Integer cscore = 0;
+                String deptId = String.valueOf(city.get("deptId"));
+                Map<String, Object> cityChildMap = new HashMap<>();
+                cityChildMap.put("cityId", deptId);
+                List<Map<String, Object>> cityChildList = (List<Map<String, Object>>) userdeptService.page(cityChildMap, 0, 0);
 
-    //获取分数等级
-    for (Map<String, Object> scoreRange : scoreCodeList) {
-        if ("1".equals(String.valueOf(scoreRange.get("scoreRange")))) {
-            yscore = Integer.valueOf(String.valueOf(scoreRange.get("code")));
+                for (Map<String, Object> childCity : cityChildList) {
+                    realNum = 0;
+                    examCount = 0;
+                    for (Map<String, Object> scoreInfo : info) {
+                        if (String.valueOf(childCity.get("deptCode")).equals(String.valueOf(scoreInfo.get("deptCode")))) {
+                            realNum++;
+                        }
+                    }
+                    for (Map<String, Object> examination : examinationList) {
+                        String examDeptCode = (String) examination.get("deptCode");
+                        if (childCity.get("deptCode").equals(examDeptCode)) {
+                            examCount++;
+                        }
+                    }
+                    childCity.put("realNum", realNum);
+                    childCity.put("examCount", examCount);
+                    cityRealNum+=realNum;
+                    cityExamCount+=examCount;
+                }
+                //city.put("child", cityChildList);
+
+                city.put("examCount",cityExamCount);
+                city.put("realNum",cityRealNum);
+
+            }
         }
-        if ("2".equals(String.valueOf(scoreRange.get("scoreRange")))) {
-            lscore = Integer.valueOf(String.valueOf(scoreRange.get("code")));
-        }
-        if ("3".equals(String.valueOf(scoreRange.get("scoreRange")))) {
-            zscore = Integer.valueOf(String.valueOf(scoreRange.get("code")));
-        }
-        if ("4".equals(String.valueOf(scoreRange.get("scoreRange")))) {
-            cscore = Integer.valueOf(String.valueOf(scoreRange.get("code")));
-        }
+        return cityList;
     }
 
-    if (score >= yscore) {
-       return 1;
+    private int judgeRange(Long score, List<Map<String, Object>> scoreCodeList) throws Exception {
+
+        Integer yscore = 0;
+        Integer lscore = 0;
+        Integer zscore = 0;
+        Integer cscore = 0;
+
+        //获取分数等级
+        for (Map<String, Object> scoreRange : scoreCodeList) {
+            if ("1".equals(String.valueOf(scoreRange.get("scoreRange")))) {
+                yscore = Integer.valueOf(String.valueOf(scoreRange.get("code")));
+            }
+            if ("2".equals(String.valueOf(scoreRange.get("scoreRange")))) {
+                lscore = Integer.valueOf(String.valueOf(scoreRange.get("code")));
+            }
+            if ("3".equals(String.valueOf(scoreRange.get("scoreRange")))) {
+                zscore = Integer.valueOf(String.valueOf(scoreRange.get("code")));
+            }
+            if ("4".equals(String.valueOf(scoreRange.get("scoreRange")))) {
+                cscore = Integer.valueOf(String.valueOf(scoreRange.get("code")));
+            }
+        }
+
+        if (score >= yscore) {
+            return 1;
+        }
+        if (score >= lscore && score < yscore) {
+            return 2;
+        }
+        if (score >= zscore && score < lscore) {
+            return 3;
+        }
+        if (score <= cscore) {
+            return 4;
+        }
+        return -1;
     }
-    if (score >= lscore && score < yscore) {
-       return 2;
-    }
-    if (score >= zscore && score < lscore) {
-        return 3;
-    }
-    if (score <= cscore) {
-        return 4;
-    }
-    return  -1;
-}
 
     //统计id确定的一场考试的人
-    private List<UserScoreInfo> statisticsUser(List<Map<String, Object>> userScoreList, Map<String, Object> examination,List<Map<String, Object>> scoreCodeList) throws Exception {
+    private List<UserScoreInfo> statisticsUser(List<Map<String, Object>> userScoreList, Map<String, Object> examination, List<Map<String, Object>> scoreCodeList) throws Exception {
 
         Integer ycount = 0;
         Integer lcount = 0;
@@ -287,20 +367,20 @@ private int judgeRange(Long score,List<Map<String, Object>> scoreCodeList) throw
         for (Map<String, Object> userScore : userScoreList) {
             UserScoreInfo info = new UserScoreInfo();
             Long totalScore = (Long) userScore.get("totalScore");
-            info.setDeptCode(userScore.get("deptCode") +"");
-            if (Long.valueOf(judgeRange(totalScore,scoreCodeList)) == 1) {
+            info.setDeptCode(userScore.get("deptCode") + "");
+            if (Long.valueOf(judgeRange(totalScore, scoreCodeList)) == 1) {
                 info.setFlag("1");
                 ycount++;
             }
-            if (Long.valueOf(judgeRange(totalScore,scoreCodeList)) == 2) {
+            if (Long.valueOf(judgeRange(totalScore, scoreCodeList)) == 2) {
                 lcount++;
                 info.setFlag("2");
             }
-            if (Long.valueOf(judgeRange(totalScore,scoreCodeList)) == 3) {
+            if (Long.valueOf(judgeRange(totalScore, scoreCodeList)) == 3) {
                 zcount++;
                 info.setFlag("3");
             }
-            if (Long.valueOf(judgeRange(totalScore,scoreCodeList)) == 4) {
+            if (Long.valueOf(judgeRange(totalScore, scoreCodeList)) == 4) {
                 info.setFlag("4");
                 ccount++;
             }
@@ -312,19 +392,25 @@ private int judgeRange(Long score,List<Map<String, Object>> scoreCodeList) throw
         }
         return userInfoList;
     }
-    //查西安所有地区
-    @TargetDataSource(value="hrupms")
+    //查所有地市
+    @TargetDataSource(value = "hrupms")
     private Object getCitys() throws Exception {
-        List<Map<String,Object>> cityList = (List<Map<String, Object>>) userdeptService.list(null);
+        List<Map<String, Object>> cityList = (List<Map<String, Object>>) userdeptService.list(null);
+        return cityList;
+    }
+
+    //查所有地市包括总队
+    @TargetDataSource(value = "hrupms")
+    private Object getAllCitys() throws Exception {
+        List<Map<String, Object>> cityList = (List<Map<String, Object>>) userdeptService.findAll();
         return cityList;
     }
 
     private List<Map<String, Object>> getScoreRange() throws Exception {
         //查编码表
         LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "SCORERANGE");
-        Map<String,Object> para = new HashMap<>();
-        List<Map<String,Object>> scoreCodeList = (List<Map<String, Object>>) baseService.list(para);
+        Map<String, Object> para = new HashMap<>();
+        List<Map<String, Object>> scoreCodeList = (List<Map<String, Object>>) baseService.list(para);
         return scoreCodeList;
     }
-
 }
