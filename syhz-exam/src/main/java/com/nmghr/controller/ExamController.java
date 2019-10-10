@@ -268,9 +268,6 @@ public class ExamController {
     }
 
     for (Map<String, Object> map : list) {
-      if (map.get("answerId") == null || "".equals(String.valueOf(map.get("answerId")).trim())) {
-        return Result.fail("999998", "answerId不能为空");
-      }
       if (map.get("questionsId") == null || "".equals(String.valueOf(map.get("questionsId")).trim())) {
         return Result.fail("999998", "questionsId不能为空");
       }

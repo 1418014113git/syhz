@@ -113,7 +113,7 @@ public class SubjectCategoryController {
    */
   @SuppressWarnings("unchecked")
   @DeleteMapping("/delete")
-  public Object detail(@RequestParam Map<String, Object> requestBody) throws Exception {
+  public Object delete(@RequestParam Map<String, Object> requestBody) throws Exception {
     //校验表单数据
     validId(requestBody.get("id"));
     Map<String, Object> param = new HashMap<>();
