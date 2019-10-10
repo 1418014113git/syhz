@@ -41,19 +41,16 @@ public interface UserDeptMapper {
   @Select("<script> select t.id deptId,t.parent_depart_id parentId, t.depart_name deptName,t.area_code areaCode,t.depart_code deptCode from u_depart t where t.parent_depart_id = #{deptId}</script>")
   List<Map<String,Object>> getCityChild(@Param("deptId") String deptId);
 
+  @Select("<script> select t.id deptId,t.parent_depart_id parentId,t.parent_depart_code parentCode, t.depart_name deptName,t.area_code areaCode,t.depart_code deptCode from u_depart t where t.parent_depart_code = #{deptCode}</script>")
+  List<Map<String,Object>> getChildByDeptCode(@Param("deptCode") String deptCode);
+
 
   /*
   查某一地区的应考人数
-   */
-  /*
-  select t.id deptId, t.depart_name deptName,t.area_code areaCode,t.depart_code deptCode,
-(select count(1) from u_user_depart_rel r where r.depart_id = t.id) as userCode from u_depart t where depart_code = #{deptCode} order by area_code;
-   */
+  */
   @Select("<script>select t.depart_code as departCode,count(1) as totalNum from u_depart t \n" +
           "inner join u_user_depart_rel r on r.depart_id = t.id where t.id = #{deptId}</script>")
   Map<String,Object> getCityChildTotalNumByDeptId(@Param("deptId") String deptId);
-
-
 
 
   @Select("<script>select t.id deptId, t.depart_name deptName,t.area_code areaCode,t.depart_code deptCode,\n" +
