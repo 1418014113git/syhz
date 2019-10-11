@@ -248,13 +248,16 @@ public class ExaminationStatisticsController {
                         cityChildMap.put("cityId", deptId);
                         cityChildMap.put("areaName", areaName);
                         List<Map<String, Object>> cityChildList = (List<Map<String, Object>>) userdeptService.page(cityChildMap, 0, 0);
-                        for (int i = 0; i < newArrStr.length; i++) {
-                            //查开放部门的及应考人数 子部门
-                            Map<String, Object> childDept = (Map<String, Object>) userdeptService.get(newArrStr[i]);
+
+
                             for (Map<String, Object> childCity : cityChildList) {
                                 int totalNum = 0;
-                                if (childDept.get("departCode") != null && childDept.get("departCode").equals(childCity.get("deptCode"))) {
-                                    totalNum = Integer.valueOf(String.valueOf(childDept.get("totalNum")));
+                                for (int i = 0; i < newArrStr.length; i++) {
+                                    //查开放部门的及应考人数 子部门
+                                    Map<String, Object> childDept = (Map<String, Object>) userdeptService.get(newArrStr[i]);
+                                    if (childDept.get("departCode") != null && childDept.get("departCode").equals(childCity.get("deptCode"))) {
+                                        totalNum = Integer.valueOf(String.valueOf(childDept.get("totalNum")));
+                                    }
                                 }
                                 yscore = 0;
                                 lscore = 0;
@@ -284,7 +287,7 @@ public class ExaminationStatisticsController {
                                 childCity.put("c", cscore);
                                 childCity.put("realNum", realNum);
                                 childCity.put("totalNum", totalNum);
-                            }
+
                         }
                         Map<String, Object> self = new HashMap<>();
                         self.put("deptName", city.get("deptName"));
@@ -330,7 +333,6 @@ public class ExaminationStatisticsController {
                 String deptId = String.valueOf(city.get("deptId"));
                 String areaName = String.valueOf(city.get("areaName"));
                 if (!"null".equals(deptId) && !"null".equals(areaName)) {
-
                     Map<String, Object> cityChildMap = new HashMap<>();
                     cityChildMap.put("cityId", deptId);
                     cityChildMap.put("areaName", areaName);
