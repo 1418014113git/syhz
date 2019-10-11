@@ -304,14 +304,13 @@ public class ExaminationStatisticsController {
     }
     //首页统计
     private List<Map<String, Object>> statisticsIndexByCity(List<Map<String, Object>> info, List<Map<String, Object>> examinationList) throws Exception {
-        //select max(r.score + r.artificial_score) as totalScore,user_id as userId,dept_code as deptCode
+
         List<Map<String, Object>> childCityList = new ArrayList<>();
         int realNum = 0;
         int examCount = 0;
         int cityRealNum = 0;
         int cityExamCount = 0;
         //查所有地区,包括省厅
-        //List<Map<String, Object>> cityList = (List<Map<String, Object>>) getCitys();
         List<Map<String, Object>> cityList = (List<Map<String, Object>>) getAllCitys();
         if (CollectionUtils.isNotEmpty(cityList)) {
             for (Map<String, Object> city : cityList) {
@@ -328,33 +327,36 @@ public class ExaminationStatisticsController {
                         cityExamCount++;
                     }
                 }
-
                 String deptId = String.valueOf(city.get("deptId"));
-                Map<String, Object> cityChildMap = new HashMap<>();
-                cityChildMap.put("cityId", deptId);
-                List<Map<String, Object>> cityChildList = (List<Map<String, Object>>) userdeptService.page(cityChildMap, 0, 0);
+                String areaName = String.valueOf(city.get("areaName"));
+                if (!"null".equals(deptId) && !"null".equals(areaName)) {
 
-                for (Map<String, Object> childCity : cityChildList) {
-                    realNum = 0;
-                    examCount = 0;
-                    for (Map<String, Object> scoreInfo : info) {
-                        if (String.valueOf(childCity.get("deptCode")).equals(String.valueOf(scoreInfo.get("deptCode")))) {
-                            realNum++;
+                    Map<String, Object> cityChildMap = new HashMap<>();
+                    cityChildMap.put("cityId", deptId);
+                    cityChildMap.put("areaName", areaName);
+                    List<Map<String, Object>> cityChildList = (List<Map<String, Object>>) userdeptService.page(cityChildMap, 0, 0);
+
+                    for (Map<String, Object> childCity : cityChildList) {
+                        realNum = 0;
+                        examCount = 0;
+                        for (Map<String, Object> scoreInfo : info) {
+                            if (String.valueOf(childCity.get("deptCode")).equals(String.valueOf(scoreInfo.get("deptCode")))) {
+                                realNum++;
+                            }
                         }
-                    }
-                    for (Map<String, Object> examination : examinationList) {
-                        String examDeptCode = (String) examination.get("deptCode");
-                        if (String.valueOf(childCity.get("deptCode")).equals(examDeptCode)) {
-                            examCount++;
+                        for (Map<String, Object> examination : examinationList) {
+                            String examDeptCode = (String) examination.get("deptCode");
+                            if (String.valueOf(childCity.get("deptCode")).equals(examDeptCode)) {
+                                examCount++;
+                            }
                         }
+                        childCity.put("realNum", realNum);
+                        childCity.put("examCount", examCount);
+                        cityRealNum += realNum;
+                        cityExamCount += examCount;
                     }
-                    childCity.put("realNum", realNum);
-                    childCity.put("examCount", examCount);
-                    cityRealNum += realNum;
-                    cityExamCount += examCount;
                 }
                 //city.put("child", cityChildList);
-
                 city.put("examCount", cityExamCount);
                 city.put("realNum", cityRealNum);
 
