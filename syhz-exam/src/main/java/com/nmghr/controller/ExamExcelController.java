@@ -306,7 +306,7 @@ public class ExamExcelController {
                 judgeMap.put("answer",1);
             }
             if("错误".equals(judgeVo.getAnswer())){
-                judgeMap.put("answer",0);
+                judgeMap.put("answer",2);
             }
             if(judgeVo.getAnalysis()!=null) {
                 //题目解析

@@ -39,17 +39,19 @@ public class PaperUpdateHandler extends AbstractUpdateHandler {
       if("1".equals(String.valueOf(requestBody.get("paperType")))){
         requestBody.put("remark", new JSONObject());
         requestBody.put("questionList", new ArrayList<>());
+        List<Map<String, Object>> sortList = new ArrayList<>();
         for (QuestionType qt : QuestionType.values()) {
-          packageParams(requestBody, qt.name(), qt.getType());
+          packageParams(requestBody, qt, sortList);
         }
+        requestBody.put("sort", ExamConstant.sortList(sortList));
       }
       Map<String, Object> params = new HashMap<String, Object>();
       params.put("paperName", requestBody.get("paperName"));
       params.put("paperType", requestBody.get("paperType"));
-      params.put("modifier", requestBody.get("modifier"));
-//      params.put("deptCode", requestBody.get("deptCode"));
-//      params.put("deptName", requestBody.get("deptName"));
+      params.put("modifier", requestBody.get("creator"));
       params.put("remark", JSONObject.toJSONString(requestBody.get("remark")));
+      params.put("sort", JSONObject.toJSONString(requestBody.get("sort")));
+
       // 修改试卷主表
       LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMPAPER");
       Object paperObj = baseService.update(id, params);
@@ -123,24 +125,25 @@ public class PaperUpdateHandler extends AbstractUpdateHandler {
   }
 
   @SuppressWarnings("unchecked")
-  private void packageParams(Map<String, Object> params, String category, int type) {
-    Map<String, Object> bean = (Map<String, Object>) params.get(category);
+  private void packageParams(Map<String, Object> params, QuestionType qType, List<Map<String, Object>> sorts) {
+    Map<String, Object> bean = (Map<String, Object>) params.get(qType.name());
     JSONObject remark = (JSONObject) params.get("remark");
     if (bean != null) {
-      remark.put(category, bean.get("desc") + ExamConstant.DESCFLAG + bean.get("sort") + ExamConstant.DESCFLAG + bean.get("value"));
+      remark.put(qType.name(), bean.get("desc") + ExamConstant.DESCFLAG + bean.get("sort") + ExamConstant.DESCFLAG + bean.get("value"));
       params.put("remark", remark);
+      sorts.add(ExamConstant.setQuestionSort(qType, String.valueOf(bean.get("sort"))));
       List<Map<String, Object>> list = (List<Map<String, Object>>) params.get("questionList");
       List<Map<String, Object>> datas = (List<Map<String, Object>>) bean.get("data");
       for (Map<String, Object> q : datas) {
         Map<String, Object> map = new HashMap<>();
         map.put("subjectCategoryId", q.get("subjectCategoryId"));
         map.put("questionsId", q.get("questionsId"));
-        map.put("type", type);
+        map.put("type", qType.getType());
         map.put("value", bean.get("value"));
         list.add(map);
       }
       params.put("questionList", list);
-      params.remove(category);
+      params.remove(qType.name());
     }
   }
 }

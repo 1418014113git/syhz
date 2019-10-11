@@ -163,11 +163,11 @@ public class PaperRandomQuestionQueryHandler extends AbstractQueryHandler {
       LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMPAPERQUESTION");
       List<Map<String, Object>> list = (List<Map<String, Object>>) baseService.list(param);
       if (list == null || list.size() == 0) {
-        throw new GlobalErrorException("999665", "您" + text + "，选择的题库中试题数量为0，请重新选择分类");
+        throw new GlobalErrorException("999665", text + "，选择的题库中试题数量为0，请重新选择分类");
       }
       if (list.size() < num) {
         log.error("EXAMPAPERQUESTION   by   cateIds :" + cateIds + " size 等于" + list.size() + "数据不够");
-        throw new GlobalErrorException("999665", "您" + text + "，选择的题库中试题总数量为" + list.size() + "，请重新选择分类");
+        throw new GlobalErrorException("999665", text + "，选择的题库中试题总数量为" + list.size() + "，请重新选择分类");
       } else {
         List<Integer> idxs = new ArrayList<>();
         Random random = new Random();
@@ -188,7 +188,7 @@ public class PaperRandomQuestionQueryHandler extends AbstractQueryHandler {
       }
     } catch (Exception e) {
       log.error(e.getMessage() + "随机试题时异常");
-      throw new GlobalErrorException("999664", "随机试题时异常");
+      throw new GlobalErrorException("999664", e.getMessage());
     }
     return rdList;
   }
@@ -216,11 +216,11 @@ public class PaperRandomQuestionQueryHandler extends AbstractQueryHandler {
       LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMPAPERQUESTION");
       List<Map<String, Object>> list = (List<Map<String, Object>>) baseService.list(param);
       if (list == null || list.size() == 0) {
-        throw new GlobalErrorException("999665", "您" + text + "，选择的模块中试题数量为0，请重新选择模块");
+        throw new GlobalErrorException("999665", text + "，选择的模块中试题数量为0，请重新选择模块");
       }
       if (list.size() < num) {
         log.error("EXAMPAPERQUESTION   by   cateIds :" + cateIds + " size 等于" + list.size() + "数据不够");
-        throw new GlobalErrorException("999665", "您" + text + "，选择的模块中试题总数量为" + list.size() + "，请重新选择模块");
+        throw new GlobalErrorException("999665", text + "，选择的模块中试题总数量为" + list.size() + "，请重新选择模块");
       } else {
         List<Integer> idxs = new ArrayList<>();
         Random random = new Random();
