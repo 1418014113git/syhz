@@ -35,6 +35,8 @@ public class CaseInfoController {
 	@Autowired
 	private EsService esService;
 
+
+
 	@PostMapping("/query")
 	@ResponseBody
 	public Object query(@RequestBody Map<String, Object> map) throws Exception {
@@ -72,7 +74,7 @@ public class CaseInfoController {
 				}
 				return Result.ok(object);
 			} catch (Exception e) {
-				e.printStackTrace();
+
 				esService.delete("caseinfo", documentId);// 删除本条数据
 				return Result.fail();
 			}
@@ -104,6 +106,7 @@ public class CaseInfoController {
 	@ResponseBody
 	public Object delete(@RequestBody Map<String, Object> map) {
 		String documnetId = SyhzUtil.setDate(map.get("documentId"));
+		String id = SyhzUtil.setDate(map.get("id"));
 		int type = SyhzUtil.setDateInt(map.get("type"));
 		if (type == 1) {
 			esService.remove("lawinfo", documnetId);
@@ -116,7 +119,7 @@ public class CaseInfoController {
 		}
 		try {
 			IUpdateHandler IUpdateHandler = SpringUtils.getBean("KnowledgeRemoveUpdateHandler", IUpdateHandler.class);
-			return IUpdateHandler.update(documnetId, map);
+			return IUpdateHandler.update(id, map);
 		} catch (Exception e) {
 			e.printStackTrace();
 			return Result.fail();
