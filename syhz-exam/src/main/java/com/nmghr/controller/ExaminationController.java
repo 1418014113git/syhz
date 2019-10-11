@@ -252,10 +252,10 @@ public class ExaminationController {
     if (requestParam.get("pageSize") != null && !"".equals(String.valueOf(requestParam.get("pageSize")).trim())) {
       pageSize = Integer.parseInt(String.valueOf(requestParam.get("pageSize")));
     }
-    //ValidationUtils.notNull(requestParam.get("deptCode"), "部门Id!");
+    ValidationUtils.notNull(requestParam.get("deptCode"), "部门编号不能为空!");
     ArrayList<String> deptCodesArr = new ArrayList<>();
 
-    String deptCode = (String) requestParam.get("deptCode");
+    String deptCode = String.valueOf(requestParam.get("deptCode"));
     deptCodesArr.add(deptCode);
     Map<String,Object> par = new HashMap<>();
     par.put("deptCode",deptCode);
@@ -277,8 +277,27 @@ public class ExaminationController {
       return paging;
   }
 
-  private void validParams(int status, Map<String, Object> requestBody) {
+  /*
+   开放阅卷人所在部门的考试列表
+ */
+  @ResponseBody
+  @GetMapping("findAllExaminationMark")
+  public Object findAllExaminationRemark(@RequestParam Map<String, Object> requestParam) throws Exception {
+    int pageNum = 1, pageSize = 15;
+    if (requestParam.get("pageNum") != null && !"".equals(String.valueOf(requestParam.get("pageNum")).trim())) {
+      pageNum = Integer.parseInt(String.valueOf(requestParam.get("pageNum")));
+    }
+    if (requestParam.get("pageSize") != null && !"".equals(String.valueOf(requestParam.get("pageSize")).trim())) {
+      pageSize = Integer.parseInt(String.valueOf(requestParam.get("pageSize")));
+    }
+    ValidationUtils.notNull(requestParam.get("userId"), "当前用户ID不能为空!");
+    requestParam.put("userId",String.valueOf(requestParam.get("userId")));
+    LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMINTATIONBYREMARK");
+    Paging paging = (Paging) baseService.page(requestParam,pageNum,pageSize);
+    return paging;
+  }
 
+  private void validParams(int status, Map<String, Object> requestBody) {
 
     /**
      *
@@ -311,6 +330,5 @@ public class ExaminationController {
       throw new GlobalErrorException(GlobalErrorEnum.PARAM_NOT_VALID.getCode(),
           ExamConstant.DATAERRORSTART);
     }
-
   }
 }
