@@ -24,6 +24,17 @@ import java.util.Date;
  */
 public class DateUtil {
 
+  public static final String yyyyMMddHHmmss = "yyyy-MM-dd HH:mm:ss";
+
+  public static String dateFormart(Date date, String dateFormatType){
+    DateFormat df = new SimpleDateFormat(dateFormatType);
+    return df.format(date);
+  }
+  public static Date strToDate(String date, String dateFormatType) throws ParseException {
+    DateFormat df = new SimpleDateFormat(dateFormatType);
+    return df.parse(date);
+  }
+
 
   /**
    * @description: 两个String类型，按照日期格式对比
@@ -58,7 +69,7 @@ public class DateUtil {
     return result;
   }
   
- /* public static void main(String[] args) {
+/*  public static void main(String[] args) {
     
     DateUtil obj = new DateUtil();
     
@@ -71,12 +82,12 @@ public class DateUtil {
       e.printStackTrace();
     }
 
-  }*/
-
+  }
+*/
   //1 minute = 60 seconds
   //1 hour = 60 x 60 = 3600
   //1 day = 3600 x 24 = 86400
-  public String printDifference(String startDate, String endDate) throws ParseException{
+  public static String printDifference(String startDate, String endDate) throws ParseException{
       
     SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
     Date StartDate = simpleDateFormat.parse(startDate);
@@ -103,8 +114,14 @@ public class DateUtil {
       different = different % minutesInMilli;
 
       long elapsedSeconds = different / secondsInMilli;
-
-      String dataString = elapsedHours +"小时"+ elapsedMinutes +"分钟" + elapsedSeconds+"秒";
+      String dataString = "";
+      if (elapsedHours <= 0 && elapsedMinutes > 0) {
+        dataString = elapsedMinutes +"分钟" + elapsedSeconds+"秒";
+      }else if (elapsedHours <= 0 && elapsedMinutes <= 0) {
+        dataString = elapsedSeconds+"秒";
+      }else {
+        dataString = elapsedHours +"小时"+ elapsedMinutes +"分钟" + elapsedSeconds+"秒";
+      }
 
       //System.out.printf("%d小时%d分钟%d秒%n", elapsedHours, elapsedMinutes, elapsedSeconds);
       

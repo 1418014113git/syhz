@@ -58,7 +58,7 @@ public class SubjectCategoryController {
     LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMSUBJECTCATEINSTCHECK");
     Map<String, Object> result = (Map<String, Object>) baseService.get(param);
     if (result != null && result.get("num") != null && Integer.parseInt(String.valueOf(result.get("num"))) > 0) {
-      return Result.fail(GlobalErrorEnum.PARAM_NOT_VALID.getCode(), "该名称已存在此父类中");
+      return Result.fail(GlobalErrorEnum.PARAM_NOT_VALID.getCode(), "当前试题模块该名称已存在，不能重复添加!");
     }
     LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMSUBJECTCATEGORY");
     return baseService.save(requestBody);
@@ -83,7 +83,7 @@ public class SubjectCategoryController {
     LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMSUBJECTCATEINSTCHECK");
     Map<String, Object> result = (Map<String, Object>) baseService.get(param);
     if (result != null && result.get("num") != null && Integer.parseInt(String.valueOf(result.get("num"))) > 0) {
-      return Result.fail(GlobalErrorEnum.PARAM_NOT_VALID.getCode(), "该名称已存在此父类中");
+      return Result.fail(GlobalErrorEnum.PARAM_NOT_VALID.getCode(), "当前试题模块该名称已存在，不能重复添加!");
     }
     LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMSUBJECTCATEGORY");
     return baseService.update(String.valueOf(requestBody.get("id")), requestBody);
@@ -113,7 +113,7 @@ public class SubjectCategoryController {
    */
   @SuppressWarnings("unchecked")
   @DeleteMapping("/delete")
-  public Object detail(@RequestParam Map<String, Object> requestBody) throws Exception {
+  public Object delete(@RequestParam Map<String, Object> requestBody) throws Exception {
     //校验表单数据
     validId(requestBody.get("id"));
     Map<String, Object> param = new HashMap<>();
@@ -126,7 +126,8 @@ public class SubjectCategoryController {
       return Result.fail(GlobalErrorEnum.PARAM_NOT_VALID.getCode(), "该名称下存在试卷");
     }
     LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMSUBJECTCATEGORYDEL");
-    return baseService.update(String.valueOf(requestBody.get("id")), new HashMap<>());
+    baseService.remove(String.valueOf(requestBody.get("id")));
+    return true;
   }
 
 
@@ -137,7 +138,7 @@ public class SubjectCategoryController {
     ValidationUtils.notNull(requestBody.get("parentId"), "上级id不能为空!");
     ValidationUtils.notNull(requestBody.get("deptCode"), "当前部门编号不能为空!");
     ValidationUtils.notNull(requestBody.get("deptName"), "当前部门名称不能为空!");
-    Matcher m = Pattern.compile("[！@#￥%…&*$]").matcher(String.valueOf(requestBody.get("categoryName")));
+    Matcher m = Pattern.compile("[!！@#￥%…&*$]").matcher(String.valueOf(requestBody.get("categoryName")));
     if (m.find()) {
       throw new GlobalErrorException(GlobalErrorEnum.PARAM_NOT_VALID.getCode(), "不能输入特殊字符！@#￥%……&*$");
     }
@@ -145,7 +146,7 @@ public class SubjectCategoryController {
 
   private void validId(Object id) {
     ValidationUtils.notNull(id, "id不能为空!");
-    ValidationUtils.regexp(id, "^\\d+$", "非法输入");
+//    ValidationUtils.regexp(id, "^\\d+$", "非法输入");
   }
 
 }

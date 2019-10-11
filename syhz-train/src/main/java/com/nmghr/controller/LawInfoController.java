@@ -2,6 +2,8 @@ package com.nmghr.controller;
 
 import java.util.Map;
 import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -18,34 +20,38 @@ import com.nmghr.basic.core.service.handler.ISaveHandler;
 import com.nmghr.basic.core.service.handler.IUpdateHandler;
 import com.nmghr.basic.core.util.SpringUtils;
 import com.nmghr.handler.service.EsService;
-import com.nmghr.handler.vo.lawinfo;
+import com.nmghr.handler.vo.IndustryInfo;
+import com.nmghr.handler.vo.Lawinfo;
 import com.nmghr.util.SyhzUtil;
 
+/**
+ * 法律法规
+ * 
+ * @author heijiantao
+ * @date 2019年9月30日
+ * @version 1.0
+ */
 @RestController
 @RequestMapping("lawInfo")
 public class LawInfoController {
 	@Autowired
-	private EsService LawInfoService;
+	private EsService esService;
 
 	@PostMapping("/query")
 	@ResponseBody
-	public Object query(@RequestBody Map<String, Object> map) {
+	public Object query(@RequestBody Map<String, Object> map) throws Exception {
 		try {
 			String searchType = "";
 			String articleType = SyhzUtil.setDate(map.get("articleType"));
-			if (articleType != "") {// 根据参数调用不同的DSL
-				searchType = "searchPage";
-			} else {
-				searchType = "categorysearchPage";
-			}
-			Map<String, Object> esMap = LawInfoService.query("lawinfo", map, searchType);// es查询documentId
+			String search = SyhzUtil.setDate(map.get("search"));
+			String category = SyhzUtil.setDate(map.get("category"));
+			searchType = "search" + toInt(articleType) + toInt(category) + toInt(search);
+			Map<String, Object> esMap = esService.query("lawinfo", map, searchType);// es查询documentId
 			IQueryHandler queryHandler = SpringUtils.getBean("lawinfoQueryHandler", IQueryHandler.class);
 			Map<String, Object> responseMap = (Map<String, Object>) queryHandler.list(esMap);
 			return responseMap;
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			return Result.fail();
+			return Result.fail("000000", "暂无数据");
 		}
 	}
 
@@ -53,19 +59,26 @@ public class LawInfoController {
 	@ResponseBody
 	public Object save(@RequestBody Map<String, Object> map) {
 		UUID(map);// 生成documentId
-		lawinfo lawinfo = JSON.parseObject(JSON.toJSONString(map), lawinfo.class);
+		Lawinfo lawinfo = JSON.parseObject(JSON.toJSONString(map), Lawinfo.class);
 		lawinfo.setEnable(0);// 启用
 		lawinfo.setDelFlag(0);// 正常
 		lawinfo.setAuditStatus(0);// 待审核
-		String documentId = LawInfoService.insert(map, "lawinfo", lawinfo);// 保存到es
-		try {
-			map.put("documentId", documentId);
-			ISaveHandler saveHandler = SpringUtils.getBean("lawinfoSaveHandler", ISaveHandler.class);
-			Object object = saveHandler.save(map);// 保存到数据库
-			return Result.ok(object);
-		} catch (Exception e) {
-			e.printStackTrace();
-			LawInfoService.delete("lawinfo", documentId);
+		String documentId = esService.insert(map, "lawinfo", lawinfo);// 保存到es
+		if (!"false".equals(documentId)) {
+			try {
+				map.put("documentId", documentId);
+				ISaveHandler saveHandler = SpringUtils.getBean("lawinfoSaveHandler", ISaveHandler.class);
+				Object object = saveHandler.save(map);// 保存到数据库s
+				if (1 == deptFlag(map)) {// 改变es审核状态
+					esService.auidt("lawinfo", documentId);
+				}
+				return Result.ok(object);
+			} catch (Exception e) {
+				e.printStackTrace();
+				esService.delete("lawinfo", documentId);// 删除本条数据
+				return Result.fail();
+			}
+		} else {
 			return Result.fail();
 		}
 	}
@@ -73,14 +86,14 @@ public class LawInfoController {
 	@PostMapping("/update")
 	@ResponseBody
 	public Object update(@RequestBody Map<String, Object> map) {
+		String id = SyhzUtil.setDate(map.get("id"));
 		String documnetId = SyhzUtil.setDate(map.get("documentId"));
 		try {
-			lawinfo lawinfo = JSON.parseObject(JSON.toJSONString(map), lawinfo.class);
-			LawInfoService.update(map, documnetId, "lawinfo", lawinfo);
+			IndustryInfo IndustryInfo = JSON.parseObject(JSON.toJSONString(map), IndustryInfo.class);
+			esService.update(map, documnetId, "lawinfo", IndustryInfo);
 			IUpdateHandler IUpdateHandler = SpringUtils.getBean("lawInfoUpdateHandler", IUpdateHandler.class);
-			return IUpdateHandler.update(documnetId, map);
+			return IUpdateHandler.update(id, map);
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 			return Result.fail();
 		}
@@ -90,7 +103,7 @@ public class LawInfoController {
 	@ResponseBody
 	public Object delete(@RequestBody Map<String, Object> map) {
 		String documnetId = SyhzUtil.setDate(map.get("documentId"));
-		LawInfoService.delete("lawinfo", documnetId);
+		esService.delete("lawinfo", documnetId);
 		SpringUtils.getBean("lawInfoRemoveHandler", IRemoveHandler.class);
 		return Result.ok("000000");
 	}
@@ -101,4 +114,25 @@ public class LawInfoController {
 		map.put("documentId", id);
 	}
 
+	private String toInt(String str) {
+		if ("".equals(str)) {
+			return "0";
+		} else {
+			return "1";
+		}
+	}
+
+	private int deptFlag(Map<String, Object> map) {
+		int draft = SyhzUtil.setDateInt(map.get("draft"));// 是否为草稿
+		int adminFlag = SyhzUtil.setDateInt(map.get("adminFlag"));// 是否为管理员
+		if (adminFlag == 0 && draft == 1) {
+			String myDeptAreaCode = SyhzUtil.setDate(map.get("myDeptAreaCode"));
+			Pattern pattern1 = Pattern.compile("^\\d*[1-9]0{4}$");
+			Matcher matcher1 = pattern1.matcher(myDeptAreaCode);
+			if (matcher1.find()) {// 省级管理员
+				return 1;
+			}
+		}
+		return 0;
+	}
 }
