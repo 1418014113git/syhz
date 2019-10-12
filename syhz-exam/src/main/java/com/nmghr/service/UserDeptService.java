@@ -36,13 +36,20 @@ public class UserDeptService implements IBaseService {
   @Resource
   UserDeptMapper userDeptMapper;
 
+
   @Override
+  @TargetDataSource(value="hrupms")
   public Object save(Map<String, Object> requestMap) throws Exception {
-    return null;
+    if (requestMap.get("deptCode") == null) {
+      return Result.fail("880088", "父级部门编号不能为空");
+    }
+    return userDeptMapper.getChildByDeptCode(String.valueOf(requestMap.get("deptCode")));
   }
 
   @Override
   public Object update(String id, Map<String, Object> requestBody) throws Exception {
+
+
     return null;
   }
 
@@ -74,7 +81,8 @@ public class UserDeptService implements IBaseService {
   @Override
   @TargetDataSource(value="hrupms")
   public Object list(Map<String, Object> map) throws Exception {
-    return userDeptMapper.getCitys();
+    //return userDeptMapper.getCitys();
+    return null;
   }
 
   @Override
@@ -84,7 +92,7 @@ public class UserDeptService implements IBaseService {
     if (requestMap.get("cityId") == null) {
       return Result.fail("880088", "父级部门Id不能为空");
     }
-    return userDeptMapper.getCityChild(String.valueOf(requestMap.get("cityId")));
+    return userDeptMapper.getCityChild(String.valueOf(requestMap.get("areaName")),String.valueOf(requestMap.get("cityId")));
   }
   @Override
   @TargetDataSource(value="hrupms")
