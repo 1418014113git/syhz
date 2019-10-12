@@ -69,6 +69,7 @@ public class TrainFractionSaveHandler extends AbstractSaveHandler {
 		queryMap.put("fractionTimeStart", dataStr + " 00:00:00"); // 今天开始时间
 		queryMap.put("fractionTimeEnd", dataStr + " 23:59:59"); // 今天结束时间
 		queryMap.put("fractionType", fractionType);
+		queryMap.put("userId", requestBody.get("fractionUserId"));
 		queryMap.put("belongSys", requestBody.get("belongSys"));
 		queryMap.put("belongMode", requestBody.get("belongMode"));
 		queryMap.put("tableId", requestBody.get("tableId"));

@@ -10,8 +10,10 @@
 
 package com.nmghr.controller;
 
+import com.nmghr.basic.common.Constant;
 import com.nmghr.basic.common.Result;
 import com.nmghr.basic.common.exception.GlobalErrorException;
+import com.nmghr.basic.core.common.LocalThreadStorage;
 import com.nmghr.basic.core.service.IBaseService;
 import com.nmghr.controller.vo.*;
 import com.nmghr.hander.save.ExamQuestionsSaveHandler;
@@ -131,13 +133,13 @@ public class ExamExcelController {
         discussVos.remove(0);
         caseAnalysisVos.remove(0);
         //获取数据校验消息集合 若返回值为NULL，则校验通过
-        Map<String,Object> simpleChoiceMsgMap = (Map<String, Object>) checkSimpleChoiceData(simpleChoiceVos);
-        Map<String,Object> mutiChoiceMsgMap = (Map<String, Object>)checkMutiChoiceData(mutiChoiceVos);
-        Map<String,Object> fillGapMsgMap = (Map<String, Object>)checkFillGapData(fillGapVos);
-        Map<String,Object> judgeMsgMap = (Map<String, Object>)checkJudgeData(judgeVos);
-        Map<String,Object> easyQuestionMsgMap = (Map<String, Object>)checkEasyQuestionData(easyQuestionVos);
-        Map<String,Object> discussMsgMap = (Map<String, Object>)checkDiscussData(discussVos);
-        Map<String,Object> caseAnalysisMsgMap = (Map<String, Object>)checkAnalysisData(caseAnalysisVos);
+        Map<String,Object> simpleChoiceMsgMap = (Map<String, Object>) checkSimpleChoiceData(simpleChoiceVos,subjectCategoryId);
+        Map<String,Object> mutiChoiceMsgMap = (Map<String, Object>)checkMutiChoiceData(mutiChoiceVos,subjectCategoryId);
+        Map<String,Object> fillGapMsgMap = (Map<String, Object>)checkFillGapData(fillGapVos,subjectCategoryId);
+        Map<String,Object> judgeMsgMap = (Map<String, Object>)checkJudgeData(judgeVos,subjectCategoryId);
+        Map<String,Object> easyQuestionMsgMap = (Map<String, Object>)checkEasyQuestionData(easyQuestionVos,subjectCategoryId);
+        Map<String,Object> discussMsgMap = (Map<String, Object>)checkDiscussData(discussVos,subjectCategoryId);
+        Map<String,Object> caseAnalysisMsgMap = (Map<String, Object>)checkAnalysisData(caseAnalysisVos,subjectCategoryId);
 
 
         List<Map<String,Object>> errors = new ArrayList<>();
@@ -199,11 +201,11 @@ public class ExamExcelController {
         throw new GlobalErrorException("99954", "上传文件为空");
     } catch (IllegalArgumentException e) {
         log.error("excel uploadFile error", e.getMessage());
-        throw new GlobalErrorException("99951", "上传文件错误");
+        throw new GlobalErrorException("99951", "上传文件错误:"+e.getMessage());
     }
     catch (Exception e) {
         log.error("excel uploadFile error", e.getMessage());
-        throw new GlobalErrorException("99950", "上传异常");
+        throw new GlobalErrorException("99950", "上传异常:"+e.getMessage());
     }
     return Result.ok(null);
   }
@@ -304,7 +306,7 @@ public class ExamExcelController {
                 judgeMap.put("answer",1);
             }
             if("错误".equals(judgeVo.getAnswer())){
-                judgeMap.put("answer",0);
+                judgeMap.put("answer",2);
             }
             if(judgeVo.getAnalysis()!=null) {
                 //题目解析
@@ -438,7 +440,7 @@ public class ExamExcelController {
         }
     }
     //校验判断题必填项的方法
-    private Object checkJudgeData(List<ExamExcelJudgeVo> judgeList) {
+    private Object checkJudgeData(List<ExamExcelJudgeVo> judgeList, String subjectCategoryId) throws Exception {
         Map<String,Object> judgeMsgMap = new HashMap<>();
         List<String> msgArr = new ArrayList<>();
         Map<String,Object> lineMsgMap = new HashMap<>();
@@ -447,6 +449,14 @@ public class ExamExcelController {
             ExamExcelJudgeVo vo = judgeList.get(i);
             if(vo.getContent() == null){
                 msgArr.add("题目内容为空");
+            }
+            LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMJUDGEBYSUB");
+            Map<String, Object> checkRepeatMap = new HashMap<>();
+            checkRepeatMap.put("subjectName", String.valueOf(vo.getContent()));
+            checkRepeatMap.put("subjectCategoryId", subjectCategoryId);
+            List<Map<String, Object>> list = (List<Map<String, Object>>) baseService.list(checkRepeatMap);
+            if (list != null && list.size() > 0) {
+                msgArr.add("题目名称重复");
             }
             if(vo.getContent() != null && vo.getContent().length() > 200){
                 msgArr.add("题目内容长度大于200");
@@ -471,14 +481,14 @@ public class ExamExcelController {
                 lineMsgMap.put(String.valueOf(i + 1), ((ArrayList<String>) msgArr).clone());
             }
         }
-        judgeMsgMap.put("type",4);
+        judgeMsgMap.put("type","4");
         if(lineMsgMap.size() > 0) {
             judgeMsgMap.put("errors", lineMsgMap);
         }
         return judgeMsgMap;
     }
     //校验填空题必填项的方法
-    private Object checkFillGapData(List<ExamExcelFillGapVo> fillGapList) {
+    private Object checkFillGapData(List<ExamExcelFillGapVo> fillGapList, String subjectCategoryId) throws Exception {
         Map<String,Object> fillGapMsgMap = new HashMap<>();
         List<String> msgArr = new ArrayList<>();
         Map<String,Object> lineMsgMap = new HashMap<>();
@@ -487,6 +497,14 @@ public class ExamExcelController {
             ExamExcelFillGapVo vo = fillGapList.get(i);
             if(vo.getContent() == null){
                 msgArr.add("题目内容为空");
+            }
+            LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMFILLGAPSBYSUB");
+            Map<String, Object> checkRepeatMap = new HashMap<>();
+            checkRepeatMap.put("subjectName", String.valueOf(vo.getContent()));
+            checkRepeatMap.put("subjectCategoryId", subjectCategoryId);
+            List<Map<String, Object>> list = (List<Map<String, Object>>) baseService.list(checkRepeatMap);
+            if (list != null && list.size() > 0) {
+                msgArr.add("题目名称重复");
             }
             if(vo.getContent() != null && vo.getContent().length() > 200){
                 msgArr.add("题目内容长度大于200");
@@ -507,14 +525,14 @@ public class ExamExcelController {
                lineMsgMap.put(String.valueOf(i + 1), ((ArrayList<String>) msgArr).clone());
            }
         }
-        fillGapMsgMap.put("type",3);
+        fillGapMsgMap.put("type","3");
         if(lineMsgMap.size() > 0) {
             fillGapMsgMap.put("errors", lineMsgMap);
         }
       return fillGapMsgMap;
     }
     //校验多选题必填项的方法
-    private Object checkMutiChoiceData(List<ExamExcelMutiChoiceVo> mutiChoiceList) {
+    private Object checkMutiChoiceData(List<ExamExcelMutiChoiceVo> mutiChoiceList, String subjectCategoryId) throws Exception {
         Map<String,Object> mutiChoiceMsgMap = new HashMap<>();
         Map<String,Object> lineMsgMap = new HashMap<>();
         List<String> msgArr = new ArrayList<>();
@@ -523,6 +541,14 @@ public class ExamExcelController {
             ExamExcelMutiChoiceVo vo = mutiChoiceList.get(i);
             if(vo.getContent() == null){
                 msgArr.add("题目内容为空");
+            }
+            LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMMUTICHOICEBYSUB");
+            Map<String, Object> checkRepeatMap = new HashMap<>();
+            checkRepeatMap.put("subjectName", String.valueOf(vo.getContent()));
+            checkRepeatMap.put("subjectCategoryId", subjectCategoryId);
+            List<Map<String, Object>> list = (List<Map<String, Object>>) baseService.list(checkRepeatMap);
+            if (list != null && list.size() > 0) {
+                msgArr.add("题目名称重复");
             }
             if(vo.getContent() != null && vo.getContent().length() > 200){
                 msgArr.add("题目内容长度大于200");
@@ -567,14 +593,14 @@ public class ExamExcelController {
                 lineMsgMap.put(String.valueOf(i + 1), ((ArrayList<String>) msgArr).clone());
             }
         }
-        mutiChoiceMsgMap.put("type",2);
+        mutiChoiceMsgMap.put("type","2");
         if(lineMsgMap.size() > 0) {
             mutiChoiceMsgMap.put("errors", lineMsgMap);
         }
         return mutiChoiceMsgMap;
     }
     //校验单选题必填项的方法
-    private Object checkSimpleChoiceData(List<ExamExcelSimpleChoiceVo> simpleChoiceList) {
+    private Object checkSimpleChoiceData(List<ExamExcelSimpleChoiceVo> simpleChoiceList, String subjectCategoryId) throws Exception {
         Map<String,Object> simpleChoiceMsgMap = new HashMap<>();
         Map<String,Object> lineMsgMap = new HashMap<>();
         List<String> msgArr = new ArrayList<>();
@@ -584,6 +610,15 @@ public class ExamExcelController {
             if(vo.getContent() == null){
                 msgArr.add("题目内容为空");
             }
+            LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMSIMPLECHOICEBYSUB");
+            Map<String, Object> checkRepeatMap = new HashMap<>();
+            checkRepeatMap.put("subjectName", String.valueOf(vo.getContent()));
+            checkRepeatMap.put("subjectCategoryId", subjectCategoryId);
+            List<Map<String, Object>> list = (List<Map<String, Object>>) baseService.list(checkRepeatMap);
+            if (list != null && list.size() > 0) {
+                msgArr.add("题目名称重复");
+            }
+
             if(vo.getContent()!=null && vo.getContent().length() > 200){
                 msgArr.add("题目内容长度大于200");
             }
@@ -629,14 +664,14 @@ public class ExamExcelController {
                 lineMsgMap.put(String.valueOf(i + 1), ((ArrayList<String>) msgArr).clone());
             }
         }
-        simpleChoiceMsgMap.put("type",1);
+        simpleChoiceMsgMap.put("type","1");
         if(lineMsgMap.size() > 0) {
             simpleChoiceMsgMap.put("errors", lineMsgMap);
         }
         return simpleChoiceMsgMap;
     }
 
-    private Object checkAnalysisData(List<ExamExcelCaseAnalysisVo> caseAnalysisList) {
+    private Object checkAnalysisData(List<ExamExcelCaseAnalysisVo> caseAnalysisList, String subjectCategoryId) throws Exception {
         Map<String,Object> caseAnalysisMsgMap = new HashMap<>();
         Map<String,Object> lineMsgMap = new HashMap<>();
         List<String> msgArr = new ArrayList<>();
@@ -645,6 +680,16 @@ public class ExamExcelController {
             ExamExcelCaseAnalysisVo vo = caseAnalysisList.get(i);
             if(vo.getContent() == null){
                 msgArr.add("题目内容为空");
+            }
+            //检查试题名称是否重复,案例分析
+            LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMDISCUSSBYSUBANDTYPE");
+            Map<String, Object> checkRepeatMap = new HashMap<>();
+            checkRepeatMap.put("subjectName", String.valueOf(vo.getContent()));
+            checkRepeatMap.put("subjectCategoryId",subjectCategoryId);
+            checkRepeatMap.put("type","7");
+            List<Map<String, Object>> list = (List<Map<String, Object>>) baseService.list(checkRepeatMap);
+            if (list != null && list.size() > 0) {
+                msgArr.add("试题名称重复!");
             }
             if(vo.getContent() != null && vo.getContent().length() > 1000){
                 msgArr.add("题目内容长度大于1000");
@@ -659,14 +704,14 @@ public class ExamExcelController {
                 lineMsgMap.put(String.valueOf(i + 1), ((ArrayList<String>) msgArr).clone());
             }
         }
-        caseAnalysisMsgMap.put("type",7);
+        caseAnalysisMsgMap.put("type","7");
         if(lineMsgMap.size() > 0) {
             caseAnalysisMsgMap.put("errors", lineMsgMap);
         }
         return caseAnalysisMsgMap;
     }
 
-    private Object checkDiscussData(List<ExamExcelDiscussVo> discussList) {
+    private Object checkDiscussData(List<ExamExcelDiscussVo> discussList, String subjectCategoryId) throws Exception {
         Map<String,Object> discussMsgMap = new HashMap<>();
         Map<String,Object> lineMsgMap = new HashMap<>();
         List<String> msgArr = new ArrayList<>();
@@ -675,6 +720,16 @@ public class ExamExcelController {
             ExamExcelDiscussVo vo = discussList.get(i);
             if(vo.getContent() == null){
                 msgArr.add((i+1)+"题目内容为空");
+            }
+            //检查试题名称是否重复,论述
+            LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMDISCUSSBYSUBANDTYPE");
+            Map<String, Object> checkRepeatMap = new HashMap<>();
+            checkRepeatMap.put("subjectName", String.valueOf(vo.getContent()));
+            checkRepeatMap.put("subjectCategoryId",subjectCategoryId);
+            checkRepeatMap.put("type","6");
+            List<Map<String, Object>> list = (List<Map<String, Object>>) baseService.list(checkRepeatMap);
+            if (list != null && list.size() > 0) {
+                msgArr.add("试题名称重复!");
             }
             if(vo.getContent() != null && vo.getContent().length() > 1000){
                 msgArr.add((i+1)+"题目内容长度大于1000");
@@ -689,14 +744,14 @@ public class ExamExcelController {
                 lineMsgMap.put(String.valueOf(i + 1), ((ArrayList<String>) msgArr).clone());
             }
         }
-        discussMsgMap.put("type",6);
+        discussMsgMap.put("type","6");
         if(lineMsgMap.size() > 0) {
             discussMsgMap.put("errors", lineMsgMap);
         }
         return discussMsgMap;
     }
 
-    private Object checkEasyQuestionData(List<ExamExcelEasyQuestionVo> easyQuestionList) {
+    private Object checkEasyQuestionData(List<ExamExcelEasyQuestionVo> easyQuestionList, String subjectCategoryId) throws Exception {
         Map<String,Object> easyQuestionMsgMap = new HashMap<>();
         Map<String,Object> lineMsgMap = new HashMap<>();
         List<String> msgArr = new ArrayList<>();
@@ -705,6 +760,16 @@ public class ExamExcelController {
             ExamExcelEasyQuestionVo vo = easyQuestionList.get(i);
             if(vo.getContent() == null){
                 msgArr.add("题目内容为空");
+            }
+            //检查试题名称是否重复,简答
+            LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMDISCUSSBYSUBANDTYPE");
+            Map<String, Object> checkRepeatMap = new HashMap<>();
+            checkRepeatMap.put("subjectName", String.valueOf(vo.getContent()));
+            checkRepeatMap.put("subjectCategoryId",subjectCategoryId);
+            checkRepeatMap.put("type","5");
+            List<Map<String, Object>> list = (List<Map<String, Object>>) baseService.list(checkRepeatMap);
+            if (list != null && list.size() > 0) {
+                msgArr.add("试题名称重复!");
             }
             if(vo.getContent() != null && vo.getContent().length() > 1000){
                 msgArr.add("题目内容长度大于1000");
@@ -719,7 +784,7 @@ public class ExamExcelController {
                 lineMsgMap.put(String.valueOf(i + 1), ((ArrayList<String>) msgArr).clone());
             }
         }
-        easyQuestionMsgMap.put("type",5);
+        easyQuestionMsgMap.put("type","5");
         if(lineMsgMap.size() > 0) {
             easyQuestionMsgMap.put("errors", lineMsgMap);
         }

@@ -18,6 +18,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -34,13 +36,20 @@ public class UserDeptService implements IBaseService {
   @Resource
   UserDeptMapper userDeptMapper;
 
+
   @Override
+  @TargetDataSource(value="hrupms")
   public Object save(Map<String, Object> requestMap) throws Exception {
-    return null;
+    if (requestMap.get("deptCode") == null) {
+      return Result.fail("880088", "父级部门编号不能为空");
+    }
+    return userDeptMapper.getChildByDeptCode(String.valueOf(requestMap.get("deptCode")));
   }
 
   @Override
   public Object update(String id, Map<String, Object> requestBody) throws Exception {
+
+
     return null;
   }
 
@@ -68,11 +77,12 @@ public class UserDeptService implements IBaseService {
   }
 
   @SuppressWarnings("unchecked")
-
+//查询地市
   @Override
   @TargetDataSource(value="hrupms")
   public Object list(Map<String, Object> map) throws Exception {
-      return userDeptMapper.getCitys();
+    //return userDeptMapper.getCitys();
+    return null;
   }
 
   @Override
@@ -82,7 +92,7 @@ public class UserDeptService implements IBaseService {
     if (requestMap.get("cityId") == null) {
       return Result.fail("880088", "父级部门Id不能为空");
     }
-    return userDeptMapper.getCityChild(String.valueOf(requestMap.get("cityId")));
+    return userDeptMapper.getCityChild(String.valueOf(requestMap.get("areaName")),String.valueOf(requestMap.get("cityId")));
   }
   @Override
   @TargetDataSource(value="hrupms")
@@ -98,16 +108,13 @@ public class UserDeptService implements IBaseService {
     else
       return null;
   }
-
+//查询所有部门包括总队
   @Override
+  @TargetDataSource(value="hrupms")
   public Object findAll() throws Exception {
-    return null;
+    return userDeptMapper.getAllCitys();
   }
 
-
-  public Object findAll(String deptId) throws Exception {
-   return  null;
-  }
 
   @Override
   public Object getSequence(String seqName) throws Exception {

@@ -118,13 +118,13 @@ public class EnclosureAuditService {
 			String[] documentIds = documentId.split(",");
 			for (int i = 0; i < documentIds.length; i++) {
 				if (belongMode == 1) {
-					esService.auidt("lawinfo", documentId);// 改变es审核状态
+					esService.auidt("lawinfo", documentIds[i]);// 改变es审核状态
 				} else if (belongMode == 2) {
-					esService.auidt("industryinfo", documentId);
+					esService.auidt("industryinfo", documentIds[i]);
 				} else if (belongMode == 3) {
-					esService.auidt("standardinfo", documentId);
+					esService.auidt("standardinfo", documentIds[i]);
 				} else if (belongMode == 4) {
-					esService.auidt("caseinfo", documentId);
+					esService.auidt("caseinfo", documentIds[i]);
 				}
 			}
 		}

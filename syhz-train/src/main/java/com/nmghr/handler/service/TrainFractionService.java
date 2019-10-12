@@ -152,6 +152,7 @@ public class TrainFractionService {
     int branchCount = 0;
     int fractionReckon = fractionEntityBo.getFractionReckon(); // 操作积分 0增加 1减少
     int fractionType = fractionEntityBo.getFractionType(); // 积分类型
+		String userId = fractionEntityBo.getFractionUserId();
     Map<String, Object> queryMap = new HashMap<String, Object>();
     if (FRACTION_RECKON_0 == fractionReckon) { // 增加积分
       SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd");
@@ -160,6 +161,7 @@ public class TrainFractionService {
       queryMap.put("fractionTimeStart", dataStr + " 00:00:00"); // 今天开始时间
       queryMap.put("fractionTimeEnd", dataStr + " 23:59:59"); // 今天结束时间
       queryMap.put("fractionType", fractionType);
+			queryMap.put("userId", userId);
 //      optFractionType(queryMap, fractionType);
       // 查询今日相关类型获得的积分数量
       branchCount = getReckon(baseService, queryMap);

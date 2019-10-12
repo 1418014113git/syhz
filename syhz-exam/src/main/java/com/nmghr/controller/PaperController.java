@@ -237,7 +237,6 @@ public class PaperController {
       return Result.fail(GlobalErrorEnum.PARAM_NOT_VALID.getCode(), "试卷已发布不能修改");
     }
 
-
     requestBody.put("from", "controller");
     IUpdateHandler updateHandler = SpringUtils.getBean("paperUpdateHandler", IUpdateHandler.class);
     return Result.ok(updateHandler.update(String.valueOf(requestBody.get("id")), requestBody));
@@ -282,7 +281,8 @@ public class PaperController {
       return Result.fail(GlobalErrorEnum.PARAM_NOT_VALID.getCode(), "试卷已发布不能删除");
     }
     LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMPAPERDEL");
-    return baseService.update(String.valueOf(requestBody.get("id")), new HashMap<>());
+    baseService.remove(String.valueOf(requestBody.get("id")));
+    return true;
   }
 
   /**
@@ -329,13 +329,18 @@ public class PaperController {
     } catch (Exception e) {
       return Result.fail(GlobalErrorEnum.PARAM_NOT_VALID.getCode(), "试卷不完整");
     }
-    paper.put("json", json);
-    paper.put("from", "controller");
+
     if("auto".equals(String.valueOf(param.get("type")))){
       paper.put("operator", "randomDetailView");
     } else {
+      if (paper.get("sort") == null) {
+        return Result.fail(GlobalErrorEnum.PARAM_NOT_VALID.getCode(), "试卷不完整");
+      }
+      json.put("sort", JSONObject.parseObject(String.valueOf(paper.get("sort"))));
       paper.put("operator", "detailView");
     }
+    paper.put("json", json);
+    paper.put("from", "controller");
     IQueryHandler queryHandler = SpringUtils.getBean("paperQuestionQueryHandler", IQueryHandler.class);
     return Result.ok(queryHandler.list(paper));
   }
@@ -354,7 +359,8 @@ public class PaperController {
     validId(id);
     LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMPAPER");
     Map<String, Object> paper = (Map<String, Object>) baseService.get(id);
-    if (paper == null || (paper.get("paperStatus") != null && "1".equals(String.valueOf(paper.get("paperStatus"))))) {
+    // paper.get("paperStatus") != null && "1".equals(String.valueOf(paper.get("paperStatus")))
+    if (paper == null) {
       return Result.fail(GlobalErrorEnum.PARAM_NOT_VALID.getCode(), "试卷不能为空");
     }
     if (paper.get("remark") == null || paper.get("sort") == null) {

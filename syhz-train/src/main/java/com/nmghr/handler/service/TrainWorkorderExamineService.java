@@ -67,9 +67,15 @@ public class TrainWorkorderExamineService {
 		String[] tableId = tableIds.split(",");
 		String workIds = SyhzUtil.setDate(requestBody.get("workId"));
 		String[] workId = workIds.split(",");
+		String belongSys = SyhzUtil.setDate(requestBody.get("belongSys"));
 		for (int i = 0; i < tableId.length; i++) {
 			requestBody.put("tableId", tableId[i]);
 			requestBody.put("workId", workId[i]);
+			if ("1".equals(belongSys)) {
+				String belongType = SyhzUtil.setDate(requestBody.get("belongType"));
+				String[] belongTypes = belongType.split(",");
+				requestBody.put("belongType", belongTypes[i]);
+			}
 			WorkflowExamineEntityBo workflowExamineEntityBo = verifyData(headers, requestBody);
 			if (workflowExamineEntityBo != null) {
 				saveWorkorder(baseService, workflowExamineEntityBo);
@@ -368,7 +374,7 @@ public class TrainWorkorderExamineService {
 		// 获取 审批节点表 本部门是 审批节点信息
 		Map<String, Object> workorderExamineMap = new HashMap<String, Object>();
 		workorderExamineMap.put("workId", workflowExamineEntityBo.getWorkId());
-		workorderExamineMap.put("auditDeptNode", "0"); // 本部门
+		// workorderExamineMap.put("auditDeptNode", "0"); // 本部门
 		Map<String, Object> workNodedataMap = getWorkNode(baseService, workorderExamineMap);
 
 		// 审核不通 初始化 审核主题表的 总状态为 1待审核 当前节点审核为1
