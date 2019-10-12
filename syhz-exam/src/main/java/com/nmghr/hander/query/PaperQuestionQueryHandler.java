@@ -172,6 +172,9 @@ public class PaperQuestionQueryHandler extends AbstractQueryHandler {
           result.put("examArtificialScore", record.get("artificialScore"));
           result.put("examStartTime", record.get("startTime"));
           result.put("examEndTime", record.get("endTime"));
+          if (record.get("startTime")!=null && record.get("endTime")!=null) {
+            result.put("totalTime", DateUtil.printDifference(String.valueOf(record.get("startTime")), String.valueOf(record.get("endTime"))));
+          }
         }
       }
       int enableNum = Integer.parseInt(String.valueOf(param.get("permitNumber"))) - count;
