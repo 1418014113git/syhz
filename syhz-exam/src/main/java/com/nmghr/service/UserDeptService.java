@@ -71,9 +71,15 @@ public class UserDeptService implements IBaseService {
 //查某一地区的应考人数
   @Override
   @TargetDataSource(value="hrupms")
-  public Object get(String deptId) throws Exception {
-    Map<String,Object> userCountMap  = (Map<String, Object>) userDeptMapper.getCityChildTotalNumByDeptId(deptId);
-    return userCountMap;
+  public Object get(String deptIds) throws Exception {
+    List<Map<String,Object>> userCountList = new ArrayList<>();
+    String[] deptArr = deptIds.split(",");
+    for (String s : deptArr) {
+      Map<String,Object> userCountMap  = (Map<String, Object>) userDeptMapper.getCityChildTotalNumByDeptId(s);
+      userCountList.add(userCountMap);
+
+    }
+    return userCountList;
   }
 
   @SuppressWarnings("unchecked")
