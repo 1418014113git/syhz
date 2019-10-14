@@ -68,13 +68,21 @@ public class TrainWorkorderExamineService {
 		String workIds = SyhzUtil.setDate(requestBody.get("workId"));
 		String[] workId = workIds.split(",");
 		String belongSys = SyhzUtil.setDate(requestBody.get("belongSys"));
+		String belongType = SyhzUtil.setDate(requestBody.get("belongType"));
+		requestBody.put("tableIds", tableIds);
+		requestBody.put("workIds", workIds);
+		String[] belongTypes = new String[] {};
+		if ("1".equals(belongSys)) {
+			belongTypes = belongType.split(",");
+		}
 		for (int i = 0; i < tableId.length; i++) {
 			requestBody.put("tableId", tableId[i]);
 			requestBody.put("workId", workId[i]);
 			if ("1".equals(belongSys)) {
-				String belongType = SyhzUtil.setDate(requestBody.get("belongType"));
-				String[] belongTypes = belongType.split(",");
 				requestBody.put("belongType", belongTypes[i]);
+			}
+			if ("2".equals(belongSys)) {
+				requestBody.put("belongType", belongType);
 			}
 			WorkflowExamineEntityBo workflowExamineEntityBo = verifyData(headers, requestBody);
 			if (workflowExamineEntityBo != null) {

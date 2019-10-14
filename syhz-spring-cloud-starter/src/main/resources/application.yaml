@@ -7,13 +7,23 @@ server:
     contextPath: /syhz
 
 spring:
+  activemq:
+    broker-url: ${mq.url}
+    user: ${mq.name}
+    password: ${mq.password}
+    pool:
+      enabled: false
+    packages: #是否信任所有包
+      trust-all: true
+  jms: #默认情况下，activemq使用的是queue模式，如果要使用topic模式，必须设置为true
+    pub-sub-domain: false
   jackson:
     dateFormat: yyyy-MM-dd HH:mm:ss
     timeZone: GMT+8
   application:
     name: syhz-api
   profiles:
-    active: dev
+    active: test
   datasource:
     separator: ;;
     url: ${db.url}
@@ -88,7 +98,7 @@ spring:
 #        validateSQL: select 1
       dslfile:
         refreshInterval: -1
-      
+
 eureka:
   client:
     registerWithEureka: false
