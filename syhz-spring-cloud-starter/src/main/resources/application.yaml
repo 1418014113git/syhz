@@ -124,3 +124,5 @@ lanxin:
   lxApi: https://staging430.t.lanxin.cn/cgi-bin/message/custom/send?rand=97
   roleCode: sys_admin
   runFlag: ${lanxin.runFlag}
+log:
+  level: ${log.level}
