@@ -59,7 +59,7 @@ spring:
         dateFormat: yyyy.MM.dd
         discoverHost: false
         rest:
-          hostNames: 192.168.42.187:9200
+          hostNames: ${elasticsearch.hostNames}
         scrollBlockedWaitTimeout: 0
         scrollThreadCount: 200
         scrollThreadQueue: 200
@@ -123,3 +123,6 @@ lanxin:
   linkmsg: http://192.168.1.104:8080/syh.html?
   lxApi: https://staging430.t.lanxin.cn/cgi-bin/message/custom/send?rand=97
   roleCode: sys_admin
+  runFlag: ${lanxin.runFlag}
+log:
+  level: ${log.level}
