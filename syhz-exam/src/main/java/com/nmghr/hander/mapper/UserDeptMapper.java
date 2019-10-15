@@ -27,21 +27,16 @@ import java.util.Map;
 
 @Mapper
 public interface UserDeptMapper {
-
+//获取开放部门总人数
   @Select("<script> select count(1) as totalNum from u_user_depart_rel r  where  r.depart_id in  (${depts}) </script>")
   Map<String, Object> getTotalNum(@Param("depts") String depts);
 
-
-//  @Select("<script>select t.id deptId, t.depart_name deptName,t.area_code areaCode,t.depart_code deptCode,\n" +
-//          "(select count(1) from u_user_depart_rel r where r.depart_id = t.id) as userCount,t.area_name as areaName from u_depart t  where t.parent_depart_id =\n" +
-//          " 1011 and area_code <![CDATA[<> '610000']]> order by area_code</script>")
-//  List<Map<String,Object>> getCitys();
-//查地市的子部门
-  @Select("<script>select  t.id deptId,t.parent_depart_id parentId, t.depart_name deptName,t.area_code areaCode,t.depart_code deptCode from u_depart t where t.area_name = #{areaName} and  t.id <![CDATA[<>]]> #{cityId}</script>")
+//查地市的子部门 包括大队和派出所
+  @Select("<script>select  t.id deptId,t.parent_depart_id parentId,t.parent_depart_code parentCode,t.depart_name deptName,t.area_code areaCode,t.depart_code deptCode,t.depart_type departType from u_depart t where t.area_name = #{areaName} and  t.id <![CDATA[<>]]> #{cityId}</script>")
   List<Map<String,Object>> getCityChild(@Param("areaName") String areaName,@Param("cityId") String cityId);
 
-
-  @Select("<script> select t.id deptId,t.parent_depart_id parentId,t.parent_depart_code parentCode, t.depart_name deptName,t.area_code areaCode,t.depart_code deptCode from u_depart t where t.parent_depart_code = #{deptCode}</script>")
+ //获取一个部门的子部门
+  @Select("<script> select t.id deptId,t.parent_depart_id parentId,t.parent_depart_code parentCode, t.depart_name deptName,t.area_code areaCode,t.depart_type departType,t.depart_code deptCode from u_depart t where t.parent_depart_code = #{deptCode}</script>")
   List<Map<String,Object>> getChildByDeptCode(@Param("deptCode") String deptCode);
 
 
@@ -52,18 +47,17 @@ public interface UserDeptMapper {
           "inner join u_user_depart_rel r on r.depart_id = t.id where t.id = #{deptId}</script>")
   Map<String,Object> getCityChildTotalNumByDeptId(@Param("deptId") String deptId);
 
-//查总队 和各个支队
-  @Select("<script>select t.id deptId, t.depart_name deptName,t.area_code areaCode,t.depart_code deptCode,t.area_name areaName,\n" +
-          "(select count(1) from u_user_depart_rel r where r.depart_id = t.id) as userCount from u_depart t  where t.parent_depart_id in\n" +
-          "(select id from u_depart where depart_code in ('610000000000','610000530000'))  order by area_code</script>")
+//查总队和各个支队
+  @Select("<script>select t.id deptId, t.depart_name deptName,t.area_code areaCode,t.depart_code deptCode,t.area_name areaName,depart_type as departType,\n" +
+          "          (select count(1) from u_user_depart_rel r where r.depart_id = t.id) as userCount from u_depart t  where t.parent_depart_id in\n" +
+          "          (select id from u_depart where depart_code in ('610000000000','610000530000'))  order by area_code</script>")
   List<Map<String,Object>> getAllCitys();
 
-/*
-select t.id deptId, t.depart_name deptName,t.area_code areaCode,t.depart_code deptCode,t.area_name areaName,
-(select count(1) from u_user_depart_rel r where r.depart_id = t.id) as userCount from u_depart t  where t.parent_depart_id in
-(select id from u_depart where depart_code in ('610000000000','610000530000'))  order by area_code
- */
-
+  /*
+  获取本部门信息
+   */
+  @Select("<script> select t.id deptId,t.parent_depart_id parentId,t.parent_depart_code parentCode, t.depart_name deptName,t.depart_type departType,t.area_code areaCode,t.depart_code deptCode from u_depart t where t.depart_code = #{deptCode}</script>")
+  Map<String,Object> getDeptInfo(String deptCode);
 
 }
 

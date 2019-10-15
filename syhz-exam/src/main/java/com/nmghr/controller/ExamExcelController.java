@@ -201,7 +201,7 @@ public class ExamExcelController {
         throw new GlobalErrorException("99954", "上传文件为空");
     } catch (IllegalArgumentException e) {
         log.error("excel uploadFile error", e.getMessage());
-        throw new GlobalErrorException("99951", "上传文件错误:"+e.getMessage());
+        throw new GlobalErrorException("99951", "上传文件错误,请确认模板是否正确,单元格格式是否为文本");
     }
     catch (Exception e) {
         log.error("excel uploadFile error", e.getMessage());
@@ -458,8 +458,8 @@ public class ExamExcelController {
             if (list != null && list.size() > 0) {
                 msgArr.add("题目名称重复");
             }
-            if(vo.getContent() != null && vo.getContent().length() > 200){
-                msgArr.add("题目内容长度大于200");
+            if(vo.getContent() != null && vo.getContent().length() > 1000){
+                msgArr.add("题目内容长度大于1000");
             }
             if(vo.getAnswer() == null){
                 msgArr.add("正确答案为空");
@@ -474,8 +474,8 @@ public class ExamExcelController {
             if(vo.getSource() == null){
                 msgArr.add("出处为空");
             }
-            if(vo.getSource() != null && vo.getSource().length() > 50){
-                msgArr.add("出处长度大于50");
+            if(vo.getSource() != null && vo.getSource().length() > 1000){
+                msgArr.add("出处长度大于1000");
             }
             if(msgArr!=null && msgArr.size() > 0) {
                 lineMsgMap.put(String.valueOf(i + 1), ((ArrayList<String>) msgArr).clone());
@@ -506,8 +506,8 @@ public class ExamExcelController {
             if (list != null && list.size() > 0) {
                 msgArr.add("题目名称重复");
             }
-            if(vo.getContent() != null && vo.getContent().length() > 200){
-                msgArr.add("题目内容长度大于200");
+            if(vo.getContent() != null && vo.getContent().length() > 1000){
+                msgArr.add("题目内容长度大于1000");
             }
             if(vo.getAnswer() == null){
                 msgArr.add("正确答案为空");
@@ -518,8 +518,8 @@ public class ExamExcelController {
             if(vo.getSource() == null){
                 msgArr.add("出处为空");
             }
-            if(vo.getSource() != null && vo.getSource().length() > 50){
-                msgArr.add("出处长度大于50");
+            if(vo.getSource() != null && vo.getSource().length() > 1000){
+                msgArr.add("出处长度大于1000");
             }
            if(msgArr!=null && msgArr.size() > 0) {
                lineMsgMap.put(String.valueOf(i + 1), ((ArrayList<String>) msgArr).clone());
@@ -550,8 +550,8 @@ public class ExamExcelController {
             if (list != null && list.size() > 0) {
                 msgArr.add("题目名称重复");
             }
-            if(vo.getContent() != null && vo.getContent().length() > 200){
-                msgArr.add("题目内容长度大于200");
+            if(vo.getContent() != null && vo.getContent().length() > 1000){
+                msgArr.add("题目内容长度大于1000");
             }
             if(vo.getChoiceA() == null){
                 msgArr.add("选项A内容为空");
@@ -586,8 +586,8 @@ public class ExamExcelController {
             if(vo.getSource() == null){
                 msgArr.add("出处为空");
             }
-            if(vo.getSource()!=null && vo.getSource().length() > 50){
-                msgArr.add("出处长度大于50");
+            if(vo.getSource()!=null && vo.getSource().length() > 1000){
+                msgArr.add("出处长度大于1000");
             }
             if(msgArr!=null && msgArr.size() > 0) {
                 lineMsgMap.put(String.valueOf(i + 1), ((ArrayList<String>) msgArr).clone());
@@ -619,8 +619,8 @@ public class ExamExcelController {
                 msgArr.add("题目名称重复");
             }
 
-            if(vo.getContent()!=null && vo.getContent().length() > 200){
-                msgArr.add("题目内容长度大于200");
+            if(vo.getContent()!=null && vo.getContent().length() > 1000){
+                msgArr.add("题目内容长度大于1000");
             }
             if(vo.getChoiceA() == null){
                 msgArr.add("选项A内容为空");
@@ -657,8 +657,8 @@ public class ExamExcelController {
             if(vo.getSource() == null){
                 msgArr.add("出处为空");
             }
-            if(vo.getSource()!=null && vo.getSource().length() > 50){
-                msgArr.add("出处长度大于50");
+            if(vo.getSource()!=null && vo.getSource().length() > 1000){
+                msgArr.add("出处长度大于1000");
             }
             if(msgArr!=null && msgArr.size() > 0) {
                 lineMsgMap.put(String.valueOf(i + 1), ((ArrayList<String>) msgArr).clone());
@@ -697,8 +697,8 @@ public class ExamExcelController {
             if(vo.getSource() == null){
                 msgArr.add("出处为空");
             }
-            if(vo.getSource() != null && vo.getSource().length() > 50){
-                msgArr.add("出处长度大于50");
+            if(vo.getSource() != null && vo.getSource().length() > 1000){
+                msgArr.add("出处长度大于1000");
             }
             if(msgArr!=null && msgArr.size() > 0) {
                 lineMsgMap.put(String.valueOf(i + 1), ((ArrayList<String>) msgArr).clone());
@@ -737,8 +737,8 @@ public class ExamExcelController {
             if(vo.getSource() == null){
                 msgArr.add((i+1)+"出处为空");
             }
-            if(vo.getSource() != null && vo.getSource().length() > 50){
-                msgArr.add((i+1)+"出处长度大于50");
+            if(vo.getSource() != null && vo.getSource().length() > 1000){
+                msgArr.add((i+1)+"出处长度大于1000");
             }
             if(msgArr!=null && msgArr.size() > 0) {
                 lineMsgMap.put(String.valueOf(i + 1), ((ArrayList<String>) msgArr).clone());
@@ -777,8 +777,8 @@ public class ExamExcelController {
             if(vo.getSource() == null){
                 msgArr.add("出处为空");
             }
-            if(vo.getSource() != null && vo.getSource().length() > 50){
-                msgArr.add("出处长度大于50");
+            if(vo.getSource() != null && vo.getSource().length() > 1000){
+                msgArr.add("出处长度大于1000");
             }
             if(msgArr!=null && msgArr.size() > 0) {
                 lineMsgMap.put(String.valueOf(i + 1), ((ArrayList<String>) msgArr).clone());
