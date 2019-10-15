@@ -32,7 +32,8 @@ public class GlobalConfig {
   public static String linkmsg;
   public static String lxApi;
   public static String roleCode;
-  
+  public static String runFlag;
+
   @Value("${lanxin.reqUrl}")
   public void setReqUrl(String reqUrl) {
     GlobalConfig.reqUrl = reqUrl;
@@ -67,5 +68,9 @@ public class GlobalConfig {
   public void setRoleCode(String roleCode) {
     GlobalConfig.roleCode = roleCode;
   }
-  
+
+  @Value("${lanxin.runFlag}")
+  public void setRunFlag(String runFlag) {
+    GlobalConfig.runFlag = runFlag;
+  }
 }
