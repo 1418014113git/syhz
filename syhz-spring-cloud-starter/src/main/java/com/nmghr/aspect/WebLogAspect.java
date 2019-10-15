@@ -60,12 +60,12 @@ public class WebLogAspect {
     HttpServletRequest request = attributes.getRequest();
 
     // 记录下请求内容
-    log.info("URL : " + request.getRequestURL().toString());
-    log.info("HTTP_METHOD : " + request.getMethod());
-    log.info("IP : " + GetIpUtil.getIpAddr(request));
-    log.info("CLASS_METHOD : " + joinPoint.getSignature().getDeclaringTypeName() + "."
-        + joinPoint.getSignature().getName());
-    log.info("ARGS : " + Arrays.toString(joinPoint.getArgs()));
+//    log.info("URL : " + request.getRequestURL().toString());
+//    log.info("HTTP_METHOD : " + request.getMethod());
+//    log.info("IP : " + GetIpUtil.getIpAddr(request));
+//    log.info("CLASS_METHOD : " + joinPoint.getSignature().getDeclaringTypeName() + "."
+//        + joinPoint.getSignature().getName());
+//    log.info("ARGS : " + Arrays.toString(joinPoint.getArgs()));
 
 //    try {
 //      Map<String, Object> map = new HashMap<String, Object>();
