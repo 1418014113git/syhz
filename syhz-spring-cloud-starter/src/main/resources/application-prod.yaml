@@ -1,11 +1,11 @@
 db:
-  url: jdbc:mysql://26.3.4.81:3306/hr-syhz?useUnicode=true&characterEncoding=utf-8&allowMultiQueries=true&useSSL=false
-  username: hrSyhz
-  password: hrSyhz@123
+  url: jdbc:mysql://192.168.42.189:3306/shanxi-hsyz?useUnicode=true&characterEncoding=utf-8&allowMultiQueries=true
+  username: shanxi-hsyz
+  password: 123456
 upms:
-  url: jdbc:mysql://26.3.4.81:3306:3306/hr-upms?useUnicode=true&characterEncoding=utf-8&allowMultiQueries=true
-  username: hrUpms
-  password: hrUpms@123
+  url: jdbc:mysql://192.168.42.189:3306/shanxi-upms?useUnicode=true&characterEncoding=utf-8&allowMultiQueries=true
+  username: shanxi-upms
+  password: 123456
 eureka:
   url: http://Nmghr:NMhr$123@192.168.3.4:7007/eureka/
 file:
