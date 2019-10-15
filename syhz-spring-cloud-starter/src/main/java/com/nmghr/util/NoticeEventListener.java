@@ -23,7 +23,7 @@ public class NoticeEventListener implements ApplicationListener<ApplicationReady
   public void onApplicationEvent(ApplicationReadyEvent arg0) {
     new NoticeQueueThread(bluemsgNoticeService, GlobalConfig.reqUrl, GlobalConfig.grantType,
         GlobalConfig.appid, GlobalConfig.secret, GlobalConfig.linkmsg, GlobalConfig.lxApi,
-        GlobalConfig.roleCode).start();
+        GlobalConfig.roleCode, GlobalConfig.runFlag).start();
   }
 
 }

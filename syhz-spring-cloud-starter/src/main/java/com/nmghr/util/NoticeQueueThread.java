@@ -30,12 +30,13 @@ public class NoticeQueueThread extends Thread {
   private String linkmsg;
   private String lxApi;
   private String roleCode;
+  private String runFlag;
 
   private String TOKEN="";
   private int TIMER = 0;
 
   public NoticeQueueThread(BlueMsgNoticeService bluemsgNoticeService, String reqUrl,
-      String grantType, String appid, String secret, String linkmsg, String lxApi, String roleCode) {
+      String grantType, String appid, String secret, String linkmsg, String lxApi, String roleCode, String runFlag) {
     this.bluemsgNoticeService = bluemsgNoticeService;
     this.reqUrl = reqUrl;
     this.grantType = grantType;
@@ -44,7 +45,8 @@ public class NoticeQueueThread extends Thread {
     this.linkmsg = linkmsg;
     this.lxApi = lxApi;
     this.roleCode = roleCode;
-    
+    this.runFlag = runFlag;
+
   }
 
   public static void add(Map<String, Object> msg) {
@@ -55,37 +57,39 @@ public class NoticeQueueThread extends Thread {
   @SuppressWarnings("unchecked")
   @Override
   public void run() {
-    while (true) {
-      try {
-        if(TIMER == 0) {
-          getToken();
-        }
-        Thread.sleep(1000);
-        Map<String, Object> task = queue.poll();
-        if (task != null) {
-          Map<String, Object> phonesPara = new HashMap<String, Object>();
-          phonesPara.put("roleCode", roleCode);
-          phonesPara.put("ids", task.get("ids"));
-          log.info("phonesPara 参数：{}", JSON.toJSONString(phonesPara));
-          List<Map<String, Object>> list =
-              (List<Map<String, Object>>) bluemsgNoticeService.list(phonesPara);
-          log.info("phones: " + JSONObject.toJSONString(list));
-          if (list != null && list.size() > 0) {
-            JSONObject params = (JSONObject) JSONObject.toJSON(task);
-            List<String> phoneList = new ArrayList<String>();
-            for(Map<String, Object> map : list) {
-              phoneList.add(String.valueOf(map.get("phone")));
-            }
-            params.put("phones", phoneList);
-            notice(params);
+     if("run".equals(runFlag)){
+      while (true) {
+        try {
+          if(TIMER == 0) {
+            getToken();
           }
+          Thread.sleep(1000);
+          Map<String, Object> task = queue.poll();
+          if (task != null) {
+            Map<String, Object> phonesPara = new HashMap<String, Object>();
+            phonesPara.put("roleCode", roleCode);
+            phonesPara.put("ids", task.get("ids"));
+            log.info("phonesPara 参数：{}", JSON.toJSONString(phonesPara));
+            List<Map<String, Object>> list =
+                (List<Map<String, Object>>) bluemsgNoticeService.list(phonesPara);
+            log.info("phones: " + JSONObject.toJSONString(list));
+            if (list != null && list.size() > 0) {
+              JSONObject params = (JSONObject) JSONObject.toJSON(task);
+              List<String> phoneList = new ArrayList<String>();
+              for(Map<String, Object> map : list) {
+                phoneList.add(String.valueOf(map.get("phone")));
+              }
+              params.put("phones", phoneList);
+              notice(params);
+            }
+          }
+          TIMER++;
+          if(TIMER > 3000) {
+            getToken();
+          }
+        } catch (Exception e) {
+          log.error("error", e);
         }
-        TIMER++;
-        if(TIMER > 3000) {
-          getToken();
-        }
-      } catch (Exception e) {
-        log.error("error", e);
       }
     }
   }
