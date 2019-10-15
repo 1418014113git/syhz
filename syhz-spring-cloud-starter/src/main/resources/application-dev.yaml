@@ -8,6 +8,9 @@ upms:
   password: 123456
 eureka:
   url: http://Nmghr:NMhr$123@192.168.3.4:7007/eureka/
-  
 file:
   path: D://111//检验鉴定委托书.docx
+mq:
+  url: tcp://192.168.42.229:61616
+  name: admin
+  password: admin

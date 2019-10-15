@@ -16,6 +16,8 @@ import com.nmghr.basic.core.service.IBaseService;
 import com.nmghr.basic.rmdb.datasource.TargetDataSource;
 import com.nmghr.controller.vo.UserScoreInfo;
 import com.nmghr.service.UserDeptService;
+import com.nmghr.util.ListPageUtil;
+import javafx.beans.binding.ObjectBinding;
 import org.apache.commons.collections.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -61,40 +63,52 @@ public class ExaminationStatisticsController {
 
         //根据条件查考试
         LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMSTATISTICS");
-        Paging paging = (Paging) baseService.page(requestParam, pageNum, pageSize);
+        List<Map<String,Object>> requestList = (List<Map<String, Object>>) baseService.list(requestParam);
+
+        Map<String, Object> responseMap = new HashMap<String, Object>();
+        responseMap.put("pageSize", pageSize);
+        responseMap.put("pageNum", pageNum);
+        responseMap.put("totalCount", requestList.size());
+        if (requestList == null || requestList.size() == 0) {
+        } else {
+            ListPageUtil<Map<String, Object>> listPageUtil = new ListPageUtil<Map<String, Object>>(requestList, pageNum,
+                    pageSize);
+            requestList = listPageUtil.getPagedList();
+        }
+
         //查分数等级
         List<Map<String, Object>> scoreCodeList = getScoreRange();
-
-        List<Map<String, Object>> examinationList = paging.getList();
+        List<Map<String, Object>> examinationList = requestList;
         List<UserScoreInfo> allPersons = new ArrayList<>();
         //查应考人数
-        for (Map<String, Object> examination : examinationList) {
-            String openDepts = (String) examination.get("openDepts");
-            Map<String, Object> totalNumParMap = new HashMap<>();
-            totalNumParMap.put("depts", openDepts);
-            Object totalNum = userdeptService.get(totalNumParMap);
-            if (totalNum != null) {
-                examination.put("totalNum", totalNum);
-            }
-            if (examination.get("examinationId") != null) {
-                LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMUSERSCORE");
-                Map<String, Object> para = new HashMap<>();
-                para.put("examId", examination.get("examinationId"));
-                List<Map<String, Object>> userScoreList = (List<Map<String, Object>>) baseService.list(para);
-                if (userScoreList != null && userScoreList.size() > 0) {
-                    //查到实考人员
-                    examination.put("realNum", userScoreList.size());
-                    //根据考试统计，确定考试对应人的成绩状态：优、良、中、差
-                    List<UserScoreInfo> list = statisticsUser(userScoreList, examination, scoreCodeList);
-                    allPersons.addAll(list);
-                } else {
-                    examination.put("realNum", 0);
+        if(examinationList!=null && examinationList.size() > 0) {
+            for (Map<String, Object> examination : examinationList) {
+                String openDepts = (String) examination.get("openDepts");
+                Map<String, Object> totalNumParMap = new HashMap<>();
+                totalNumParMap.put("depts", openDepts);
+                Object totalNum = userdeptService.get(totalNumParMap);
+                if (totalNum != null) {
+                    examination.put("totalNum", totalNum);
+                }
+                if (examination.get("examinationId") != null) {
+                    Map<String, Object> para = new HashMap<>();
+                    para.put("examId", Integer.valueOf(String.valueOf(examination.get("examinationId"))));
+                    LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMUSERSCORE");
+                    List<Map<String, Object>> userScoreList = (List<Map<String, Object>>) baseService.list(para);
+                    if (userScoreList != null && userScoreList.size() > 0) {
+                        //查到实考人员
+                        examination.put("realNum", userScoreList.size());
+                        //根据考试统计，确定考试对应人的成绩状态：优、良、中、差
+                        List<UserScoreInfo> list = statisticsUser(userScoreList, examination, scoreCodeList);
+                        allPersons.addAll(list);
+                    } else {
+                        examination.put("realNum", 0);
+                    }
                 }
             }
-
         }
-        paging.setList(examinationList);
-        return paging;
+          responseMap.put("list",examinationList);
+        return responseMap;
     }
 
     @GetMapping("statisticsOne")
@@ -198,13 +212,12 @@ public class ExaminationStatisticsController {
         param.put("examinationIds", examinationIds);
         Map<String, Object> depts = (Map<String, Object>) baseService.get(param);
         String deptsStr = (String) depts.get("depts");
-        String[] deptArr = deptsStr.split(",");
-        Map<String, Object> map = new HashMap<String, Object>();
-        for (String str : deptArr) {
-            map.put(str, str);
-        }
+        //String[] deptArr = deptsStr.split(",");
+        //获取这些部门的deptCode 和人数
+         List<Map<String, Object>> totalCountList = (List<Map<String, Object>>) userdeptService.get(deptsStr);
+
         //返回一个包含所有对象的指定类型的数组
-        String[] newArrStr = map.keySet().toArray(new String[1]);
+        //String[] newArrStr = map.keySet().toArray(new String[1]);
         //查总队 和各个支队
         List<Map<String, Object>> cityList = (List<Map<String, Object>>) getAllCitys();
         if (CollectionUtils.isNotEmpty(cityList)) {
@@ -233,13 +246,12 @@ public class ExaminationStatisticsController {
                             citycscore++;
                         }
                     }
-                        for (int i = 0; i < newArrStr.length; i++) {
-                        //查开放部门的人数，即应考人数 支队
-                        Map<String, Object> dept = (Map<String, Object>) userdeptService.get(newArrStr[i]);
-                            if (dept.get("departCode") != null && dept.get("departCode").equals(city.get("deptCode"))) {
-                                cityTotalNum = Integer.valueOf(String.valueOf(dept.get("totalNum")));
-                            }
+                    for (Map<String, Object> totalCountMap : totalCountList) {
+                        if (totalCountMap.get("departCode") != null && totalCountMap.get("departCode").equals(city.get("deptCode"))) {
+                            cityTotalNum+= Integer.valueOf(String.valueOf(totalCountMap.get("totalNum")));
                         }
+                    }
+                        //查开放部门的人数，即应考人数 支队
                     String deptId = String.valueOf(city.get("deptId"));
                     String areaName = String.valueOf(city.get("areaName"));
                     if (!"null".equals(deptId) && !"null".equals(areaName)) {
@@ -252,11 +264,10 @@ public class ExaminationStatisticsController {
 
                             for (Map<String, Object> childCity : cityChildList) {
                                 int totalNum = 0;
-                                for (int i = 0; i < newArrStr.length; i++) {
+                                for (Map<String, Object> totalCountMap : totalCountList) {
                                     //查开放部门的及应考人数 子部门
-                                    Map<String, Object> childDept = (Map<String, Object>) userdeptService.get(newArrStr[i]);
-                                    if (childDept.get("departCode") != null && childDept.get("departCode").equals(childCity.get("deptCode"))) {
-                                        totalNum = Integer.valueOf(String.valueOf(childDept.get("totalNum")));
+                                    if (totalCountMap.get("departCode") != null && totalCountMap.get("departCode").equals(childCity.get("deptCode"))) {
+                                        totalNum += Integer.valueOf(String.valueOf(totalCountMap.get("totalNum")));
                                     }
                                 }
                                 yscore = 0;
