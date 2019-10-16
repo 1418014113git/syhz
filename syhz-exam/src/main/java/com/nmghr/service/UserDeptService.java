@@ -99,51 +99,52 @@ public class UserDeptService implements IBaseService {
     private Map<String, Object> getChildDept(String deptCode) {
         Map<String, Object> dept = userDeptMapper.getDeptInfo(deptCode);
         //总队
-        if ("1".equals(String.valueOf(dept.get("departType")))) {
-            //查支队
-            List<Map<String, Object>> zdDepts = userDeptMapper.getChildByDeptCode(deptCode);
-            if (zdDepts != null && zdDepts.size() > 0) {
-                for (Map<String, Object> zd : zdDepts) {
-                    //查大队
-                    List<Map<String, Object>> ddDepts = userDeptMapper.getChildByDeptCode(String.valueOf(zd.get("deptCode")));
-                    if (ddDepts != null && ddDepts.size() > 0) {
-                        for (Map<String, Object> dd : ddDepts) {
-                            //查派出所
-                            List<Map<String, Object>> pcss = userDeptMapper.getChildByDeptCode(String.valueOf(dd.get("deptCode")));
-                            dd.put("child",pcss);
+        if(dept!=null) {
+            if ("1".equals(String.valueOf(dept.get("departType")))) {
+                //查支队
+                List<Map<String, Object>> zdDepts = userDeptMapper.getChildByDeptCode(deptCode);
+                if (zdDepts != null && zdDepts.size() > 0) {
+                    for (Map<String, Object> zd : zdDepts) {
+                        //查大队
+                        List<Map<String, Object>> ddDepts = userDeptMapper.getChildByDeptCode(String.valueOf(zd.get("deptCode")));
+                        if (ddDepts != null && ddDepts.size() > 0) {
+                            for (Map<String, Object> dd : ddDepts) {
+                                //查派出所
+                                List<Map<String, Object>> pcss = userDeptMapper.getChildByDeptCode(String.valueOf(dd.get("deptCode")));
+                                dd.put("child", pcss);
+                            }
                         }
+                        zd.put("child", ddDepts);
                     }
-                    zd.put("child",ddDepts);
                 }
-
+                dept.put("child", zdDepts);
+                return dept;
             }
-            dept.put("child",zdDepts);
-            return dept;
-        }
-        //支队
-        if("2".equals(String.valueOf(dept.get("departType")))){
-            //查到大队
-            List<Map<String, Object>> ddDepts = userDeptMapper.getChildByDeptCode(deptCode);
-            if (ddDepts != null && ddDepts.size() > 0) {
-                for (Map<String, Object> dd : ddDepts) {
-                    //查派出所
-                    List<Map<String, Object>> pcss = userDeptMapper.getChildByDeptCode(String.valueOf(dd.get("deptCode")));
-                    dd.put("child",pcss);
+            //支队
+            if ("2".equals(String.valueOf(dept.get("departType")))) {
+                //查到大队
+                List<Map<String, Object>> ddDepts = userDeptMapper.getChildByDeptCode(deptCode);
+                if (ddDepts != null && ddDepts.size() > 0) {
+                    for (Map<String, Object> dd : ddDepts) {
+                        //查派出所
+                        List<Map<String, Object>> pcss = userDeptMapper.getChildByDeptCode(String.valueOf(dd.get("deptCode")));
+                        dd.put("child", pcss);
+                    }
                 }
+                dept.put("child", ddDepts);
+                return dept;
             }
-            dept.put("child",ddDepts);
-            return dept;
-        }
-        //大队
-        if("3".equals(String.valueOf(dept.get("departType")))){
-            //查派出所
-            List<Map<String, Object>> pcss = userDeptMapper.getChildByDeptCode(deptCode);
-            dept.put("child",pcss);
-            return dept;
-        }
-        //派出所
-        if("4".equals(String.valueOf(dept.get("departType")))){
-            return dept;
+            //大队
+            if ("3".equals(String.valueOf(dept.get("departType")))) {
+                //查派出所
+                List<Map<String, Object>> pcss = userDeptMapper.getChildByDeptCode(deptCode);
+                dept.put("child", pcss);
+                return dept;
+            }
+            //派出所
+            if ("4".equals(String.valueOf(dept.get("departType")))) {
+                return dept;
+            }
         }
         return new HashMap<>();
 }
