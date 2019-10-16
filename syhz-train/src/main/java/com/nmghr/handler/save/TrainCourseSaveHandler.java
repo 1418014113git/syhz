@@ -45,7 +45,9 @@ public class TrainCourseSaveHandler extends AbstractSaveHandler {
 	public Object save(Map<String, Object> requestBody) throws Exception {
 		validation(requestBody);
 		String enclosure = String.valueOf(requestBody.get("enclosure"));// 附件Josn传
-		int adminFlag = SyhzUtil.setDateInt(requestBody.get("adminFlag"));
+		int draft = SyhzUtil.setDateInt(requestBody.get("draft"));// 是否为草稿
+		int adminFlag = SyhzUtil.setDateInt(requestBody.get("adminFlag"));// 是否为管理员
+		int depType = SyhzUtil.setDateInt(requestBody.get("depType"));// 是否派出所
 		JSONArray array = JSONArray.parseArray(enclosure);
 		EnclosureAuditService.validationJson(array);
 		for (int i = 0; i < array.size(); i++) {
@@ -59,7 +61,7 @@ public class TrainCourseSaveHandler extends AbstractSaveHandler {
 			Map<String, String> header = new HashMap<String, String>();
 			Map<String, Object> auditMap = EnclosureAuditService.audit(requestBody, 2, 1);
 			Object workId = TrainWorkorderService.createWorkflowData(baseService, header, auditMap);// 添加审批记录
-			if (adminFlag == 0) {// 管理员默认审核通过
+			if (draft == 1 && adminFlag == 0 && depType != 4) {// 管理员默认审核通过
 				EnclosureAuditService.subimtaduit(workId, crouseId, 2, 1, requestBody, baseService);
 			}
 		}

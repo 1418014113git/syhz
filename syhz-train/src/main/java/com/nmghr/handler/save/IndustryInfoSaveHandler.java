@@ -41,6 +41,7 @@ public class IndustryInfoSaveHandler extends AbstractSaveHandler {
 		Object lawInfoId = SyhzUtil.setDate(requestBody.get("id"));// 是否已存为草稿
 		int draft = SyhzUtil.setDateInt(requestBody.get("draft"));// 是否为草稿
 		int adminFlag = SyhzUtil.setDateInt(requestBody.get("adminFlag"));// 是否为管理员
+		int depType = SyhzUtil.setDateInt(requestBody.get("depType"));// 是否派出所
 		validation(requestBody);
 		LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, ALIAS_TRAININDUSTRYINFO);
 		lawInfoId = baseService.save(requestBody);
@@ -49,7 +50,7 @@ public class IndustryInfoSaveHandler extends AbstractSaveHandler {
 		Map<String, String> header = new HashMap<String, String>();
 		Map<String, Object> auditMap = EnclosureAuditService.audit(requestBody, belong_sys, belong_mode);
 		Object workId = TrainWorkorderService.createWorkflowData(baseService, header, auditMap);// 添加审批记录
-		if (draft == 1 && adminFlag == 0) {// 不是草稿管理员默认审核通过
+		if (draft == 1 && adminFlag == 0 && depType != 4) {// 不是草稿管理员默认审核通过
 			EnclosureAuditService.subimtaduit(workId, lawInfoId, belong_sys, belong_mode, requestBody, baseService);
 		}
 		return requestBody;
