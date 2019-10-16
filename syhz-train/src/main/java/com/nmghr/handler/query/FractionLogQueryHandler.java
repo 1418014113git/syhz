@@ -24,6 +24,7 @@ public class FractionLogQueryHandler extends AbstractQueryHandler {
 
 	private static String ALIAS_FRACTIONLOG = "FRACTIONLOG";
 	private static String ALIAS_DAYFRACTIONLOG = "DAYFRACTIONLOG";
+
 	private static int month = 1;
 
 	public FractionLogQueryHandler(IBaseService baseService) {
@@ -44,7 +45,7 @@ public class FractionLogQueryHandler extends AbstractQueryHandler {
 		}
 		String id = SyhzUtil.setDate(requestBody.get("id"));
 		LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, ALIAS_FRACTIONLOG);
-		Map<String, Object> fraction = (Map<String, Object>) baseService.get(id);// 我的积分
+		Map<String, Object> fraction = (Map<String, Object>) baseService.get(id);// 我的积
 		Map<String, Object> param = new HashMap<String, Object>();
 		responseMap.put("systemRank", baseService.page(param, pageNum, pageSize));
 		param.put("months", month);

@@ -76,7 +76,6 @@ public class TrainCrouseQueryHandler extends AbstractQueryHandler {
 		validation(requestBody);
 		LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, ALIAS_TRAINCOURSE);// 课程查询
 		return baseService.page(requestBody, currentPage, pageSize);
-
 	}
 
 	private void validation(Map<String, Object> requestBody) {

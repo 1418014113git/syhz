@@ -45,8 +45,11 @@ public class TrainauditService {
 		for (int i = 0; i < workId.length; i++) {
 			requestBody.put("workId", workId[i]);
 			requestBody.put("tableId", tableId[i]);
-			snedMessgeService.sendMessage(EnclosureAuditService.activeMq(requestBody, baseService, 1),
-					QueueConfig.KNOWLEDGE);
+			Map<String, Object> sendMap = EnclosureAuditService.activeMq(requestBody, baseService, 1);
+			int sendFlag = SyhzUtil.setDateInt(sendMap.get("sendFlag"));
+			if (sendFlag == 0) {
+				snedMessgeService.sendMessage(sendMap, QueueConfig.KNOWLEDGE);
+			}
 		}
 	}
 

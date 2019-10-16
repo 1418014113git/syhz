@@ -111,4 +111,6 @@ public class EsService {
 		ClientInterface clientUtil = bbossESStarter.getConfigRestClient("esmapper/" + index + ".xml");
 		clientUtil.updateByQuery(index + "/_doc/" + documentId + "/_update", "delete");
 	}
+
+
 }
