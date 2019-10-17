@@ -10,12 +10,9 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.alibaba.fastjson.JSONObject;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
-import com.nmghr.basic.core.service.handler.ISaveHandler;
-import com.nmghr.basic.core.util.SpringUtils;
 
 import okhttp3.Callback;
 import okhttp3.MediaType;
@@ -100,12 +97,7 @@ public class OkHttpUtil {
 		}
 	}
 
-	public static String post(String json) throws Exception {
-		Map<String, Object> map = (Map<String, Object>) JSONObject.parse(json);
-		ISaveHandler saveHandler = SpringUtils.getBean("messagesSaveHandler", ISaveHandler.class);
-		saveHandler.save(map);// 保存到数据库s
-		return null;
-	}
+
 
 	/**
 	 * 通联支付post

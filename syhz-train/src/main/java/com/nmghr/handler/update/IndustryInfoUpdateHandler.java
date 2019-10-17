@@ -45,9 +45,10 @@ public class IndustryInfoUpdateHandler extends AbstractUpdateHandler {
 		requestBody.put("belongMode", belong_mode);// 行业标准
 		LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, ALIAS_KNOWLEDGEENCLOSURE);
 		baseService.remove(requestBody);// 删除之前的附件
-		EnclosureAuditService.enclouseSave(requestBody, id, baseService, belong_mode);// 添加附件
 		LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, ALIAS_TRAININDUSTRYINFO);
 		baseService.update(id, requestBody);
+		EnclosureAuditService.enclouseSave(requestBody, id, baseService, belong_mode);// 添加附件
+
 		LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, ALIAS_TARINKNOWAUDITSTATUS);
 		Map<String, Object> map = (Map<String, Object>) baseService.get(requestBody);
 		int status = SyhzUtil.setDateInt(map.get("auditStatus"));
