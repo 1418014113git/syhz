@@ -52,7 +52,7 @@ public class TrainCourseUpdateHandler extends AbstractUpdateHandler {
 		LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, ALIAS_TRAINCOURSE);
 		baseService.update(id, requestBody);
 		if (subType == 1 && (statu2 == 0 || status == 3)) {
-			if (status == 0) {
+			if (status == 0 && adminFlag == 0 && depType != 4) {
 				EnclosureAuditService.subimtaduit(workId, id, belong_sys, belong_mode, requestBody, baseService);
 			}
 			if (status == 3) {
