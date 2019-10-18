@@ -104,7 +104,7 @@ public class ExamAnswerSaveHandler extends AbstractSaveHandler {
       String userAnswer = String.valueOf(answer.get("answer"));
       saveParams.put("correctAnswer", userAnswer);
       if(type == QuestionType.fillGap.getType()){
-        boolean flag = check(userAnswer.split("\\|"), text);
+        boolean flag = check(text.split("\\|"), userAnswer);
         saveParams.put("answerType", flag ? 0 : 1);
         saveParams.put("score", flag ? answer.get("score") : 0);
       } else {
@@ -120,22 +120,26 @@ public class ExamAnswerSaveHandler extends AbstractSaveHandler {
 
   }
 
-  private static boolean check(String[] as1, String answer) {
+  private static boolean check(String[] texts, String answer) {
     answer = answer.replaceAll(",", "，");
     String[] answers = answer.split("\\|");
     int anum = 0;
-    if (as1.length < answers.length) {
+    if (texts.length < answers.length) {
       return false;
     }
     for (int i = 0; i < answers.length; i++) {
       String a = answers[i];
+      if(texts[i]==null){
+        continue;
+      }
+      String text = texts[i].trim();
       if(a.contains("，")){
         List arr = Arrays.asList(a.split("，"));
-        if (!"".equals(as1[i].trim()) && arr.contains(as1[i])) {
+        if (!"".equals(text) && arr.contains(text)) {
           anum++;
         }
       } else if(!a.contains("，")){
-        if (!"".equals(as1[i].trim()) && a.equals(as1[i])) {
+        if (!"".equals(text) && a.equals(text)) {
           anum++;
         }
       }
