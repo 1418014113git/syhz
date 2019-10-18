@@ -8,26 +8,17 @@
 
 package com.nmghr.controller;
 
-import com.nmghr.basic.common.Constant;
 import com.nmghr.basic.common.Result;
 import com.nmghr.basic.common.exception.GlobalErrorEnum;
-import com.nmghr.basic.core.common.LocalThreadStorage;
 import com.nmghr.basic.core.service.IBaseService;
-import com.nmghr.basic.rmdb.datasource.TargetDataSource;
-import com.nmghr.controller.vo.UserScoreInfo;
 import com.nmghr.service.UserDeptService;
-import com.nmghr.util.ListPageUtil;
-import org.apache.commons.collections.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
