@@ -243,7 +243,6 @@ public class PaperQuestionQueryHandler extends AbstractQueryHandler {
       param.put("type", qt.name());
       param.put("types", QuestionType.getTypeArray(qt));
       LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMPAPERDETAIL");
-//      LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMPAPERINFOQUESTION");
       List<Map<String, Object>> datas = (List<Map<String, Object>>) baseService.list(param);
       if (qt.equals(QuestionType.choices)) {
         json.put("sort", sort);
