@@ -13,10 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * 考试记录添加
@@ -104,9 +101,16 @@ public class ExamAnswerSaveHandler extends AbstractSaveHandler {
         throw new GlobalErrorException("999001", "试题不存在！");
       }
       Map<String, Object> answer = answers.get(0);
-      saveParams.put("correctAnswer", answer.get("answer"));
-      saveParams.put("answerType", String.valueOf(answer.get("answer")).equals(text) ? 0 : 1);
-      saveParams.put("score", String.valueOf(answer.get("answer")).equals(text) ? answer.get("score") : 0);
+      String userAnswer = String.valueOf(answer.get("answer"));
+      saveParams.put("correctAnswer", userAnswer);
+      if(type == QuestionType.fillGap.getType()){
+        boolean flag = check(userAnswer.split("\\|"), text);
+        saveParams.put("answerType", flag ? 0 : 1);
+        saveParams.put("score", flag ? answer.get("score") : 0);
+      } else {
+        saveParams.put("answerType", userAnswer.equals(text) ? 0 : 1);
+        saveParams.put("score", userAnswer.equals(text) ? answer.get("score") : 0);
+      }
     } else {
       //主观题
       saveParams.put("correctAnswer", "");
@@ -114,6 +118,29 @@ public class ExamAnswerSaveHandler extends AbstractSaveHandler {
       saveParams.put("score", 0);
     }
 
+  }
+
+  private static boolean check(String[] as1, String answer) {
+    answer = answer.replaceAll(",", "，");
+    String[] answers = answer.split("\\|");
+    int anum = 0;
+    if (as1.length < answers.length) {
+      return false;
+    }
+    for (int i = 0; i < answers.length; i++) {
+      String a = answers[i];
+      if(a.contains("，")){
+        List arr = Arrays.asList(a.split("，"));
+        if (!"".equals(as1[i].trim()) && arr.contains(as1[i])) {
+          anum++;
+        }
+      } else if(!a.contains("，")){
+        if (!"".equals(as1[i].trim()) && a.equals(as1[i])) {
+          anum++;
+        }
+      }
+    }
+    return anum == answers.length;
   }
 
 }
