@@ -54,7 +54,7 @@ public class IndustryInfoUpdateHandler extends AbstractUpdateHandler {
 		int status = SyhzUtil.setDateInt(map.get("auditStatus"));
 		int statu2 = SyhzUtil.setDateInt(map.get("auditStatus2"));
 		if ("1".equals(subType) && (statu2 == 0 || status == 3)) {
-			if (status == 0) {
+			if (status == 0 && adminFlag == 0 && depType != 4) {
 				EnclosureAuditService.subimtaduit(workId, id, belong_sys, belong_mode, requestBody, baseService);
 			}
 			if (status == 3) {
