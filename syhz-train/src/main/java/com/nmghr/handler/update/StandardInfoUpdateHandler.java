@@ -1,5 +1,6 @@
 package com.nmghr.handler.update;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +22,8 @@ public class StandardInfoUpdateHandler extends AbstractUpdateHandler {
 	private EnclosureAuditService EnclosureAuditService;
 	private static String ALIAS_KNOWLEDGEENCLOSURE = "KNOWLEDGEENCLOSURE";// 行业标准
 	private static String ALIAS_TRAINSTANDARDINFO = "TRAINSTANDARDINFO";
+	private static String ALIAS_TARINKNOWAUDITSTATUS = "TARINKNOWAUDITSTATUS";// 状态查询
+	private static String ALIAS_TRAINWORKORDER = "TRAINWORKORDER";// 修改工单状态
 	private static int belong_sys = 1;// 所属系统(1 知识库 2网上培训)
 	private static int belong_mode = 3;// 1 法律法规、2行业标准、3规则制度、4案例指引
 
@@ -35,16 +38,36 @@ public class StandardInfoUpdateHandler extends AbstractUpdateHandler {
 		String workId = SyhzUtil.setDate(requestBody.get("workId"));
 		String creationId = SyhzUtil.setDate(requestBody.get("creationId"));
 		String authorId = SyhzUtil.setDate(requestBody.get("authorId"));
+		int adminFlag = SyhzUtil.setDateInt(requestBody.get("adminFlag"));// 是否为管理员
+		int depType = SyhzUtil.setDateInt(requestBody.get("depType"));// 是否派出所
 		validation(requestBody);
 		requestBody.put("id", id);
 		requestBody.put("belongMode", belong_mode);// 行业标准
 		LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, ALIAS_KNOWLEDGEENCLOSURE);
 		baseService.remove(requestBody);// 删除之前的附件
-		EnclosureAuditService.enclouseSave(requestBody, id, baseService, belong_mode);// 添加附件
 		LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, ALIAS_TRAINSTANDARDINFO);
 		baseService.update(id, requestBody);
-		if ("1".equals(subType) && authorId.equals(creationId)) {
-			EnclosureAuditService.subimtaduit(workId, id, belong_sys, belong_mode, requestBody, baseService);
+		EnclosureAuditService.enclouseSave(requestBody, id, baseService, belong_mode);// 添加附件
+		LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, ALIAS_TARINKNOWAUDITSTATUS);
+		Map<String, Object> map = (Map<String, Object>) baseService.get(requestBody);
+		int status = SyhzUtil.setDateInt(map.get("auditStatus"));
+		int statu2 = SyhzUtil.setDateInt(map.get("auditStatus2"));
+		if ("1".equals(subType) && (statu2 == 0 || status == 3)) {
+			if (status == 0 && adminFlag == 0 && depType != 4) {
+				EnclosureAuditService.subimtaduit(workId, id, belong_sys, belong_mode, requestBody, baseService);
+			}
+			if (status == 3) {
+				EnclosureAuditService.subimtaduitFail(workId, id, belong_sys, belong_mode, requestBody, baseService);
+			}
+			if (status == 4) {
+				Map<String, Object> mapStatus = new HashMap<String, Object>();
+				mapStatus.put("auditStatus", "0");
+				LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, ALIAS_TRAINWORKORDER);
+				baseService.update(workId, mapStatus);
+			}
+			if (status != 0 && adminFlag == 0 && depType != 4) {
+				EnclosureAuditService.subimtaduit(workId, id, belong_sys, belong_mode, requestBody, baseService);
+			}
 		}
 		return Result.ok("");
 	}
