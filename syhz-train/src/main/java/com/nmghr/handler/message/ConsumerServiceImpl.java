@@ -22,7 +22,7 @@ import com.nmghr.basic.core.util.SpringUtils;
 public class ConsumerServiceImpl {
 	Logger logger = LoggerFactory.getLogger(ConsumerServiceImpl.class);
 
-	// 个人接收报名消息
+	// 知识库审核消息
 	@JmsListener(destination = QueueConfig.KNOWLEDGE, containerFactory = "queueContainerFactory")
 	public void consumeSignUpQueue(String message) throws Exception {
 		Map<String, Object> map = JSON.parseObject(message);
@@ -30,5 +30,4 @@ public class ConsumerServiceImpl {
 		ISaveHandler saveHandler = SpringUtils.getBean("messagesSaveHandler", ISaveHandler.class);
 		saveHandler.save(map);// 保存到数据库
 	}
-
 }
