@@ -18,6 +18,7 @@ import com.nmghr.handler.message.QueueConfig;
 import com.nmghr.handler.service.SendMessageService;
 import com.nmghr.service.DeptNameService;
 import com.nmghr.util.DateUtil;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.web.bind.annotation.*;
@@ -190,7 +191,7 @@ public class NoticeController {
     }
     LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "BASEMESSAGELIST");
     Object obj = baseService.page(params, pageNum, pageSize);
-    if(obj==null){
+    if (obj == null) {
       return Result.ok(new HashMap<>());
     }
     Paging page = (Paging) obj;
@@ -198,11 +199,11 @@ public class NoticeController {
     result.put("total", page.getTotalCount());
     result.put("allData", page.getList());
 
-    if("true".equals(String.valueOf(params.get("checkFlag")))){
-      params.put("signStatus",1);
+    if ("true".equals(String.valueOf(params.get("checkFlag")))) {
+      params.put("signStatus", 1);
       LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "BASEMESSAGELIST");
       Object unObj = baseService.page(params, pageNum, pageSize);
-      if(obj!=null){
+      if (obj != null) {
         Paging unList = (Paging) unObj;
         result.put("unSignNum", unList.getTotalCount());
         result.put("unSignData", unList.getList());
@@ -394,9 +395,22 @@ public class NoticeController {
     ValidationUtils.notNull(body.get("curDeptName"), "curDeptName不能为空!");
     ValidationUtils.notNull(body.get("acceptDeptId"), "acceptDeptId不能为空!");
     try {
+
+      Map<String, Object> codePara = new HashMap<>();
+      codePara.put("mananercode", "mananercode");
+      codePara.put("queryType", "dictCode");
+      List<Map<String, Object>> mCodes = (List<Map<String, Object>>) deptNameService.list(codePara);
+      if (mCodes == null || mCodes.size() == 0) {
+        return Result.fail("999667", "请联系管理员设置管理者code！");
+      }
+      List<Object> codes = new ArrayList<>();
+      for (Map<String, Object> map : mCodes) {
+        codes.add(map.get("dictCode"));
+      }
+
       Map<String, Object> map = new HashMap<>();
       map.put("deptId", body.get("acceptDeptId"));
-      map.put("roleCodes", GlobalConfig.managerRoleCodes);
+      map.put("roleCodes", StringUtils.join(codes, ","));
       map.put("queryType", "managerUserId");
       List<Map<String, Object>> list = (List<Map<String, Object>>) deptNameService.list(map);
       if (list == null || list.size() == 0) {
@@ -430,7 +444,7 @@ public class NoticeController {
   }
 
   private List<Map<String, Object>> getDeptName(List<Object> ids) throws Exception {
-    if(ids==null || ids.size()==0){
+    if (ids == null || ids.size() == 0) {
       throw new GlobalErrorException("999667", "接收人不能为空");
     }
     Map<String, Object> params = new HashMap<>();
@@ -454,7 +468,7 @@ public class NoticeController {
     ValidationUtils.notNull(body.get("messageStatus"), "messageStatus不能为空!");
     ValidationUtils.notNull(body.get("recipient"), "接收人不能为空!");
     JSONArray groups = JSONArray.parseArray(String.valueOf(body.get("recipient")));
-    if(groups==null || groups.size()==0){
+    if (groups == null || groups.size() == 0) {
       throw new GlobalErrorException("999667", "接收人不能为空");
     }
   }

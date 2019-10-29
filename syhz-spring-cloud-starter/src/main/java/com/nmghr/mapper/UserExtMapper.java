@@ -42,4 +42,7 @@ public interface UserExtMapper {
       "where d.depart_id = #{deptId} and role_code in (${roleCodes}) </script>")
   List<Map<String, Object>> getManagerUserId(@Param("deptId")Object deptId,@Param("roleCodes")Object roleCodes);
 
+  @Select("<script> SELECT id,dict_code as `dictCode`  FROM u_dict WHERE app_id=1  and dict_type=#{dictType}  and enabled=1 </script>")
+  List<Map<String, Object>> getDictCode(@Param("dictType")Object dictType);
+
 }
