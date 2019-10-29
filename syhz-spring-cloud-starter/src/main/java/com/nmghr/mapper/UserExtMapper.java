@@ -32,4 +32,17 @@ public interface UserExtMapper {
       "INNER JOIN u_depart ud on udr.depart_id = ud.id  " + 
       "where u.id in  <foreach collection=\"ids\" item=\"item\" open=\"(\" separator=\",\" close=\")\"> #{item} </foreach>  </script>")
   List<Map<String, Object>> getList(@Param("ids")List<Object> ids);
+
+
+  @Select("<script> select id as receiverDeptId, depart_name as receiverDeptName,depart_code as receiverDeptCode " +
+      "from u_depart where enabled = 1 and id in  <foreach collection=\"ids\" item=\"item\" open=\"(\" separator=\",\" close=\")\"> #{item} </foreach>  </script>")
+  List<Map<String, Object>> getDeptNameList(@Param("ids")List<Object> ids);
+
+  @Select("<script> select d.user_id as userId from u_user_depart_rel d INNER JOIN u_user_role_rel r on d.user_id = r.user_id INNER JOIN u_role role on r.role_id = role.id\n" +
+      "where d.depart_id = #{deptId} and role_code in (${roleCodes}) </script>")
+  List<Map<String, Object>> getManagerUserId(@Param("deptId")Object deptId,@Param("roleCodes")Object roleCodes);
+
+  @Select("<script> SELECT id,dict_code as `dictCode`  FROM u_dict WHERE app_id=1  and dict_type=#{dictType}  and enabled=1 </script>")
+  List<Map<String, Object>> getDictCode(@Param("dictType")Object dictType);
+
 }
