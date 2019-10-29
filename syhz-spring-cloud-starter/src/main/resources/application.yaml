@@ -126,4 +126,3 @@ lanxin:
   runFlag: ${lanxin.runFlag}
 log:
   level: ${log.level}
-managerRoleCodes: 1008,2001

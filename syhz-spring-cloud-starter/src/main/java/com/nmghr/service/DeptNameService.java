@@ -28,6 +28,9 @@ public class DeptNameService implements IBaseService {
     if("managerUserId".equals(String.valueOf(requestMap.get("queryType")))){
       return userExtMapper.getManagerUserId(requestMap.get("deptId"),requestMap.get("roleCodes"));
     }
+    if("dictCode".equals(String.valueOf(requestMap.get("queryType")))){
+      return userExtMapper.getDictCode(requestMap.get("mananercode"));
+    }
     return new ArrayList();
   }
 
