@@ -91,9 +91,9 @@ public class LinkManGroupController {
 
   }
 
-  @GetMapping("/checkGroupNameRepeat")
+  @PostMapping("/checkGroupNameRepeat")
   @ResponseBody
-  public Object checkRepeat(@RequestParam Map<String, Object> requestParam) throws Exception {
+  public Object checkRepeat(@RequestBody Map<String, Object> requestParam) throws Exception {
     validateParam(requestParam,3);
     Map<String, Object> resultMap = new HashMap<>();
 
