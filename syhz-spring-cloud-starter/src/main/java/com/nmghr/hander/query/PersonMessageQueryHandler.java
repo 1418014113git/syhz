@@ -41,6 +41,12 @@ public class PersonMessageQueryHandler extends AbstractQueryHandler {
 		List<Map<String, Object>> jgszms = new ArrayList<Map<String, Object>>();
 		List<Map<String, Object>> ydzt = new ArrayList<Map<String, Object>>();
 		List<Map<String, Object>> zyzz = new ArrayList<Map<String, Object>>();
+		List<Map<String, Object>> fxxs = new ArrayList<Map<String, Object>>();
+		List<Map<String, Object>> qszt = new ArrayList<Map<String, Object>>();
+		List<Map<String, Object>> shzt = new ArrayList<Map<String, Object>>();
+		List<Map<String, Object>> zbjl = new ArrayList<Map<String, Object>>();
+		List<Map<String, Object>> zblx = new ArrayList<Map<String, Object>>();
+		List<Map<String, Object>> zbzt = new ArrayList<Map<String, Object>>();
 		for (int i = 0; i < list.size(); i++) {
 			if ("mz".equals(String.valueOf(list.get(i).get("codeLx")))) {
 				mz.add(list.get(i));
@@ -74,6 +80,18 @@ public class PersonMessageQueryHandler extends AbstractQueryHandler {
 				ydzt.add(list.get(i));
 			} else if ("zyzz".equals(String.valueOf(list.get(i).get("codeLx")))) {
 				zyzz.add(list.get(i));
+			}else if ("fxxs".equals(String.valueOf(list.get(i).get("codeLx")))) {
+				fxxs.add(list.get(i));
+			} else if ("qszt".equals(String.valueOf(list.get(i).get("codeLx")))) {
+				qszt.add(list.get(i));
+			} else if ("shzt".equals(String.valueOf(list.get(i).get("codeLx")))) {
+				shzt.add(list.get(i));
+			} else if ("zbjl".equals(String.valueOf(list.get(i).get("codeLx")))) {
+				zbjl.add(list.get(i));
+			} else if ("zblx".equals(String.valueOf(list.get(i).get("codeLx")))) {
+				zblx.add(list.get(i));
+			} else if ("zbzt".equals(String.valueOf(list.get(i).get("codeLx")))) {
+				zbzt.add(list.get(i));
 			}
 		}
 		Map<String, Object> map = new HashMap<String, Object>();
@@ -93,6 +111,12 @@ public class PersonMessageQueryHandler extends AbstractQueryHandler {
 		map.put("jgszms", jgszms);
 		map.put("ydzt", ydzt);
 		map.put("zyzz", zyzz);
+		map.put("fxxs", fxxs);
+		map.put("qszt", qszt);
+		map.put("shzt", shzt);
+		map.put("zbjl", zbjl);
+		map.put("zblx", zblx);
+		map.put("zbzt", zbzt);
 		return map;
 		
 	}
