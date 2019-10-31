@@ -51,11 +51,11 @@ spring:
         password: ${upms.password}
         type: com.alibaba.druid.pool.DruidDataSource
         driver-class-name: com.mysql.jdbc.Driver
-  elasticsearch: 
+  elasticsearch:
     bboss:
       elasticPassword: changeme
       elasticUser: elastic
-      elasticsearch: 
+      elasticsearch:
         dateFormat: yyyy.MM.dd
         discoverHost: false
         rest:
