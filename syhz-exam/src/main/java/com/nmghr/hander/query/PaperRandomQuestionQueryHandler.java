@@ -6,6 +6,7 @@ import com.nmghr.basic.core.common.LocalThreadStorage;
 import com.nmghr.basic.core.service.IBaseService;
 import com.nmghr.basic.core.service.handler.impl.AbstractQueryHandler;
 import com.nmghr.common.ExamConstant;
+import com.nmghr.common.QuestionType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -21,6 +22,8 @@ public class PaperRandomQuestionQueryHandler extends AbstractQueryHandler {
 
   private Logger log = LoggerFactory.getLogger(PaperRandomQuestionQueryHandler.class);
 
+  private String Q_KEY = "data";
+
   public PaperRandomQuestionQueryHandler(IBaseService baseService) {
     super(baseService);
   }
@@ -32,11 +35,13 @@ public class PaperRandomQuestionQueryHandler extends AbstractQueryHandler {
    */
   @Override
   public Object list(Map<String, Object> param) throws Exception {
-    if(param.get("from") ==null){
+    if (param.get("from") == null) {
       throw new GlobalErrorException("999997", "参数不正确");
     }
     if (param.get("operator") != null && "save".equals(String.valueOf(param.get("operator")))) {
-      return saveRandomList(param);
+      return saveRandomList(param, false);
+    } else if (param.get("operator") != null && "preViewSave".equals(String.valueOf(param.get("operator")))) {
+      return saveRandomList(param, true);
     }
     return previewRandomList(param);
   }
@@ -47,62 +52,92 @@ public class PaperRandomQuestionQueryHandler extends AbstractQueryHandler {
    * @param reqMap
    * @return
    */
-  private List<Map<String, Object>> previewRandomList(Map<String, Object> reqMap) {
-    List<Map<String, Object>> randomList = new ArrayList<>();
-    if (reqMap.get("choices") != null) {
-      randomList.addAll(getPreViewRandomList((Map<String, Object>) reqMap.get("choices"), ExamConstant.CHOICES));
+  private Map<String, Object> previewRandomList(Map<String, Object> reqMap) {
+    Map<String, Object> randomPaper = new HashMap<>();
+    randomPaper.put("paperName", reqMap.get("paperName"));
+    randomPaper.put("paperType", reqMap.get("paperType"));
+    randomPaper.put("creator", reqMap.get("creator"));
+    randomPaper.put("deptCode", reqMap.get("deptCode"));
+    randomPaper.put("deptName", reqMap.get("deptName"));
+    randomPaper.put("paperStatus", reqMap.get("paperStatus"));
+    List<Map<String, Object>> sortList = new ArrayList<>();
+    for (QuestionType qt : QuestionType.values()) {
+      if (reqMap.get(qt.name()) != null) {
+        Map<String, Object> map = (Map<String, Object>) reqMap.get(qt.name());
+        map.put(Q_KEY, getPreViewRandomList(map, qt.getType()));
+        sortList.add(ExamConstant.setQuestionSort(qt, String.valueOf(map.get("sort"))));
+        randomPaper.put(qt.name(), map);
+      }
     }
-    if (reqMap.get("multiSelect") != null) {
-      randomList.addAll(getPreViewRandomList((Map<String, Object>) reqMap.get("multiSelect"), ExamConstant.MULTISELECT));
-    }
-    if (reqMap.get("fillGap") != null) {
-      randomList.addAll(getPreViewRandomList((Map<String, Object>) reqMap.get("fillGap"), ExamConstant.FILLGAP));
-    }
-    if (reqMap.get("judge") != null) {
-      randomList.addAll(getPreViewRandomList((Map<String, Object>) reqMap.get("judge"), ExamConstant.JUDGE));
-    }
-    if (reqMap.get("shortAnswer") != null) {
-      randomList.addAll(getPreViewRandomList((Map<String, Object>) reqMap.get("shortAnswer"), ExamConstant.SHORTANSWER));
-    }
-    if (reqMap.get("discuss") != null) {
-      randomList.addAll(getPreViewRandomList((Map<String, Object>) reqMap.get("discuss"), ExamConstant.DISCUSS));
-    }
-    if (reqMap.get("caseAnalysis") != null) {
-      randomList.addAll(getPreViewRandomList((Map<String, Object>) reqMap.get("caseAnalysis"), ExamConstant.CASEANALYSIS));
-    }
-    return randomList;
+    randomPaper.put("sort", ExamConstant.sortList(sortList));
+    return randomPaper;
   }
 
   /**
    * 添加时随机试题
    *
-   * @param reqMap
+   * @param reqMap    m
+   * @param isProView isProView
+   * @return Map
+   */
+  private Map<String, Object> saveRandomList(Map<String, Object> reqMap, boolean isProView) {
+    Map<String, Object> result = new HashMap<>();
+    List<Map<String, Object>> randomList = new ArrayList<>();
+    Map<String, Object> remark = new HashMap<>();
+    List<Map<String, Object>> sortList = new ArrayList<>();
+    for (QuestionType qt : QuestionType.values()) {
+      if (reqMap.get(qt.name()) != null) {
+        Map<String, Object> map = (Map<String, Object>) reqMap.get(qt.name());
+        getRemark(map, remark, qt.name());
+        sortList.add(ExamConstant.setQuestionSort(qt, String.valueOf(map.get("sort"))));
+        if (isProView) {
+          randomList.addAll(getSaveParams(map, qt.getType()));
+        } else {
+          randomList.addAll(getRandomList(map, qt.getType()));
+        }
+      }
+    }
+    // 排序
+    result.put("sort", ExamConstant.sortList(sortList));
+    result.put("remark", remark);
+    result.put("list", randomList);
+    return result;
+  }
+
+  private void getRemark(Map<String, Object> map, Map<String, Object> remark, String key) {
+    remark.put(key, String.valueOf(map.get("desc")) + ExamConstant.DESCFLAG + String.valueOf(map.get("sort"))
+        + ExamConstant.DESCFLAG + String.valueOf(map.get("value"))
+        + ExamConstant.DESCFLAG + String.valueOf(map.get("num"))
+        + ExamConstant.DESCFLAG + String.valueOf(map.get("cateIds")));
+  }
+
+  /**
+   * 拼组保存时随机的数据
+   *
+   * @param paramMap
    * @return
    */
-  private List<Map<String, Object>> saveRandomList(Map<String, Object> reqMap) {
-    List<Map<String, Object>> randomList = new ArrayList<>();
-    if (reqMap.get("choices") != null) {
-      randomList.addAll(getRandomList((Map<String, Object>) reqMap.get("choices"), ExamConstant.CHOICES));
+  private List<Map<String, Object>> getSaveParams(Map<String, Object> paramMap, int type) {
+    int sort = Integer.parseInt(String.valueOf(paramMap.get("sort")));
+    int value = Integer.parseInt(String.valueOf(paramMap.get("value")));
+    List<Map<String, Object>> rdList = new ArrayList<>();
+    try {
+      List<Map<String, Object>> list = (List<Map<String, Object>>) paramMap.get(Q_KEY);
+      if (list != null && list.size() > 0) {
+        for (Map<String, Object> map : list) {
+          Map<String, Object> bean = new HashMap<>();
+          bean.put("subjectCategoryId", map.get("subjectCategoryId"));
+          bean.put("questionsId", map.get("id"));
+          bean.put("type", type);
+          bean.put("sort", sort);
+          bean.put("value", value);
+          rdList.add(bean);
+        }
+      }
+    } catch (Exception e) {
+      //log
     }
-    if (reqMap.get("multiSelect") != null) {
-      randomList.addAll(getRandomList((Map<String, Object>) reqMap.get("multiSelect"), ExamConstant.MULTISELECT));
-    }
-    if (reqMap.get("fillGap") != null) {
-      randomList.addAll(getRandomList((Map<String, Object>) reqMap.get("fillGap"), ExamConstant.FILLGAP));
-    }
-    if (reqMap.get("judge") != null) {
-      randomList.addAll(getRandomList((Map<String, Object>) reqMap.get("judge"), ExamConstant.JUDGE));
-    }
-    if (reqMap.get("shortAnswer") != null) {
-      randomList.addAll(getRandomList((Map<String, Object>) reqMap.get("shortAnswer"), ExamConstant.SHORTANSWER));
-    }
-    if (reqMap.get("discuss") != null) {
-      randomList.addAll(getRandomList((Map<String, Object>) reqMap.get("discuss"), ExamConstant.DISCUSS));
-    }
-    if (reqMap.get("caseAnalysis") != null) {
-      randomList.addAll(getRandomList((Map<String, Object>) reqMap.get("caseAnalysis"), ExamConstant.CASEANALYSIS));
-    }
-    return randomList;
+    return rdList;
   }
 
   /**
@@ -114,40 +149,46 @@ public class PaperRandomQuestionQueryHandler extends AbstractQueryHandler {
   private List<Map<String, Object>> getRandomList(Map<String, Object> paramMap, int type) {
     String cateIds = String.valueOf(paramMap.get("cateIds"));
     int num = Integer.parseInt(String.valueOf(paramMap.get("num")));
+    if (num < 1) {
+      return new ArrayList<>();
+    }
     int sort = Integer.parseInt(String.valueOf(paramMap.get("sort")));
-    int score = Integer.parseInt(String.valueOf(paramMap.get("score")));
+    int value = Integer.parseInt(String.valueOf(paramMap.get("value")));
     List<Map<String, Object>> rdList = new ArrayList<>();
     Map<String, Object> param = new HashMap<>();
     param.put("cateIds", cateIds);
     param.put("type", type);
+    String text = QuestionType.byType(type).getText();
     try {
       LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMPAPERQUESTION");
       List<Map<String, Object>> list = (List<Map<String, Object>>) baseService.list(param);
-      if (list != null && list.size() > 0) {
-        if (list.size() < num) {
-          log.error("EXAMPAPERQUESTION   by   cateIds :" + cateIds + " size 等于" + list.size() + "数据不够");
-          rdList = list;
-        } else {
-          List<Integer> idxs = new ArrayList<>();
-          Random random = new Random();
-          do {
-            int idx = random.nextInt(list.size());
-            if (!idxs.contains(idx)) {
-              Map<String, Object> question = list.get(idx);
-              Map<String, Object> bean = new HashMap<>();
-              bean.put("subjectCategoryId", question.get("subCategoryId"));
-              bean.put("questionsId", question.get("id"));
-              bean.put("type", type);
-              bean.put("sort", sort);
-              bean.put("value", score);
-              rdList.add(bean);
-              idxs.add(idx);
-            }
-          } while (rdList.size() < num);
-        }
+      if (list == null || list.size() == 0) {
+        throw new GlobalErrorException("999665", text + "，选择的题库中试题数量为0，请重新选择分类");
+      }
+      if (list.size() < num) {
+        log.error("EXAMPAPERQUESTION   by   cateIds :" + cateIds + " size 等于" + list.size() + "数据不够");
+        throw new GlobalErrorException("999665", text + "，选择的题库中试题总数量为" + list.size() + "，请重新选择分类");
+      } else {
+        List<Integer> idxs = new ArrayList<>();
+        Random random = new Random();
+        do {
+          int idx = random.nextInt(list.size());
+          if (!idxs.contains(idx)) {
+            Map<String, Object> question = list.get(idx);
+            Map<String, Object> bean = new HashMap<>();
+            bean.put("subjectCategoryId", question.get("subCategoryId"));
+            bean.put("questionsId", question.get("id"));
+            bean.put("type", type);
+            bean.put("sort", sort);
+            bean.put("value", value);
+            rdList.add(bean);
+            idxs.add(idx);
+          }
+        } while (rdList.size() < num);
       }
     } catch (Exception e) {
-      //log
+      log.error(e.getMessage() + "随机试题时异常");
+      throw new GlobalErrorException("999664", e.getMessage());
     }
     return rdList;
   }
@@ -161,49 +202,57 @@ public class PaperRandomQuestionQueryHandler extends AbstractQueryHandler {
   private List<Map<String, Object>> getPreViewRandomList(Map<String, Object> paramMap, int type) {
     String cateIds = String.valueOf(paramMap.get("cateIds"));
     int num = Integer.parseInt(String.valueOf(paramMap.get("num")));
+    if (num < 1) {
+      return new ArrayList<>();
+    }
     int sort = Integer.parseInt(String.valueOf(paramMap.get("sort")));
-    int score = Integer.parseInt(String.valueOf(paramMap.get("score")));
+    int value = Integer.parseInt(String.valueOf(paramMap.get("value")));
     List<Map<String, Object>> rdList = new ArrayList<>();
     Map<String, Object> param = new HashMap<>();
     param.put("cateIds", cateIds);
     param.put("type", type);
+    String text = QuestionType.byType(type).getText();
     try {
       LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMPAPERQUESTION");
       List<Map<String, Object>> list = (List<Map<String, Object>>) baseService.list(param);
-      if (list != null && list.size() > 0) {
-        if (list.size() < num) {
-          log.error("EXAMPAPERQUESTION   by   cateIds :" + cateIds + " size 等于" + list.size() + "数据不够");
-          rdList = list;
-        } else {
-          List<Integer> idxs = new ArrayList<>();
-          Random random = new Random();
-          do {
-            int idx = random.nextInt(list.size());
-            if (!idxs.contains(idx)) {
-              Map<String, Object> question = list.get(idx);
-              Map<String, Object> bean = new HashMap<>();
-              bean.put("name", question.get("name"));
-              bean.put("id", question.get("id"));
-              bean.put("type", type);
-              bean.put("sort", sort);
-              bean.put("score", score);
-              rdList.add(bean);
-              idxs.add(idx);
-            }
-          } while (rdList.size() < num);
-          if (type == 1 || type ==2) {
-            rdList = settingChoices(rdList);
+      if (list == null || list.size() == 0) {
+        throw new GlobalErrorException("999665", text + "，选择的模块中试题数量为0，请重新选择模块");
+      }
+      if (list.size() < num) {
+        log.error("EXAMPAPERQUESTION   by   cateIds :" + cateIds + " size 等于" + list.size() + "数据不够");
+        throw new GlobalErrorException("999665", text + "，选择的模块中试题总数量为" + list.size() + "，请重新选择模块");
+      } else {
+        List<Integer> idxs = new ArrayList<>();
+        Random random = new Random();
+        do {
+          int idx = random.nextInt(list.size());
+          if (!idxs.contains(idx)) {
+            Map<String, Object> question = list.get(idx);
+            Map<String, Object> bean = new HashMap<>();
+            bean.put("name", question.get("name"));
+            bean.put("subjectCategoryId", question.get("subCategoryId"));
+            bean.put("id", question.get("id"));
+            bean.put("type", type);
+            bean.put("sort", sort);
+            bean.put("value", value);
+            rdList.add(bean);
+            idxs.add(idx);
           }
+        } while (rdList.size() < num);
+        if (type == 1 || type == 2) {
+          rdList = settingChoices(rdList);
         }
       }
     } catch (Exception e) {
-      //log
+      log.error(e.getMessage() + "随机试题时异常");
+      throw new GlobalErrorException("999664", e.getMessage());
     }
     return rdList;
   }
 
   /**
    * 选择题，多选题设置选项
+   *
    * @param choices
    * @return
    */
@@ -231,10 +280,10 @@ public class PaperRandomQuestionQueryHandler extends AbstractQueryHandler {
           if (result.get(key) != null) {
             Map<String, Object> question = (Map<String, Object>) result.get(key);
             Map<String, Object> items = (Map<String, Object>) question.get("items");
-            if(items==null){
+            if (items == null) {
               items = new HashMap<>();
               items.put(String.valueOf(map.get("point")), map.get("text"));
-            }else {
+            } else {
               items.put(String.valueOf(map.get("point")), map.get("text"));
             }
             question.put("items", items);
