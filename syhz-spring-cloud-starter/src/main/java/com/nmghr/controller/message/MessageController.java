@@ -53,11 +53,12 @@ public class MessageController {
       names.add(json.get("id")+"_"+json.get("name"));
       Map<String, Object> params = setMap(body.get("title"),body.get("content"),json.get("id"), json.get("name"),
           body.get("userId"), body.get("curDeptName"),body.get("curDeptCode"), null);
+      sendMessageService.sendMessage(params, QueueConfig.SAVEMESSAGE);
       sendMessageService.sendMessage(params, QueueConfig.TIMELYMESSAGE);
     }
     Map<String, Object> params = setMap(body.get("title"),body.get("content"), "", names.get(0),
         body.get("userId"), body.get("curDeptName"),body.get("curDeptCode"), StringUtils.join(names.toArray(), ","));
-    sendMessageService.sendMessage(params, QueueConfig.TIMELYMESSAGE);
+    sendMessageService.sendMessage(params, QueueConfig.SAVEMESSAGE);
     return array.size();
   }
 
@@ -81,8 +82,6 @@ public class MessageController {
     }
     return params;
   }
-
-
 
   @GetMapping("/query")
   @ResponseBody

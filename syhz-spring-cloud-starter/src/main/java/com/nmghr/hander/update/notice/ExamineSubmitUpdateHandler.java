@@ -79,7 +79,8 @@ public class ExamineSubmitUpdateHandler extends AbstractUpdateHandler {
     //发送消息
     Map<String, Object> sendMap = setMap(title, content, body.get("creatorId"),
         body.get("creatorName"), body.get("userId"), body.get("curDeptCode"), body.get("curDeptName"));
-    sendMessageService.sendMessage(sendMap,QueueConfig.NOTICEEXAMINE);
+    sendMessageService.sendMessage(sendMap,QueueConfig.SAVEMESSAGE);
+    sendMessageService.sendMessage(sendMap,QueueConfig.TIMELYMESSAGE);
 
     //设置本次审批状态为 已结束   修改workorder表
     Map<String, Object> orderMap = new HashMap<String, Object>();
