@@ -430,7 +430,8 @@ public class NoticeController {
           params.put("deptName", body.get("curDeptName"));
           params.put("acceptId", bean.get("userId"));
           params.put("category", 1);//弹出信息
-          sendMessageService.sendMessage(params, QueueConfig.NOTICEEXAMINE);
+          sendMessageService.sendMessage(params, QueueConfig.TIMELYMESSAGE);
+          sendMessageService.sendMessage(params, QueueConfig.SAVEMESSAGE);
           params = new HashMap<>();
           params.put("remindTime", DateUtil.dateFormart(new Date(), DateUtil.yyyyMMddHHmmss));
           LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "BASEMESSAGESIGN");
