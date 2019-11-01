@@ -18,20 +18,12 @@ import java.util.Map;
 public class MessageConsumerServiceImpl {
   Logger logger = LoggerFactory.getLogger(MessageConsumerServiceImpl.class);
 
-  // 知识库审核消息
-  @JmsListener(destination = QueueConfig.TIMELYMESSAGE, containerFactory = "queueContainerFactory")
-  public void consumeSignUpQueue(String message) throws Exception {
-    Map<String, Object> map = JSON.parseObject(message);
-    logger.info("knowledge", "及时消息处理");
-    ISaveHandler saveHandler = SpringUtils.getBean("messagesSaveHandler", ISaveHandler.class);
-    saveHandler.save(map);// 保存到数据库
-  }
 
   // 知识库审核消息
-  @JmsListener(destination = QueueConfig.NOTICEEXAMINE, containerFactory = "queueContainerFactory")
+  @JmsListener(destination = QueueConfig.SAVEMESSAGE, containerFactory = "queueContainerFactory")
   public void consumeNoticeQueue(String message) throws Exception {
     Map<String, Object> map = JSON.parseObject(message);
-    logger.info("knowledge", "通知审核消息");
+    logger.info("message", "sys_message");
     ISaveHandler saveHandler = SpringUtils.getBean("messagesSaveHandler", ISaveHandler.class);
     saveHandler.save(map);// 保存到数据库
   }

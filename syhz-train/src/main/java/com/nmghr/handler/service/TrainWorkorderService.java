@@ -200,9 +200,12 @@ public class TrainWorkorderService {
 		workorderFlowMap.put("creationTime", workflowEntityBo.getCreationTime());
 		workorderFlowMap.put("nextAuditDeptCode", "0"); // 如果是省级审批 则上级部门为0
 		workorderFlowMap.put("nextFlowId", "0"); // 如果是省级审批 则下一次流转为0 审核通过后下次流程节点id
-
+		workorderFlowMap.put("currentAuditNode", 2);
+		LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, ALIAS_TRAIN_WORK);
+		baseService.update(String.valueOf(workId), workorderFlowMap);
 		LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, ALIAS_TRAIN_WORK_FLOW);
 		Object provinceWorkId = baseService.save(workorderFlowMap);
+
 		return provinceWorkId;
 	}
 
@@ -237,7 +240,9 @@ public class TrainWorkorderService {
 		workorderFlowMap.put("creationTime", workflowEntityBo.getCreationTime());
 		workorderFlowMap.put("nextAuditDeptCode", provinceDepCode); // 当前部门上级的部门code
 		workorderFlowMap.put("nextFlowId", provinceWorkId); // 审核通过后下次流程节点id
-
+		workorderFlowMap.put("currentAuditNode", 1);
+		LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, ALIAS_TRAIN_WORK);
+		baseService.update(String.valueOf(workId), workorderFlowMap);
 		LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, ALIAS_TRAIN_WORK_FLOW);
 		Object cityWorkId = baseService.save(workorderFlowMap);
 		return cityWorkId;
@@ -274,7 +279,9 @@ public class TrainWorkorderService {
 		workorderFlowMap.put("creationTime", workflowEntityBo.getCreationTime());
 		workorderFlowMap.put("nextAuditDeptCode", parentDepCode); // 当前部门上级的部门code
 		workorderFlowMap.put("nextFlowId", parentWorkId); // 审核通过后下次流程节点id
-
+		workorderFlowMap.put("currentAuditNode", auditDeptNode);
+		LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, ALIAS_TRAIN_WORK);
+		baseService.update(String.valueOf(workId), workorderFlowMap);
 		LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, ALIAS_TRAIN_WORK_FLOW);
 		Object cityWorkId = baseService.save(workorderFlowMap);
 		return cityWorkId;

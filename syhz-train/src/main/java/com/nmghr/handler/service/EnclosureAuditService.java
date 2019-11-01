@@ -112,6 +112,7 @@ public class EnclosureAuditService {
 		int sendFlag = SyhzUtil.setDateInt(sendMap.get("sendFlag"));
 		if (sendFlag == 0) {
 			snedMessgeService.sendMessage(sendMap, QueueConfig.KNOWLEDGE);
+			snedMessgeService.sendMessage(sendMap, QueueConfig.TIMELYMESSAGE);
 		}
 		map.put("fractionUserId", SyhzUtil.setDate(requestBody.get("creationId")));
 		map.put("fractionUserName", SyhzUtil.setDate(requestBody.get("creationName")));
@@ -296,7 +297,7 @@ public class EnclosureAuditService {
 			LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, ALIAS_TRAINUSERNAME);
 			Map<String, Object> user = (Map<String, Object>) baseService.get(responseMap);
 			String title = SyhzUtil.setDate(user.get("title"));
-			String userId = SyhzUtil.setDate(user.get("userId"));
+			int userId = SyhzUtil.setDateInt(user.get("userId"));
 			responseMap.put("bussionType", 3);
 			String con = "";
 			if (currentAuditType == 2) {
@@ -312,12 +313,13 @@ public class EnclosureAuditService {
 			responseMap.put("deptCode", deptCode);
 			responseMap.put("deptName", deptName);
 			if (i == 0) {
-				responseMap.put("acceptId", map.get("creationId"));
+				responseMap.put("acceptId", SyhzUtil.setDateInt(map.get("creationId")));
 			}
 			if (i == 1) {
 				responseMap.put("acceptId", userId);
 			}
 			responseMap.put("sendFlag", 0);// 发送
+			responseMap.put("category", 1);// 弹出信息
 		} else {
 			responseMap.put("sendFlag", 1);// 不发送
 		}
