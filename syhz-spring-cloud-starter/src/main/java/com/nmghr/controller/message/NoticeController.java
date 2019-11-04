@@ -426,6 +426,7 @@ public class NoticeController {
           params.put("content", body.get("creatorName") + "与" + body.get("creatorDate") + "发布的" + body.get("title") + "通知您还未签收，请及时查阅并签收！");
           params.put("status", 0);
           params.put("creator", body.get("userId"));
+          params.put("creatorName", body.get("userName"));
           params.put("deptCode", body.get("curDeptCode"));
           params.put("deptName", body.get("curDeptName"));
           params.put("acceptId", bean.get("userId"));
