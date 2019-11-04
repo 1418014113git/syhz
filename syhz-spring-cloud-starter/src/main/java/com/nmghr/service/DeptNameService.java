@@ -53,6 +53,8 @@ public class DeptNameService implements IBaseService {
 		String provinceCode = SyhzUtil.setDate(requestMap.get("provinceCode"));
 		String cityCode = SyhzUtil.setDate(requestMap.get("cityCode"));
 		String departCode = SyhzUtil.setDate(requestMap.get("departCode"));
+		String reginCode = SyhzUtil.setDate(requestMap.get("reginCode"));
+
 		List<Map<String, Object>> cList = null;
 		if (!"".equals(provinceCode)) {
 			cList = userExtMapper.getCity();
@@ -62,6 +64,9 @@ public class DeptNameService implements IBaseService {
 		}
 		if (!"".equals(departCode)) {
 			cList = userExtMapper.getDepart(departCode);
+		}
+		if (!"".equals(reginCode)) {
+			cList = userExtMapper.getReginDepart(reginCode);
 		}
 		for (Map<String, Object> city : cList) {
 			Object dCode = city.get("departCode");

@@ -57,6 +57,10 @@ public interface UserExtMapper {
 			+ "WHERE t.depart_type !=4 and  t.city_code=#{cityCode}\n" + "ORDER BY t.depart_code </script>")
 	List<Map<String, Object>> getCityDepart(@Param("cityCode") Object cityCode);
 
+	@Select("<script> SELECT t.depart_code as 'deptCode',t.depart_code as 'departCode',t.depart_name as 'areaName',t.depart_type as 'departType',area_code as areaCode FROM u_depart t \n"
+			+ "WHERE t.depart_type !=4 and  t.regin_code=#{reginCode}\n" + "ORDER BY t.depart_code </script>")
+	List<Map<String, Object>> getReginDepart(@Param("reginCode") Object reginCode);
+
 	@Select("<script> SELECT \n" + "ifnull(count((case when d.depart_type=1 then 1 else null end ) ),0) as p1,\n"
 			+ "ifnull(count((case when d.depart_type=2 then 1 else null end ) ),0) as p2,\n"
 			+ "ifnull(count((case when d.depart_type=3 then 1 else null end ) ),0) as p3\n" + "FROM u_depart d\n"
