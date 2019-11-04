@@ -64,7 +64,7 @@ public interface UserExtMapper {
 	@Select("<script> SELECT \n" + "ifnull(count((case when d.depart_type=1 then 1 else null end ) ),0) as p1,\n"
 			+ "ifnull(count((case when d.depart_type=2 then 1 else null end ) ),0) as p2,\n"
 			+ "ifnull(count((case when d.depart_type=3 then 1 else null end ) ),0) as p3\n" + "FROM u_depart d\n"
-			+ "WHERE d.parent_depart_code=#{departCode} or d.depart_code=#{departCode}  </script>")
+			+ "WHERE (d.parent_depart_code=#{departCode} and parent_depart_code!='610000530000') or d.depart_code=#{departCode}  </script>")
 	Map<String, Object> getDepartType(@Param("departCode") Object departCode);
 
 	@Select("<script> SELECT \n" + "ifnull(count((case when d.depart_type=1 then 1 else null end ) ),0) as p1,\n"
