@@ -26,6 +26,7 @@ public class TrainCrouseQueryHandler extends AbstractQueryHandler {
 	private static final String EN_TYPE_1 = "1";
 	private static final String EN_TYPE_2 = "2";
 	private static String ALIAS_TRAINCOURSE = "TRAINCOURSE";// 课程查询
+	private static String ALIAS_TRAINCOURSETOTAL = "TRAINCOURSETOTAL";// 课程数量查询
 	private static String ALIAS_TRAINCOURSE_BYTITLE = "TRAINCOURSEBYTITLE";// 课程查询
 
 	public TrainCrouseQueryHandler(IBaseService baseService) {
@@ -35,23 +36,34 @@ public class TrainCrouseQueryHandler extends AbstractQueryHandler {
 	public Object list(Map<String, Object> requestBody) throws Exception {
 		Map<String, Object> map = new HashMap<String, Object>();
 		requestBody.put("limit", SyhzUtil.setDateInt(requestBody.get("pageSize")));// 显示数量
-		LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, ALIAS_TRAINCOURSE);
 
 		requestBody.put("enType", EN_TYPE_0);// 文档
 		crouseList(requestBody, map, "enType0");
+		crousetotal(requestBody, map, "enType0Length");
 
 		requestBody.put("enType", EN_TYPE_1);// 视频
 		crouseList(requestBody, map, "enType1");
+		crousetotal(requestBody, map, "enType1Length");
 
 		requestBody.put("enType", EN_TYPE_2);// 音频
 		crouseList(requestBody, map, "enType2");
+		crousetotal(requestBody, map, "enType2Length");
+
 		return map;
 	}
 
 	public void crouseList(Map<String, Object> requestBody, Map<String, Object> map, String saveMapKey)
 			throws Exception {
+		LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, ALIAS_TRAINCOURSE);
 		List<Map<String, Object>> mapList = (List<Map<String, Object>>) baseService.list(requestBody);
 		map.put(saveMapKey, mapList);
+	}
+
+	public void crousetotal(Map<String, Object> requestBody, Map<String, Object> map, String saveMapKey)
+			throws Exception {
+		LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, ALIAS_TRAINCOURSETOTAL);
+		Map<String, Object> maps = (Map<String, Object>) baseService.get(requestBody);
+		map.put(saveMapKey, SyhzUtil.setDateInt(maps.get("total")));
 	}
 
 	// 课程详情查询
