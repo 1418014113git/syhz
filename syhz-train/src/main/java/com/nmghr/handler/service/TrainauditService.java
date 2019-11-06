@@ -49,6 +49,7 @@ public class TrainauditService {
 			int sendFlag = SyhzUtil.setDateInt(sendMap.get("sendFlag"));
 			if (sendFlag == 0) {
 				snedMessgeService.sendMessage(sendMap, QueueConfig.KNOWLEDGE);
+				snedMessgeService.sendMessage(sendMap, QueueConfig.TIMELYMESSAGE);
 			}
 		}
 	}
