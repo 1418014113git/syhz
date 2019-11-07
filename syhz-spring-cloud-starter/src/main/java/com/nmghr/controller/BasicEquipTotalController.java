@@ -57,6 +57,7 @@ public class BasicEquipTotalController {
 			requestBody.putAll(city);
 			LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "BASICEQUIPTOTAL");
 			List<Map<String, Object>> totalList = (List<Map<String, Object>>) baseService.list(requestBody);
+			requestBody.remove("areaCodeSpe");
 			city.put("totalList", totalList);
 			Map<String, Object> thMap2 = count(city, totalMap);// 数据处理
 			responseList.add(thMap2);
@@ -154,7 +155,6 @@ public class BasicEquipTotalController {
 		totalMap.put("totalType2a", totalType2total + SyhzUtil.setDateInt(totalMap.get("totalType2totala")));
 		return map;
 	}
-
 
 	private void toMap(Map<String, Object> total, Map<String, Object> totalMap, Map<String, Object> map, int p1, int p2,
 			int p3, int value1, int value2, int totalType1total, int totalType2total) {
