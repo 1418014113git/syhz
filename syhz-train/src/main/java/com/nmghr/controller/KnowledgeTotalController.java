@@ -53,6 +53,7 @@ public class KnowledgeTotalController {
 				LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, ALIAS_KNOWLEDGETOTAL);
 				map.putAll(city);
 				Map<String, Object> cityTotal = (Map<String, Object>) baseService.get(map);
+				map.remove("areaCodeSpe");
 				Sum(cityTotal);
 				city.putAll(cityTotal);
 			}
@@ -119,6 +120,7 @@ public class KnowledgeTotalController {
 				LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, ALIAS_KNOWLEDGEUSETOTAL);
 				map.putAll(city);
 				List<Map<String, Object>> cityTotal = (List<Map<String, Object>>) baseService.list(map);
+				map.remove("areaCodeSpe");
 				city.putAll(ListToMap(cityTotal));
 			}
 			return cityCodeList;
@@ -148,13 +150,13 @@ public class KnowledgeTotalController {
 				String cityCode = String.valueOf(city.get("areaCode"));
 				if ("610403".equals(cityCode)) {
 					city.put("areaCodeSpe", cityCode);
-
 				} else {
 					city.put("areaCode", cityCode.substring(0, 4));
 				}
 				LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, ALIAS_TRAINCOURSELOGSTATISTICS);
 				map.putAll(city);
 				List<Map<String, Object>> cityTotal = (List<Map<String, Object>>) baseService.list(map);
+				map.remove("areaCodeSpe");
 				city.putAll(ListToMap(cityTotal));
 			}
 			return cityCodeList;
