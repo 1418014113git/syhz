@@ -40,7 +40,7 @@ public class CaseClusterSubmitSaveHandler extends AbstractSaveHandler {
   @Transactional
   public Object save(Map<String, Object> body) throws Exception {
     if (!validName(String.valueOf(body.get("curDeptCode")), String.valueOf(body.get("clusterTitle")))) {
-      throw new GlobalErrorException("999667", "通知标题重复，请确认后重新输入！");
+      throw new GlobalErrorException("999667", "集群战役标题已存在，请确认后重新输入！");
     }
     if (body.containsKey("status") && null != body.get("status") && "1".equals(String.valueOf(body.get("status")))) {
       Object id = create(body);
@@ -93,7 +93,7 @@ public class CaseClusterSubmitSaveHandler extends AbstractSaveHandler {
     approve.setCurDeptName(params.get("curDeptName"));
     approve.setWdTable(WorkOrder.caseCluster.getTable());
     approve.setWdValue(clusterId);
-    approve.setAcceptDept(params.get("acceptDept"));
+    approve.setAcceptDept(params.get("acceptDeptId"));
     approve.setAcceptDeptName(params.get("acceptDeptName"));
     approve.setAcceptedUser(params.get("acceptedUser"));
     approve.setWfStatus(checkFlag ? 3 : 1);

@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.sql.Timestamp;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -35,16 +36,14 @@ public class ExamineUpdateHandler extends AbstractUpdateHandler {
   @Transactional
   public Object update(String flowId, Map<String, Object> body) throws Exception {
     //修改flow 表
-    String type = String.valueOf(body.get("type"));
-    String bsId = String.valueOf(body.get("bsId"));
-    String flowStatus = String.valueOf(body.get("flowStatus"));
-    if ("4".equals(flowStatus) && body.get("content") == null) {
+    String status = String.valueOf(body.get("status"));
+    if ("4".equals(status) && body.get("content") == null) {
       throw new GlobalErrorException("999667", "请填写审核意见！");
     }
     // 修改工单流程状态
     String now = DateUtil.dateFormart(new Date(), DateUtil.yyyyMMddHHmmss);
     Map<String, Object> flowMap = new HashMap<String, Object>();
-    flowMap.put("wdFlowStatus", flowStatus);
+    flowMap.put("wdFlowStatus", status);
     flowMap.put("updateTime", now);
     flowMap.put("updateUser", body.get("userName"));
     if (body.get("content") != null) {
@@ -55,9 +54,24 @@ public class ExamineUpdateHandler extends AbstractUpdateHandler {
     LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "WORKORDERFLOW");
     baseService.update(flowId, flowMap);
 
-    //设置本次审批状态为 已结束   修改workorder表
     Map<String, Object> orderMap = new HashMap<String, Object>();
-    orderMap.put("status", 3);//已结束
+    //向上级申请
+    if ("6".equals(status)) {
+      // 增加工作流
+      Map<String, Object> params = new HashMap<String, Object>();
+      params.put("wdId", body.get("wdId"));
+      params.put("acceptedDept", body.get("acceptDeptId"));
+      params.put("acceptedDeptName", body.get("acceptDeptName"));
+      params.put("acceptedTime", new Timestamp(System.currentTimeMillis()));
+      params.put("wdFlowStatus", "1");// flow待审核
+      params.put("parentId", flowId);
+      LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "WORKORDERFLOW");
+      baseService.save(params);
+      orderMap.put("status", 2);//进行中
+    } else {
+      orderMap.put("status", 3);//已结束
+    }
+    //设置本次审批状态为 已结束   修改workorder表
     LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "WORKORDER");
     Object obj = baseService.update(String.valueOf(body.get("wdId")), orderMap);
 
@@ -66,17 +80,17 @@ public class ExamineUpdateHandler extends AbstractUpdateHandler {
     content.append("【站内通知】-").append(String.valueOf(body.get("title"))).append("在").append(now);
 
     //审核通过
-    if ("3".equals(flowStatus)) {
+    if ("3".equals(status)) {
       title.append("审核通过提醒");
       content.append("审核通过，请及时查阅！");
     }
     // 审核不通过
-    if ("4".equals(flowStatus)) {
+    if ("4".equals(status)) {
       title.append("审核不通过提醒");
       content.append("审核不通过，请及时查阅！");
     }
     //向上级申请
-    if ("6".equals(flowStatus)) {
+    if ("6".equals(status)) {
       title.append("审核通过提醒");
       content.append("审核通过，请及时查阅！");
     }

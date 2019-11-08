@@ -5,7 +5,6 @@ import com.nmghr.basic.common.exception.GlobalErrorException;
 import com.nmghr.basic.core.service.IBaseService;
 import com.nmghr.basic.core.service.handler.ISaveHandler;
 import com.nmghr.basic.core.util.SpringUtils;
-import com.nmghr.controller.vo.PitchManVO;
 import com.sargeraswang.util.ExcelUtil.ExcelUtil;
 import org.apache.commons.collections.IteratorUtils;
 import org.slf4j.Logger;
@@ -15,7 +14,6 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.servlet.http.HttpServletRequest;
 import java.io.FileNotFoundException;
 import java.util.*;
 
@@ -37,8 +35,10 @@ public class CaseAssistClueController {
   @PostMapping(value = "/upload")
   @ResponseBody
   public Object clueImport(@RequestParam("file") MultipartFile mulFile,
+                           @RequestParam("type") Object type,
+                           @RequestParam("userId") Object userId,
+                           @RequestParam("userName") Object userName,
                            @RequestParam("category") Object category,
-                           @RequestParam("creator") Object creator,
                            @RequestParam("curDeptCode") Object curDeptCode,
                            @RequestParam("curDeptName") Object curDeptName,
                            @RequestParam("assistId") Object assistId){
@@ -53,9 +53,11 @@ public class CaseAssistClueController {
           }
 
           List<Map<String, Object>> params = IteratorUtils.toList(list.iterator());
+//          List<LinkedHashMap<String, Object>> params = IteratorUtils.toList(list.iterator());
           if(params.size()>0){
             Map<String, Object> map = params.get(0);
-            List<String> keys = IteratorUtils.toList( map.keySet().iterator());
+//            LinkedHashMap<String, Object> map = params.get(0);
+            List<String> keys = IteratorUtils.toList(map.keySet().iterator());
             StringBuilder err = new StringBuilder();
            if(!keys.contains("序号")){
              err.append("标题必须包含《序号》;");
@@ -68,8 +70,10 @@ public class CaseAssistClueController {
             }
           }
           Map<String, Object> data = new HashMap<>();
+          data.put("type", type);
           data.put("category", category);
-          data.put("creator", creator);
+          data.put("userId", userId);
+          data.put("userName", userName);
           data.put("curDeptCode", curDeptCode);
           data.put("curDeptName", curDeptName);
           data.put("assistId", assistId);
@@ -94,7 +98,7 @@ public class CaseAssistClueController {
     } catch (Exception e) {
       log.error("excel uploadFile error", e.getMessage());
     }
-    return Result.fail("999668", "保存失败");
+    return Result.fail("999669", "保存失败");
   }
   /**
    * 协查线索列表
