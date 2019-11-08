@@ -124,6 +124,8 @@ public class BasicEquipTotalController {
 		int p1 = SyhzUtil.setDateInt(city.get("p1"));
 		int p2 = SyhzUtil.setDateInt(city.get("p2"));
 		int p3 = SyhzUtil.setDateInt(city.get("p3"));
+
+
 		int value1 = 0;
 		int value2 = 0;
 		int totalType1total = 0;
@@ -158,6 +160,9 @@ public class BasicEquipTotalController {
 
 	private void toMap(Map<String, Object> total, Map<String, Object> totalMap, Map<String, Object> map, int p1, int p2,
 			int p3, int value1, int value2, int totalType1total, int totalType2total) {
+		int e1 = SyhzUtil.setDateInt(total.get("equip1"));
+		int e2 = SyhzUtil.setDateInt(total.get("equip2"));
+		int e3 = SyhzUtil.setDateInt(total.get("equip3"));
 		int groupId = SyhzUtil.setDateInt(total.get("groupId"));
 		String groupName = SyhzUtil.setDate(total.get("group_name"));
 		int p1v1 = SyhzUtil.setDateInt(total.get("p1v1"));
@@ -166,7 +171,8 @@ public class BasicEquipTotalController {
 		int equipNumber = SyhzUtil.setDateInt(total.get("equipNumber"));
 		int totalType1 = SyhzUtil.setDateInt(total.get("totalType1"));
 		int totalType2 = SyhzUtil.setDateInt(total.get("totalType2"));
-		int v = p1 * p1v1 + p2 * p1v2 + p1v3 * p3;
+		System.out.println(e1 + "/" + e2 + "/" + e3);
+		int v = p1 * p1v1 + p2 * p1v2 + p1v3 * p3 + e1 + e2 + e3;
 		value1 = value1 + equipNumber;
 		value2 = value2 + v;
 		totalType1total = totalType1total + totalType1;
