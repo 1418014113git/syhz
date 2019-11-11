@@ -459,7 +459,7 @@ public class NoticeController {
     return (List<Map<String, Object>>) obj;
   }
 
-  private void validParams(@RequestBody Map<String, Object> body) {
+  private void validParams(Map<String, Object> body) {
     ValidationUtils.notNull(body.get("title"), "标题不能为空!");
     ValidationUtils.notNull(body.get("content"), "内容不能为空!");
     ValidationUtils.notNull(body.get("userId"), "userId不能为空!");
