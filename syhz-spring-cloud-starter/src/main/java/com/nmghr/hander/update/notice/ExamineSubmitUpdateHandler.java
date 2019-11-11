@@ -78,7 +78,7 @@ public class ExamineSubmitUpdateHandler extends AbstractUpdateHandler {
     }
     //发送消息
     Map<String, Object> sendMap = setMap(title, content, body.get("creatorId"),
-        body.get("creatorName"), body.get("userId"), body.get("curDeptCode"), body.get("curDeptName"));
+        body.get("creatorName"), body.get("userId"), body.get("userName"), body.get("curDeptCode"), body.get("curDeptName"));
     sendMessageService.sendMessage(sendMap,QueueConfig.SAVEMESSAGE);
     sendMessageService.sendMessage(sendMap,QueueConfig.TIMELYMESSAGE);
 
@@ -144,7 +144,7 @@ public class ExamineSubmitUpdateHandler extends AbstractUpdateHandler {
     }
   }
   private Map<String, Object> setMap(Object title, Object content, Object id,
-                                     Object name, Object userId, Object curDeptCode, Object curDeptName) {
+                                     Object name, Object userId, Object userName, Object curDeptCode, Object curDeptName) {
     Map<String, Object> params = new HashMap<>();
     params.put("bussionType", 4);
     params.put("bussionTypeInfo", 404);
@@ -155,6 +155,7 @@ public class ExamineSubmitUpdateHandler extends AbstractUpdateHandler {
     params.put("acceptId", id);
     params.put("acceptName", name);
     params.put("creator", userId);
+    params.put("creatorName", userName);
     params.put("deptCode", curDeptCode);
     params.put("deptName", curDeptName);
     params.put("category", 1);//弹出信息
