@@ -14,7 +14,7 @@ import com.nmghr.basic.core.service.handler.impl.AbstractQueryHandler;
 
 @Service("personMessageQueryHandler")
 public class PersonMessageQueryHandler extends AbstractQueryHandler {
-	
+
 	private static String ALIAS_PERSONMESSAGE = "PERSONMESSAGE";// 字典
 
 	public PersonMessageQueryHandler(IBaseService baseService) {
@@ -47,6 +47,9 @@ public class PersonMessageQueryHandler extends AbstractQueryHandler {
 		List<Map<String, Object>> zbjl = new ArrayList<Map<String, Object>>();
 		List<Map<String, Object>> zblx = new ArrayList<Map<String, Object>>();
 		List<Map<String, Object>> zbzt = new ArrayList<Map<String, Object>>();
+		List<Map<String, Object>> dbjb = new ArrayList<Map<String, Object>>();
+		List<Map<String, Object>> dbajzt = new ArrayList<Map<String, Object>>();
+		List<Map<String, Object>> dbajpczt = new ArrayList<Map<String, Object>>();
 		for (int i = 0; i < list.size(); i++) {
 			if ("mz".equals(String.valueOf(list.get(i).get("codeLx")))) {
 				mz.add(list.get(i));
@@ -80,7 +83,7 @@ public class PersonMessageQueryHandler extends AbstractQueryHandler {
 				ydzt.add(list.get(i));
 			} else if ("zyzz".equals(String.valueOf(list.get(i).get("codeLx")))) {
 				zyzz.add(list.get(i));
-			}else if ("fxxs".equals(String.valueOf(list.get(i).get("codeLx")))) {
+			} else if ("fxxs".equals(String.valueOf(list.get(i).get("codeLx")))) {
 				fxxs.add(list.get(i));
 			} else if ("qszt".equals(String.valueOf(list.get(i).get("codeLx")))) {
 				qszt.add(list.get(i));
@@ -92,6 +95,12 @@ public class PersonMessageQueryHandler extends AbstractQueryHandler {
 				zblx.add(list.get(i));
 			} else if ("zbzt".equals(String.valueOf(list.get(i).get("codeLx")))) {
 				zbzt.add(list.get(i));
+			} else if ("dbjb".equals(String.valueOf(list.get(i).get("codeLx")))) {
+				dbjb.add(list.get(i));
+			} else if ("dbajzt".equals(String.valueOf(list.get(i).get("codeLx")))) {
+				dbajzt.add(list.get(i));
+			} else if ("dbajpczt".equals(String.valueOf(list.get(i).get("codeLx")))) {
+				dbajpczt.add(list.get(i));
 			}
 		}
 		Map<String, Object> map = new HashMap<String, Object>();
@@ -117,9 +126,11 @@ public class PersonMessageQueryHandler extends AbstractQueryHandler {
 		map.put("zbjl", zbjl);
 		map.put("zblx", zblx);
 		map.put("zbzt", zbzt);
+		map.put("dbjb", dbjb);
+		map.put("dbajzt", dbajzt);
+		map.put("dbajpczt", dbajpczt);
 		return map;
-		
+
 	}
-	
 
 }
