@@ -155,7 +155,7 @@ public class ExaminePassUpdateHandler extends AbstractUpdateHandler {
 
   /**
    * 增加签收表信息
-   * 
+   *
    * @param businessTable
    * @param id
    * @param businessType
