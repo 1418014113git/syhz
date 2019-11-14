@@ -426,11 +426,13 @@ public class NoticeController {
           params.put("content", body.get("creatorName") + "与" + body.get("creatorDate") + "发布的" + body.get("title") + "通知您还未签收，请及时查阅并签收！");
           params.put("status", 0);
           params.put("creator", body.get("userId"));
+          params.put("creatorName", body.get("userName"));
           params.put("deptCode", body.get("curDeptCode"));
           params.put("deptName", body.get("curDeptName"));
           params.put("acceptId", bean.get("userId"));
           params.put("category", 1);//弹出信息
-          sendMessageService.sendMessage(params, QueueConfig.NOTICEEXAMINE);
+          sendMessageService.sendMessage(params, QueueConfig.TIMELYMESSAGE);
+          sendMessageService.sendMessage(params, QueueConfig.SAVEMESSAGE);
           params = new HashMap<>();
           params.put("remindTime", DateUtil.dateFormart(new Date(), DateUtil.yyyyMMddHHmmss));
           LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "BASEMESSAGESIGN");
@@ -457,7 +459,7 @@ public class NoticeController {
     return (List<Map<String, Object>>) obj;
   }
 
-  private void validParams(@RequestBody Map<String, Object> body) {
+  private void validParams(Map<String, Object> body) {
     ValidationUtils.notNull(body.get("title"), "标题不能为空!");
     ValidationUtils.notNull(body.get("content"), "内容不能为空!");
     ValidationUtils.notNull(body.get("userId"), "userId不能为空!");

@@ -52,17 +52,18 @@ public class MessageController {
       JSONObject json = array.getJSONObject(i);
       names.add(json.get("id")+"_"+json.get("name"));
       Map<String, Object> params = setMap(body.get("title"),body.get("content"),json.get("id"), json.get("name"),
-          body.get("userId"), body.get("curDeptName"),body.get("curDeptCode"), null);
+          body.get("userId"), body.get("userName"), body.get("curDeptName"),body.get("curDeptCode"), null);
+      sendMessageService.sendMessage(params, QueueConfig.SAVEMESSAGE);
       sendMessageService.sendMessage(params, QueueConfig.TIMELYMESSAGE);
     }
     Map<String, Object> params = setMap(body.get("title"),body.get("content"), "", names.get(0),
-        body.get("userId"), body.get("curDeptName"),body.get("curDeptCode"), StringUtils.join(names.toArray(), ","));
-    sendMessageService.sendMessage(params, QueueConfig.TIMELYMESSAGE);
+        body.get("userId"), body.get("userName"), body.get("curDeptCode"),body.get("curDeptName"), StringUtils.join(names.toArray(), ","));
+    sendMessageService.sendMessage(params, QueueConfig.SAVEMESSAGE);
     return array.size();
   }
 
   private Map<String, Object> setMap(Object title, Object content, Object id,
-                                     Object name, Object userId, Object curDeptCode, Object curDeptName, Object remark) {
+                                     Object name, Object userId, Object userName, Object curDeptCode, Object curDeptName, Object remark) {
     Map<String, Object> params = new HashMap<>();
     params.put("bussionType", 4);
     params.put("bussionTypeInfo", 403);
@@ -73,6 +74,7 @@ public class MessageController {
     params.put("acceptId", id);
     params.put("acceptName", name);
     params.put("creator", userId);
+    params.put("creatorName", userName);
     params.put("deptCode", curDeptCode);
     params.put("deptName", curDeptName);
     params.put("category", 1);//弹出信息
@@ -81,8 +83,6 @@ public class MessageController {
     }
     return params;
   }
-
-
 
   @GetMapping("/query")
   @ResponseBody

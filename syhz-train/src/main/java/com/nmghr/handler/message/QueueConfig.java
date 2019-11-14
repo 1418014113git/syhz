@@ -6,7 +6,7 @@ public class QueueConfig {
 	 */
 	public static final String KNOWLEDGE = "activemq.knowleageAudit";
 
-	public static final String NOTICEEXAMINE = "activemq.noticeExamine";
+	public static final String SAVEMESSAGE = "activemq.saveMessage";
 	public static final String TIMELYMESSAGE = "activemq.timelyMessage";
 
 }
