@@ -23,6 +23,7 @@ import com.nmghr.basic.common.Result;
 import com.nmghr.basic.core.service.IBaseService;
 import com.nmghr.handler.service.TrainWorkorderExamineService;
 import com.nmghr.handler.service.TrainWorkorderService;
+import com.nmghr.handler.service.TrainauditService;
 
 /**
  * 审核信息服务
@@ -33,41 +34,44 @@ import com.nmghr.handler.service.TrainWorkorderService;
  */
 @RestController
 public class TrainWorkorderController {
-  private static final Logger LOGGER = LoggerFactory.getLogger(TrainWorkorderController.class);
-  
-  @Autowired
-  @Qualifier("baseService")
-  private IBaseService baseService;
-  
-  @Autowired
-  TrainWorkorderService trainWorkorderService;
-  
-  @Autowired
-  TrainWorkorderExamineService trainWorkorderExamineService;
-  
-  @PostMapping("/workorder/flow")
-  public Object workorderFlow(@RequestBody Map<String, Object> requestBody,
-      @RequestHeader Map<String, String> headers) {
-    try {
-      trainWorkorderService.createWorkflowData(baseService, headers, requestBody);
-      return Result.ok("ok");
-    } catch (Exception e) {
-      LOGGER.error("TrainWorkorderController.workorderFlow.error:", e.toString());
-      return Result.fail();
-    }
+	private static final Logger LOGGER = LoggerFactory.getLogger(TrainWorkorderController.class);
 
-  }
-  
-  @PostMapping("/work/node")
-  public Object workorderFlowNode(@RequestBody Map<String, Object> requestBody,
-      @RequestHeader Map<String, String> headers) {
-    try {
-      trainWorkorderExamineService.examineWorkFlowData(baseService, headers, requestBody);
-      return Result.ok("ok");
-    } catch (Exception e) {
-      LOGGER.error("TrainWorkorderController.workorderFlow.error:", e.toString());
-      return Result.fail();
-    }
+	@Autowired
+	@Qualifier("baseService")
+	private IBaseService baseService;
 
-  }
+	@Autowired
+	TrainWorkorderService trainWorkorderService;
+
+	@Autowired
+	TrainWorkorderExamineService trainWorkorderExamineService;
+
+	@Autowired
+	private TrainauditService TrainauditService;
+
+	@PostMapping("/workorder/flow")
+	public Object workorderFlow(@RequestBody Map<String, Object> requestBody,
+			@RequestHeader Map<String, String> headers) {
+		try {
+			trainWorkorderService.createWorkflowData(baseService, headers, requestBody);
+			return Result.ok("ok");
+		} catch (Exception e) {
+			LOGGER.error("TrainWorkorderController.workorderFlow.error:", e.toString());
+			return Result.fail();
+		}
+
+	}
+
+	@PostMapping("/work/node")
+	public Object workorderFlowNode(@RequestBody Map<String, Object> requestBody,
+			@RequestHeader Map<String, String> headers) throws Exception {
+		TrainauditService.audit(requestBody, headers);
+		// trainWorkorderExamineService.examineWorkFlowData(baseService, headers,
+		// requestBody);
+		// EnclosureAuditService.rule1(requestBody, baseService);
+		// EnclosureAuditService.audit(requestBody);
+		return Result.ok("ok");
+	}
+
+
 }

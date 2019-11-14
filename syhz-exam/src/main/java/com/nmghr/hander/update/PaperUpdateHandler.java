@@ -7,6 +7,7 @@ import com.nmghr.basic.core.common.LocalThreadStorage;
 import com.nmghr.basic.core.service.IBaseService;
 import com.nmghr.basic.core.service.handler.impl.AbstractUpdateHandler;
 import com.nmghr.common.ExamConstant;
+import com.nmghr.common.QuestionType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -38,21 +39,19 @@ public class PaperUpdateHandler extends AbstractUpdateHandler {
       if("1".equals(String.valueOf(requestBody.get("paperType")))){
         requestBody.put("remark", new JSONObject());
         requestBody.put("questionList", new ArrayList<>());
-        packageParams((Map<String, Object>) requestBody.get(ExamConstant.CHOICESNAME), requestBody, ExamConstant.CHOICESNAME, ExamConstant.CHOICES);
-        packageParams((Map<String, Object>) requestBody.get(ExamConstant.MULTISELECTNAME), requestBody, ExamConstant.MULTISELECTNAME, ExamConstant.MULTISELECT);
-        packageParams((Map<String, Object>) requestBody.get(ExamConstant.FILLGAPNAME), requestBody, ExamConstant.FILLGAPNAME, ExamConstant.FILLGAP);
-        packageParams((Map<String, Object>) requestBody.get(ExamConstant.JUDGENAME), requestBody, ExamConstant.JUDGENAME, ExamConstant.JUDGE);
-        packageParams((Map<String, Object>) requestBody.get(ExamConstant.SHORTANSWERNAME), requestBody, ExamConstant.SHORTANSWERNAME, ExamConstant.SHORTANSWER);
-        packageParams((Map<String, Object>) requestBody.get(ExamConstant.DISCUSSNAME), requestBody, ExamConstant.DISCUSSNAME, ExamConstant.DISCUSS);
-        packageParams((Map<String, Object>) requestBody.get(ExamConstant.CASEANALYSISNAME), requestBody, ExamConstant.CASEANALYSISNAME, ExamConstant.CASEANALYSIS);
+        List<Map<String, Object>> sortList = new ArrayList<>();
+        for (QuestionType qt : QuestionType.values()) {
+          packageParams(requestBody, qt, sortList);
+        }
+        requestBody.put("sort", ExamConstant.sortList(sortList));
       }
       Map<String, Object> params = new HashMap<String, Object>();
       params.put("paperName", requestBody.get("paperName"));
       params.put("paperType", requestBody.get("paperType"));
-      params.put("modifier", requestBody.get("modifier"));
-//      params.put("deptCode", requestBody.get("deptCode"));
-//      params.put("deptName", requestBody.get("deptName"));
+      params.put("modifier", requestBody.get("creator"));
       params.put("remark", JSONObject.toJSONString(requestBody.get("remark")));
+      params.put("sort", JSONObject.toJSONString(requestBody.get("sort")));
+
       // 修改试卷主表
       LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMPAPER");
       Object paperObj = baseService.update(id, params);
@@ -126,23 +125,25 @@ public class PaperUpdateHandler extends AbstractUpdateHandler {
   }
 
   @SuppressWarnings("unchecked")
-  private void packageParams(Map<String, Object> bean, Map<String, Object> params, String key, int type) {
+  private void packageParams(Map<String, Object> params, QuestionType qType, List<Map<String, Object>> sorts) {
+    Map<String, Object> bean = (Map<String, Object>) params.get(qType.name());
     JSONObject remark = (JSONObject) params.get("remark");
     if (bean != null) {
-      remark.put(key, bean.get("desc") + ExamConstant.DESCFLAG + bean.get("sort") + ExamConstant.DESCFLAG + bean.get("value"));
+      remark.put(qType.name(), bean.get("desc") + ExamConstant.DESCFLAG + bean.get("sort") + ExamConstant.DESCFLAG + bean.get("value"));
       params.put("remark", remark);
+      sorts.add(ExamConstant.setQuestionSort(qType, String.valueOf(bean.get("sort"))));
       List<Map<String, Object>> list = (List<Map<String, Object>>) params.get("questionList");
       List<Map<String, Object>> datas = (List<Map<String, Object>>) bean.get("data");
       for (Map<String, Object> q : datas) {
         Map<String, Object> map = new HashMap<>();
         map.put("subjectCategoryId", q.get("subjectCategoryId"));
         map.put("questionsId", q.get("questionsId"));
-        map.put("type", type);
+        map.put("type", qType.getType());
         map.put("value", bean.get("value"));
         list.add(map);
       }
       params.put("questionList", list);
-      params.remove(key);
+      params.remove(qType.name());
     }
   }
 }

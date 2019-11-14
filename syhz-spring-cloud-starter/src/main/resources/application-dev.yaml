@@ -1,13 +1,29 @@
 db:
-  url: jdbc:mysql://192.168.42.230:3306/shanxi-hsyz?useUnicode=true&characterEncoding=utf-8&allowMultiQueries=true
+  url: jdbc:mysql://192.168.42.230:3306/shanxi-hsyz?useUnicode=true&characterEncoding=utf-8&allowMultiQueries=true&useSSL=false
   username: hsyz
   password: 123456
 upms:
-  url: jdbc:mysql://192.168.42.230:3306/shanxi-upms?useUnicode=true&characterEncoding=utf-8&allowMultiQueries=true
+  url: jdbc:mysql://192.168.42.230:3306/shanxi-upms?useUnicode=true&characterEncoding=utf-8&allowMultiQueries=true&useSSL=false
   username: shanxiupms
   password: 123456
 eureka:
   url: http://Nmghr:NMhr$123@192.168.3.4:7007/eureka/
-  
 file:
   path: D://111//检验鉴定委托书.docx
+mq:
+  url: tcp://192.168.42.189:61616
+  name: admin
+  password: admin
+lanxin:
+  reqUrl: http://staging430.t.lanxin.cn/cgi-bin/token
+  grantType: client_credential
+  appid: 101783
+  secret: 2TMFJ4ZgHGZPTwE_RW
+  linkmsg: http://192.168.1.104:8080/syh.html?
+  lxApi: https://staging430.t.lanxin.cn/cgi-bin/message/custom/send?rand=97
+  roleCode: sys_admin
+  runFlag: stop
+log:
+  level: error
+elasticsearch:
+  hostNames: 192.168.42.187:9200

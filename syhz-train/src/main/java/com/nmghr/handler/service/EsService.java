@@ -1,5 +1,6 @@
 package com.nmghr.handler.service;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -13,51 +14,52 @@ import org.springframework.stereotype.Service;
 
 import com.nmghr.util.SyhzUtil;
 
+/**
+ * Es公共类
+ * 
+ * @author heijiantao
+ * @date 2019年9月26日
+ * @version 1.0
+ */
 @Service
 public class EsService {
 	@Autowired
 	private BBossESStarter bbossESStarter;
 
-	public void CreateIndice() {
-		// 创建加载配置文件的客户端工具，单实例多线程安全
-		ClientInterface clientUtil = bbossESStarter.getConfigRestClient("esmapper/lawInfo.xml");
-		try {
-			// 判读索引表article是否存在，存在返回true，不存在返回false
-			boolean exist = clientUtil.existIndice("lawinfo");// 索引名不支持小写
-			// 如果索引表article已经存在先删除mapping
-			if (exist) {
-				String r = clientUtil.dropIndice("lawinfo");
-				exist = clientUtil.existIndice("lawinfo");
-				// r = clientUtil.dropIndice("article");
-				String articleIndice = clientUtil.getIndice("lawinfo");// 获取最新建立的索引表结构
-			}
-			// 创建索引表article
-			clientUtil.createIndiceMapping("lawinfo", // 索引表名称
-					"createlawInfoIndice");// 索引表mapping dsl脚本名称，在esmapper/lawInfo.xml中定义createlawInfoIndice
-			String articleIndice = clientUtil.getIndice("lawinfo");// 获取最新建立的索引表结构
-		} catch (ElasticSearchException e) {
-			e.printStackTrace();
-		}
-
-	}
-
 	public Map<String, Object> query(String index, Map<String, Object> map, String DSL) {
 		int pageSize = SyhzUtil.setDateInt(map.get("pageSize"));
 		int pageNum = SyhzUtil.setDateInt(map.get("pageNum"));
-		map.put("num", pageNum * (pageSize - 1));
-		ClientInterface clientUtil = bbossESStarter.getConfigRestClient("esmapper/" + index + ".xml");
-		ESDatas<Map> esDatas = // ESDatas包含当前检索的记录集合，最多1000条记录，由dsl中的size属性指定
-				clientUtil.searchList(index + "/_search", // demo为索引表，_search为检索操作action
-						DSL, // esmapper/demo.xml中定义的dsl语句
-						map, // 变量参数
-						Map.class);// 返回的文档封装对象类型
-		List<Map> mapList = esDatas.getDatas();
-		long totalSize = esDatas.getTotalSize();
+		map.put("num", (pageNum - 1) * pageSize);
 		Map<String, Object> reposneMap = new HashMap<String, Object>();
-		reposneMap.put("data", mapList);
-		reposneMap.put("pageSize", pageSize);
-		reposneMap.put("pageNum", pageNum);
-		reposneMap.put("totalCount", totalSize);
+
+		try {
+			String category = SyhzUtil.setDate(map.get("category"));
+			if (!"".equals(category)) {
+				map.put("category", category.replaceAll(",", " "));
+			}
+			ClientInterface clientUtil = bbossESStarter.getConfigRestClient("esmapper/" + index + ".xml");
+			ESDatas<Map> esDatas = // ESDatas包含当前检索的记录集合，最多1000条记录，由dsl中的size属性指定
+					clientUtil.searchList(index + "/_search", // demo为索引表，_search为检索操作action
+							DSL, // esmapper/demo.xml中定义的dsl语句
+							map, // 变量参数
+							Map.class);// 返回的文档封装对象类型
+			List<Map> mapList = esDatas.getDatas();
+			long totalSize = esDatas.getTotalSize();
+			reposneMap.put("data", mapList);
+			reposneMap.put("pageSize", pageSize);
+			reposneMap.put("pageNum", pageNum);
+			reposneMap.put("totalCount", totalSize);
+		} catch (Exception e) {
+			Map documentMap = new HashMap();
+			documentMap.put("documnetId", -1);
+			List<Map> dList = new ArrayList<Map>();
+			dList.add(documentMap);
+			reposneMap.put("data", dList);
+			reposneMap.put("pageSize", pageSize);
+			reposneMap.put("pageNum", pageNum);
+			reposneMap.put("totalCount", 0);
+		}
+
 		return reposneMap;
 	}
 
@@ -83,9 +85,32 @@ public class EsService {
 
 	public void update(Map<String, Object> map, String documnetId, String index, Object object) {
 		ClientInterface clientUtil = bbossESStarter.getRestClient();
-		clientUtil.updateDocument("lawinfo", // 索引表
+		clientUtil.updateDocument(index + "/_doc/" + documnetId, // 索引表
 				"_doc", // 索引类型
-				documnetId, // 文档id
-				object);
+				"", // 文档id
+				toMap(map));
 	}
+
+	public Map<String, Object> toMap(Map<String, Object> map) {
+		Map<String, Object> esMap = new HashMap<String, Object>();
+		esMap.put("title", SyhzUtil.setDate(map.get("title")));
+		esMap.put("articleType", SyhzUtil.setDate(map.get("articleType")));
+		esMap.put("category", SyhzUtil.setDate(map.get("category")));
+		esMap.put("content", SyhzUtil.setDate(map.get("content")));
+		esMap.put("publishTime", SyhzUtil.setDate(map.get("publishTime")));
+		return esMap;
+
+	}
+
+	public void auidt(String index, String documentId) {
+		ClientInterface clientUtil = bbossESStarter.getConfigRestClient("esmapper/" + index + ".xml");
+		clientUtil.updateByQuery(index + "/_doc/" + documentId + "/_update", "audit");
+	}
+
+	public void remove(String index, String documentId) {
+		ClientInterface clientUtil = bbossESStarter.getConfigRestClient("esmapper/" + index + ".xml");
+		clientUtil.updateByQuery(index + "/_doc/" + documentId + "/_update", "delete");
+	}
+
+
 }

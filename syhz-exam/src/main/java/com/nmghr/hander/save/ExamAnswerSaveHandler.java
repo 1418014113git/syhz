@@ -6,16 +6,14 @@ import com.nmghr.basic.core.common.LocalThreadStorage;
 import com.nmghr.basic.core.service.IBaseService;
 import com.nmghr.basic.core.service.handler.impl.AbstractSaveHandler;
 import com.nmghr.common.ExamConstant;
+import com.nmghr.common.QuestionType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * 考试记录添加
@@ -91,7 +89,7 @@ public class ExamAnswerSaveHandler extends AbstractSaveHandler {
   private void setAnswer(Object paperId, Object questionId, String text, int type,
                          Map<String, Object> saveParams) throws Exception {
     saveParams.put("type", type);
-    if (type == ExamConstant.CHOICES || type == ExamConstant.MULTISELECT || type == ExamConstant.FILLGAP || type == ExamConstant.JUDGE) {
+    if (type == QuestionType.choices.getType() || type == QuestionType.multiSelect.getType() || type == QuestionType.fillGap.getType() || type == QuestionType.judge.getType()) {
       // 客观题
       Map<String, Object> params = new HashMap<>();
       params.put("type", type);
@@ -100,12 +98,19 @@ public class ExamAnswerSaveHandler extends AbstractSaveHandler {
       LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMPAPERANSWER");
       List<Map<String, Object>> answers = (List<Map<String, Object>>) baseService.list(params);
       if (answers == null || answers.size() == 0) {
-        throw new GlobalErrorException("999001", "提交答案异常！");
+        throw new GlobalErrorException("999001", "试题不存在！");
       }
       Map<String, Object> answer = answers.get(0);
-      saveParams.put("correctAnswer", answer.get("answer"));
-      saveParams.put("answerType", String.valueOf(answer.get("answer")).equals(text) ? 0 : 1);
-      saveParams.put("score", answer.get("score"));
+      String userAnswer = String.valueOf(answer.get("answer"));
+      saveParams.put("correctAnswer", userAnswer);
+      if(type == QuestionType.fillGap.getType()){
+        boolean flag = check(text.split("\\|"), userAnswer);
+        saveParams.put("answerType", flag ? 0 : 1);
+        saveParams.put("score", flag ? answer.get("score") : 0);
+      } else {
+        saveParams.put("answerType", userAnswer.equals(text) ? 0 : 1);
+        saveParams.put("score", userAnswer.equals(text) ? answer.get("score") : 0);
+      }
     } else {
       //主观题
       saveParams.put("correctAnswer", "");
@@ -113,6 +118,33 @@ public class ExamAnswerSaveHandler extends AbstractSaveHandler {
       saveParams.put("score", 0);
     }
 
+  }
+
+  private static boolean check(String[] texts, String answer) {
+    answer = answer.replaceAll(",", "，");
+    String[] answers = answer.split("\\|");
+    int anum = 0;
+    if (texts.length < answers.length) {
+      return false;
+    }
+    for (int i = 0; i < answers.length; i++) {
+      String a = answers[i];
+      if(texts[i]==null){
+        continue;
+      }
+      String text = texts[i].trim();
+      if(a.contains("，")){
+        List arr = Arrays.asList(a.split("，"));
+        if (!"".equals(text) && arr.contains(text)) {
+          anum++;
+        }
+      } else if(!a.contains("，")){
+        if (!"".equals(text) && a.equals(text)) {
+          anum++;
+        }
+      }
+    }
+    return anum == answers.length;
   }
 
 }
