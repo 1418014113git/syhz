@@ -93,13 +93,11 @@ public class AJRLSaveHandler extends AbstractSaveHandler {
       }
       if (map.get("LARQ") != null) {
         String larq = String.valueOf(map.get("LARQ"));
-        if (larq.length() < 4 || !Pattern.compile("^\\d+$").matcher(larq.substring(0, 4)).matches() || Integer.parseInt(larq.substring(0, 4)) < 2019) {
+        if (larq.length() == 8 && Pattern.compile("^\\d+$").matcher(larq.substring(0, 4)).matches() && Integer.parseInt(larq.substring(0, 4)) >= 2019) {
           status = 2;
           saveBisNotice(requestBody, map.get("id"), status);
         }
       }
-
-
       // 向记录表business_log添加数据
       requestBody.put("bizType", "1");
       requestBody.put("action", "案件认领");
