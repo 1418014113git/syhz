@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.util.List;
 import java.util.Map;
@@ -56,6 +57,9 @@ public class ReportTemplateService {
     for (Map<String, Object> column : columnList) {
       column.put("templateId", id);
       LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, REPORT_TEMPLATE_COLUMN);
+      if (column.containsKey("sortType") && !StringUtils.isEmpty(column.get("sortType"))) {
+        column.put("sortType", String.valueOf(column.get("sortType")));
+      }
       baseService.save(column);
     }
     return id;
@@ -69,6 +73,9 @@ public class ReportTemplateService {
     List<Map<String, Object>> columnList = (List<Map<String, Object>>) requestBody.get("columnSet");
     for (Map<String, Object> column : columnList) {
       LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, REPORT_TEMPLATE_COLUMN);
+      if (column.containsKey("sortType") && !StringUtils.isEmpty(column.get("sortType"))) {
+        column.put("sortType", String.valueOf(column.get("sortType")));
+      }
       baseService.update(String.valueOf(column.get("id")), column);
     }
   }

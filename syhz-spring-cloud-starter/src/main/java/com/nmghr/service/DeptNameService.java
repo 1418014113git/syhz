@@ -54,7 +54,7 @@ public class DeptNameService implements IBaseService {
 		String cityCode = SyhzUtil.setDate(requestMap.get("cityCode"));
 		String departCode = SyhzUtil.setDate(requestMap.get("departCode"));
 		String reginCode = SyhzUtil.setDate(requestMap.get("reginCode"));
-
+		int flag = SyhzUtil.setDateInt(requestMap.get("flag"));
 		List<Map<String, Object>> cList = null;
 		if (!"".equals(provinceCode)) {
 			cList = userExtMapper.getCity();
@@ -68,16 +68,19 @@ public class DeptNameService implements IBaseService {
 		if (!"".equals(reginCode)) {
 			cList = userExtMapper.getReginDepart(reginCode);
 		}
-		for (Map<String, Object> city : cList) {
-			Object dCode = city.get("departCode");
-			// List<Map<String, Object>> depart = userExtMapper.getDepart(departCode);
-			// city.put("children", depart);
-			if (!"".equals(provinceCode)) {
-				Map<String, Object> type = userExtMapper.getDepartType(dCode);
-				city.putAll(type);
-			} else {
-				Map<String, Object> type = userExtMapper.getMyDepartType(dCode);
-				city.putAll(type);
+		if (flag != 1) {
+
+			for (Map<String, Object> city : cList) {
+				Object dCode = city.get("departCode");
+				// List<Map<String, Object>> depart = userExtMapper.getDepart(departCode);
+				// city.put("children", depart);
+				if (!"".equals(provinceCode)) {
+					Map<String, Object> type = userExtMapper.getDepartType(dCode);
+					city.putAll(type);
+				} else {
+					Map<String, Object> type = userExtMapper.getMyDepartType(dCode);
+					city.putAll(type);
+				}
 			}
 		}
 		return cList;
