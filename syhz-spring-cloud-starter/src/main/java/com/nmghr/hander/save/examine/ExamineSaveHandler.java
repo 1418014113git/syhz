@@ -1,5 +1,12 @@
 package com.nmghr.hander.save.examine;
 
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.nmghr.basic.common.Constant;
 import com.nmghr.basic.common.exception.GlobalErrorException;
 import com.nmghr.basic.core.common.LocalThreadStorage;
@@ -7,12 +14,6 @@ import com.nmghr.basic.core.service.IBaseService;
 import com.nmghr.basic.core.service.handler.impl.AbstractSaveHandler;
 import com.nmghr.hander.dto.ApproveParam;
 import com.nmghr.util.DateUtil;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
 
 
 /**
@@ -32,7 +33,7 @@ public class ExamineSaveHandler extends AbstractSaveHandler {
    * @throws Exception e
    */
   @Transactional
-  public void createApprove(ApproveParam params, Boolean checkFlag){
+	public Object createApprove(ApproveParam params, Boolean checkFlag) {
     try{
       Map<String, Object> approve = new HashMap<>();
       approve.put("type", params.getWdType());
@@ -62,7 +63,7 @@ public class ExamineSaveHandler extends AbstractSaveHandler {
         flow.put("content", "审核通过");
       }
       LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "WORKORDERFLOW");
-      baseService.save(flow);
+			return baseService.save(flow);
     } catch (Exception e){
       throw new GlobalErrorException("999667","审核信息保存异常");
     }
