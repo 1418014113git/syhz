@@ -50,6 +50,8 @@ public class PersonMessageQueryHandler extends AbstractQueryHandler {
 		List<Map<String, Object>> dbjb = new ArrayList<Map<String, Object>>();
 		List<Map<String, Object>> dbajzt = new ArrayList<Map<String, Object>>();
 		List<Map<String, Object>> dbajpczt = new ArrayList<Map<String, Object>>();
+		List<Map<String, Object>> cbzt = new ArrayList<Map<String, Object>>();
+
 		for (int i = 0; i < list.size(); i++) {
 			if ("mz".equals(String.valueOf(list.get(i).get("codeLx")))) {
 				mz.add(list.get(i));
@@ -101,6 +103,8 @@ public class PersonMessageQueryHandler extends AbstractQueryHandler {
 				dbajzt.add(list.get(i));
 			} else if ("dbajpczt".equals(String.valueOf(list.get(i).get("codeLx")))) {
 				dbajpczt.add(list.get(i));
+			} else if ("cbzt".equals(String.valueOf(list.get(i).get("codeLx")))) {
+				cbzt.add(list.get(i));
 			}
 		}
 		Map<String, Object> map = new HashMap<String, Object>();
@@ -129,6 +133,7 @@ public class PersonMessageQueryHandler extends AbstractQueryHandler {
 		map.put("dbjb", dbjb);
 		map.put("dbajzt", dbajzt);
 		map.put("dbajpczt", dbajpczt);
+		map.put("cbzt", cbzt);
 		return map;
 
 	}
