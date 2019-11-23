@@ -1,16 +1,15 @@
 package com.nmghr.hander.query;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import org.springframework.stereotype.Service;
-
 import com.nmghr.basic.common.Constant;
 import com.nmghr.basic.core.common.LocalThreadStorage;
 import com.nmghr.basic.core.service.IBaseService;
 import com.nmghr.basic.core.service.handler.impl.AbstractQueryHandler;
+import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Service("personMessageQueryHandler")
 public class PersonMessageQueryHandler extends AbstractQueryHandler {
@@ -51,6 +50,11 @@ public class PersonMessageQueryHandler extends AbstractQueryHandler {
 		List<Map<String, Object>> dbajzt = new ArrayList<Map<String, Object>>();
 		List<Map<String, Object>> dbajpczt = new ArrayList<Map<String, Object>>();
 		List<Map<String, Object>> cbzt = new ArrayList<Map<String, Object>>();
+		List<Map<String, Object>> qy = new ArrayList<Map<String, Object>>();
+		List<Map<String, Object>> qxx = new ArrayList<Map<String, Object>>();
+		List<Map<String, Object>> mtlx = new ArrayList<Map<String, Object>>();
+		List<Map<String, Object>> xsfl = new ArrayList<Map<String, Object>>();
+		List<Map<String, Object>> cjlx = new ArrayList<Map<String, Object>>();
 
 		for (int i = 0; i < list.size(); i++) {
 			if ("mz".equals(String.valueOf(list.get(i).get("codeLx")))) {
@@ -105,6 +109,16 @@ public class PersonMessageQueryHandler extends AbstractQueryHandler {
 				dbajpczt.add(list.get(i));
 			} else if ("cbzt".equals(String.valueOf(list.get(i).get("codeLx")))) {
 				cbzt.add(list.get(i));
+			} else if ("qy".equals(String.valueOf(list.get(i).get("codeLx")))) {
+				qy.add(list.get(i));
+			} else if ("qxx".equals(String.valueOf(list.get(i).get("codeLx")))) {
+				qxx.add(list.get(i));
+			} else if ("mtlx".equals(String.valueOf(list.get(i).get("codeLx")))) {
+				mtlx.add(list.get(i));
+			} else if ("xsfl".equals(String.valueOf(list.get(i).get("codeLx")))) {
+				xsfl.add(list.get(i));
+			} else if ("cjlx".equals(String.valueOf(list.get(i).get("codeLx")))) {
+				cjlx.add(list.get(i));
 			}
 		}
 		Map<String, Object> map = new HashMap<String, Object>();
@@ -134,6 +148,11 @@ public class PersonMessageQueryHandler extends AbstractQueryHandler {
 		map.put("dbajzt", dbajzt);
 		map.put("dbajpczt", dbajpczt);
 		map.put("cbzt", cbzt);
+		map.put("qy", qy);
+		map.put("qxx", qxx);
+		map.put("mtlx", mtlx);
+		map.put("xsfl", xsfl);
+		map.put("cjlx", cjlx);
 		return map;
 
 	}
