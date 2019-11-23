@@ -1,20 +1,19 @@
 package com.nmghr.hander.query;
 
+import com.nmghr.basic.common.Constant;
+import com.nmghr.basic.core.common.LocalThreadStorage;
+import com.nmghr.basic.core.service.IBaseService;
+import com.nmghr.basic.core.service.handler.impl.AbstractQueryHandler;
+import org.springframework.stereotype.Service;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.springframework.stereotype.Service;
-
-import com.nmghr.basic.common.Constant;
-import com.nmghr.basic.core.common.LocalThreadStorage;
-import com.nmghr.basic.core.service.IBaseService;
-import com.nmghr.basic.core.service.handler.impl.AbstractQueryHandler;
-
 @Service("personMessageQueryHandler")
 public class PersonMessageQueryHandler extends AbstractQueryHandler {
-	
+
 	private static String ALIAS_PERSONMESSAGE = "PERSONMESSAGE";// 字典
 
 	public PersonMessageQueryHandler(IBaseService baseService) {
@@ -47,6 +46,16 @@ public class PersonMessageQueryHandler extends AbstractQueryHandler {
 		List<Map<String, Object>> zbjl = new ArrayList<Map<String, Object>>();
 		List<Map<String, Object>> zblx = new ArrayList<Map<String, Object>>();
 		List<Map<String, Object>> zbzt = new ArrayList<Map<String, Object>>();
+		List<Map<String, Object>> dbjb = new ArrayList<Map<String, Object>>();
+		List<Map<String, Object>> dbajzt = new ArrayList<Map<String, Object>>();
+		List<Map<String, Object>> dbajpczt = new ArrayList<Map<String, Object>>();
+		List<Map<String, Object>> cbzt = new ArrayList<Map<String, Object>>();
+		List<Map<String, Object>> qy = new ArrayList<Map<String, Object>>();
+		List<Map<String, Object>> qxx = new ArrayList<Map<String, Object>>();
+		List<Map<String, Object>> mtlx = new ArrayList<Map<String, Object>>();
+		List<Map<String, Object>> xsfl = new ArrayList<Map<String, Object>>();
+		List<Map<String, Object>> cjlx = new ArrayList<Map<String, Object>>();
+
 		for (int i = 0; i < list.size(); i++) {
 			if ("mz".equals(String.valueOf(list.get(i).get("codeLx")))) {
 				mz.add(list.get(i));
@@ -80,7 +89,7 @@ public class PersonMessageQueryHandler extends AbstractQueryHandler {
 				ydzt.add(list.get(i));
 			} else if ("zyzz".equals(String.valueOf(list.get(i).get("codeLx")))) {
 				zyzz.add(list.get(i));
-			}else if ("fxxs".equals(String.valueOf(list.get(i).get("codeLx")))) {
+			} else if ("fxxs".equals(String.valueOf(list.get(i).get("codeLx")))) {
 				fxxs.add(list.get(i));
 			} else if ("qszt".equals(String.valueOf(list.get(i).get("codeLx")))) {
 				qszt.add(list.get(i));
@@ -92,6 +101,24 @@ public class PersonMessageQueryHandler extends AbstractQueryHandler {
 				zblx.add(list.get(i));
 			} else if ("zbzt".equals(String.valueOf(list.get(i).get("codeLx")))) {
 				zbzt.add(list.get(i));
+			} else if ("dbjb".equals(String.valueOf(list.get(i).get("codeLx")))) {
+				dbjb.add(list.get(i));
+			} else if ("dbajzt".equals(String.valueOf(list.get(i).get("codeLx")))) {
+				dbajzt.add(list.get(i));
+			} else if ("dbajpczt".equals(String.valueOf(list.get(i).get("codeLx")))) {
+				dbajpczt.add(list.get(i));
+			} else if ("cbzt".equals(String.valueOf(list.get(i).get("codeLx")))) {
+				cbzt.add(list.get(i));
+			} else if ("qy".equals(String.valueOf(list.get(i).get("codeLx")))) {
+				qy.add(list.get(i));
+			} else if ("qxx".equals(String.valueOf(list.get(i).get("codeLx")))) {
+				qxx.add(list.get(i));
+			} else if ("mtlx".equals(String.valueOf(list.get(i).get("codeLx")))) {
+				mtlx.add(list.get(i));
+			} else if ("xsfl".equals(String.valueOf(list.get(i).get("codeLx")))) {
+				xsfl.add(list.get(i));
+			} else if ("cjlx".equals(String.valueOf(list.get(i).get("codeLx")))) {
+				cjlx.add(list.get(i));
 			}
 		}
 		Map<String, Object> map = new HashMap<String, Object>();
@@ -117,9 +144,17 @@ public class PersonMessageQueryHandler extends AbstractQueryHandler {
 		map.put("zbjl", zbjl);
 		map.put("zblx", zblx);
 		map.put("zbzt", zbzt);
+		map.put("dbjb", dbjb);
+		map.put("dbajzt", dbajzt);
+		map.put("dbajpczt", dbajpczt);
+		map.put("cbzt", cbzt);
+		map.put("qy", qy);
+		map.put("qxx", qxx);
+		map.put("mtlx", mtlx);
+		map.put("xsfl", xsfl);
+		map.put("cjlx", cjlx);
 		return map;
-		
+
 	}
-	
 
 }
