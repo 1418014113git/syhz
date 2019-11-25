@@ -41,11 +41,19 @@ public class CaseSuperviseReportSaveHandler extends AbstractSaveHandler {
 		if ("610000530000".equals(createDeptCode)) {
 			saveLog(dbId, requestBody, "上报结案报告");
 			saveLog(dbId, requestBody, "结案报告-审核成功");
+			updateCaseSupervise(String.valueOf(id), 3);
 			return createApprove(requestBody, id, true);
 		} else {
 			saveLog(dbId, requestBody, "上报结案报告");
 			return createApprove(requestBody, id, false);
 		}
+	}
+
+	private void updateCaseSupervise(String id, int status) throws Exception {
+		Map<String, Object> noticeMap = new HashMap<>();
+		noticeMap.put("ststus", String.valueOf(status));
+		LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "CASESUPERVISEREPORTSTATUS");
+		baseService.update(id, noticeMap);
 	}
 
 	// 添加审核
