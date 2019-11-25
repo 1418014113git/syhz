@@ -44,7 +44,7 @@ public class AJRLSaveHandler extends AbstractSaveHandler {
   @Override
   @Transactional
   public Object save(Map<String, Object> requestBody) {
-    if (requestBody.get("id") == null) {
+    if (requestBody.get("id") == null ||"".equals(requestBody.get("id"))) {
       log.error("请求参数异常,id不存在!");
       throw new GlobalErrorException("999011", "请求参数异常,id不存在!");
     }
@@ -64,7 +64,7 @@ public class AJRLSaveHandler extends AbstractSaveHandler {
           (Map<String, Object>) baseService.get(String.valueOf(requestBody.get("AJBH")));
       if (exist != null) {
         log.info("案件编号已经存在：{}!", requestBody.get("AJBH"));
-        throw new GlobalErrorException("999012", "该案件已经被认领!");
+        return Result.fail("999012", "该案件已经被认领!");
       }
 
       // 认领
@@ -106,11 +106,12 @@ public class AJRLSaveHandler extends AbstractSaveHandler {
       requestBody.put("userName", requestBody.get("userName"));
       LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "BUSINESSLOG");
       baseService.save(requestBody);
-      return map.get("id");
+      return Result.ok(map.get("id"));
     } catch(Exception e) {
       log.error(e.getMessage());
+      return  Result.fail("999986",e.getMessage());
     }
-    return Result.fail();
+
   }
 
   private void saveBisNotice(Map<String, Object> requestBody, Object ajId, int status) throws Exception {
