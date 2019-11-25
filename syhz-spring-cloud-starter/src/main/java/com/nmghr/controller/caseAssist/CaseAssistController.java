@@ -24,21 +24,21 @@ import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
- * 案件集群战役
+ * 案件协查
  */
 @SuppressWarnings("unchecked")
 @RestController
-@RequestMapping("/casecluster")
-public class CaseClusterController {
-  private static final Logger log = LoggerFactory.getLogger(CaseClusterController.class);
+@RequestMapping("/caseAssist")
+public class CaseAssistController {
+  private static final Logger log = LoggerFactory.getLogger(CaseAssistController.class);
   @Autowired
   private IBaseService baseService;
-
-  @Autowired
-  private ClusterExamineUpdateHandler clusterExamineUpdateHandler;
 
   @Autowired
   private AjglQbxsService ajglQbxsService;
@@ -50,7 +50,7 @@ public class CaseClusterController {
   private AjglSignService ajglSignService;
 
   /**
-   * 集群战役列表
+   * 案件协查列表
    *
    * @return
    */
@@ -77,28 +77,27 @@ public class CaseClusterController {
       }
     }
     try {
-      LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJCLUSTERASSIST");
+      LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJASSIST");
       Paging obj = (Paging) baseService.page(params, pageNum, pageSize);
       if(obj==null || obj.getList().size()==0){
         return obj;
       }
-      Map<String, Object> temp = new LinkedHashMap<>();
+      Map<String, Object> temp = new HashMap<>();
       List<Object> ids = new ArrayList();
       List<Map<String, Object>> pglist = obj.getList();
       for (Map<String, Object> m : pglist) {
         m.put("cityCode", String.valueOf(m.get("applyDeptCode")).substring(0,4)+"00");
-        temp.put(String.valueOf(m.get("clusterId")), m);
-        ids.add(m.get("clusterId"));
+        temp.put(String.valueOf(m.get("ajxcId")), m);
+        ids.add(m.get("ajxcId"));
       }
       Map<String, Object> p = new HashMap<>();
       p.put("assistIds", ids);
       p.put("curDeptCode", params.get("curDeptCode"));
-      LocalThreadStorage.put(Constant.CONTROLLER_PAGE, false);
-      LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJCLUSTERASSISTDEPTCLUE");
+      LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJASSISTDEPTCLUE");
       List<Map<String, Object>> deptInfo = (List<Map<String, Object>>) baseService.list(p);
       if (deptInfo != null && deptInfo.size() > 0) {
         for (Map<String, Object> m : deptInfo) {
-          Map<String, Object> bean = (Map<String, Object>) temp.get(String.valueOf(m.get("clusterId")));
+          Map<String, Object> bean = (Map<String, Object>) temp.get(String.valueOf(m.get("ajxcId")));
           if (bean != null) {
             if (bean.containsKey("xsCount")) {
               bean.put("xsCount", Integer.parseInt(String.valueOf(bean.get("xsCount"))) + Integer.parseInt(String.valueOf(m.get("xsNum"))));
@@ -126,8 +125,6 @@ public class CaseClusterController {
               bean.put("cityCount", 1);
             }
             m.put("deptName", getCity(String.valueOf(m.get("deptName"))));
-            m.put("applyDeptCode",String.valueOf(bean.get("applyDeptCode")));
-            m.put("cityCode", String.valueOf(m.get("deptCode")).substring(0,4)+"00");
             if (bean.containsKey("deptList")) {
               List<Map<String, Object>> array = (List<Map<String, Object>>) bean.get("deptList");
               BigDecimal xsNum = new BigDecimal(String.valueOf(m.get("xsNum")));
@@ -265,7 +262,6 @@ public class CaseClusterController {
       LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJCLUSTERASSIST");
       Map<String, Object> bean = (Map<String, Object>) baseService.get(String.valueOf(id));
       bean.putAll(ajglQbxsService.getClueTotal(String.valueOf(id)));
-      bean.put("cityCode", String.valueOf(bean.get("applyDeptCode")).substring(0,4)+"00");
       return Result.ok(bean);
     } catch (Exception e) {
       if (e instanceof GlobalErrorException) {
@@ -375,9 +371,8 @@ public class CaseClusterController {
     try {
       Map<String, Object> p = new HashMap<>();
       p.put("assistId", assistId);
-      p.put("assistType", 2);
       if (deptCode != null) {
-        p.put("deptCode", deptCode);
+        p.put("createDeptCode", deptCode);
       }
       LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJGLQBXSSIGN");
       return Result.ok(baseService.page(p, pageNum, pageSize));
@@ -509,7 +504,7 @@ public class CaseClusterController {
       return Result.fail("999881", "部门信息异常");
     }
     try {
-      return Result.ok(caseAssistService.number(dept, 1));
+      return Result.ok(caseAssistService.number(dept, 2));
     } catch (Exception e) {
       if (e instanceof GlobalErrorException) {
         GlobalErrorException ge = (GlobalErrorException) e;
@@ -537,7 +532,7 @@ public class CaseClusterController {
       Map<String, Object> params = new HashMap<>();
       params.put("deptCode", dept);
       params.put("number", numStr);
-      LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJCLUSTERNUMBERCHECK");
+      LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJASSISTNUMBERCHECK");
       List<Map<String, Object>> list = (List<Map<String, Object>>) baseService.list(params);
       return Result.ok((list == null || list.size() == 0));
     } catch (Exception e) {
@@ -554,14 +549,14 @@ public class CaseClusterController {
 
   private void validParams(Map<String, Object> body) {
     ValidationUtils.notNull(body.get("operator"), "操作类型不能为空!");
+    ValidationUtils.notNull(body.get("category"), "下发类型不能为空!");
     if ("submit".equals(String.valueOf(body.get("operator")))) {
       ValidationUtils.notNull(body.get("id"), "id不能为空!");
     } else {
-      ValidationUtils.notNull(body.get("category"), "下发类型不能为空!");
       if ("update".equals(String.valueOf(body.get("operator")))) {
         ValidationUtils.notNull(body.get("id"), "id不能为空!");
       }
-      ValidationUtils.notNull(body.get("clusterTitle"), "标题不能为空!");
+      ValidationUtils.notNull(body.get("title"), "标题不能为空!");
       ValidationUtils.notNull(body.get("assistContent"), "内容不能为空!");
       if (((String) body.get("assistContent")).length() > 50000) {
         throw new GlobalErrorException("999667", "正文内容过长！");
@@ -572,7 +567,7 @@ public class CaseClusterController {
       ValidationUtils.notNull(body.get("curDeptId"), "curDeptId不能为空!");
       ValidationUtils.notNull(body.get("curDeptName"), "curDeptName不能为空!");
       ValidationUtils.notNull(body.get("curDeptCode"), "curDeptCode不能为空!");
-      ValidationUtils.notNull(body.get("clusterCitys"), "clusterCitys不能为空!");
+      ValidationUtils.notNull(body.get("citys"), "clusterCitys不能为空!");
       ValidationUtils.notNull(body.get("status"), "status!");
       String status = String.valueOf(body.get("status"));
       if (!"0".equals(status) && !"1".equals(status) && !"5".equals(status)) {
@@ -586,7 +581,7 @@ public class CaseClusterController {
       if ("5".equals(status)) {
         ValidationUtils.notNull(body.get("startDate"), "开始时间不能为空!");
         ValidationUtils.notNull(body.get("endDate"), "截止时间不能为空!");
-        ValidationUtils.notNull(body.get("clusterNumber"), "编号不能为空!");
+        ValidationUtils.notNull(body.get("assistNumber"), "编号不能为空!");
       }
     }
   }
