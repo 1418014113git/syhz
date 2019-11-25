@@ -43,6 +43,7 @@ public class CaseSuperviseReportUpdateHandler extends AbstractUpdateHandler {
 			if ("610000530000".equals(createDeptCode)) {
 				saveLog(dbId, requestBody, "上报结案报告");
 				saveLog(dbId, requestBody, "结案报告-审核成功");
+				updateCaseSupervise(id, 3);
 				return createApprove(requestBody, reportId, true);
 			} else {
 				saveLog(dbId, requestBody, "上报结案报告");
@@ -50,6 +51,13 @@ public class CaseSuperviseReportUpdateHandler extends AbstractUpdateHandler {
 			}
 		}
 		return Result.ok("");
+	}
+
+	private void updateCaseSupervise(String id, int status) throws Exception {
+		Map<String, Object> noticeMap = new HashMap<>();
+		noticeMap.put("status", String.valueOf(status));
+		LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "CASESUPERVISERECORDSTATUS");
+		baseService.update(id, noticeMap);
 	}
 
 	// 添加审核
