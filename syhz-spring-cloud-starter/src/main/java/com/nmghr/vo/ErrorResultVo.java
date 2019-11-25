@@ -17,16 +17,18 @@ import com.nmghr.entity.ErrorEntity;
  * @date 2019年11月23日 下午4:09:25
  * @version 1.0
  */
-public class ErrorResultVo {
+public class ErrorResultVo{
   private String jsonrpc;
   private String id;
   private ErrorEntity error;// 错误信息
 
-  ErrorResultVo(String jsonrpc, String id, String code, String message) {
-    this.setJsonrpc(jsonrpc);
-    this.setId(id);
+  public static ErrorResultVo setErrorResultVo(String jsonrpc, String id, String code, String message) {
+    ErrorResultVo errorResultVo =new ErrorResultVo();
+    errorResultVo.setJsonrpc(jsonrpc);
+    errorResultVo.setId(id);
     ErrorEntity error = new ErrorEntity(code, message);
-    this.setError(error);
+    errorResultVo.setError(error);
+    return errorResultVo;
   }
 
   public String getJsonrpc() {

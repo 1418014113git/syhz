@@ -12,7 +12,7 @@ package com.nmghr.util.app;
 
 import java.util.regex.Pattern;
 
-import com.nmghr.entity.ErrorEntity;
+import com.nmghr.common.AppeErrorException;
 
 
 /**
@@ -26,19 +26,19 @@ public class SyhzAppValidationUtil {
   
   public static void notNull(Object value, String message) {
     if (value == null || value.toString().trim().length() == 0) {
-      throw new ErrorEntity(SyhzAppErrorEnmu.ERROR_32600.getCode(),message);
+      throw new AppeErrorException(SyhzAppErrorEnmu.ERROR_32600.getCode(),message);
     }
   }
 
   public static void max(Object value, Integer max, String message) {
     if (value == null || (max != null && value.toString().trim().length() > max)) {
-      throw new ErrorEntity(SyhzAppErrorEnmu.ERROR_32600.getCode(),message);
+      throw new AppeErrorException(SyhzAppErrorEnmu.ERROR_32600.getCode(),message);
     }
   }
 
   public static void min(Object value, Integer min, String message) {
     if (value == null || (min != null && value.toString().trim().length() < min)) {
-      throw new ErrorEntity(SyhzAppErrorEnmu.ERROR_32600.getCode(),message);    }
+      throw new AppeErrorException(SyhzAppErrorEnmu.ERROR_32600.getCode(),message);    }
   }
 
   public static void length(Object value, Integer min, Integer max, String message) {
@@ -48,6 +48,6 @@ public class SyhzAppValidationUtil {
 
   public static void regexp(Object value, String expression, String message) {
     if (value == null || !Pattern.matches(expression, value.toString())) {
-      throw new ErrorEntity(SyhzAppErrorEnmu.ERROR_32600.getCode(),message);    }
+      throw new AppeErrorException(SyhzAppErrorEnmu.ERROR_32600.getCode(),message);    }
   }
 }

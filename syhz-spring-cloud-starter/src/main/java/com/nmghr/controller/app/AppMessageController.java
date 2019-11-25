@@ -12,7 +12,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -24,15 +23,13 @@ import org.springframework.web.bind.annotation.RestController;
 import com.nmghr.basic.common.Constant;
 import com.nmghr.basic.core.common.LocalThreadStorage;
 import com.nmghr.basic.core.service.IBaseService;
+import com.nmghr.common.AppeErrorException;
 import com.nmghr.entity.operation.OperationResult;
 import com.nmghr.entity.operation.OperationResultData;
-import com.nmghr.entity.query.FieldValue;
-import com.nmghr.entity.query.Page;
 import com.nmghr.entity.query.QueryResult;
-import com.nmghr.entity.query.QueryResultData;
-import com.nmghr.util.SyhzUtil;
 import com.nmghr.util.app.AppVerifyUtils;
 import com.nmghr.util.app.Result;
+import com.nmghr.vo.ErrorResultVo;
 import com.nmghr.vo.OperationRequestVo;
 import com.nmghr.vo.QueryRequestVo;
 
@@ -56,70 +53,56 @@ public class AppMessageController {
   public Object getMessageList(@RequestBody Map<String, Object> requestBody) throws Exception {
     // 将请求参照转化为Vo
     QueryRequestVo queryRequestVo = QueryRequestVo.dataToVo(requestBody);
-    // 验证查询请求参数的必填项
-    AppVerifyUtils.verifyQueryParams(queryRequestVo);
-    
-    Map<String, Object> conditionMap = new HashMap<String, Object>();
-    // userId = '1' and deptCode='610000530000'
-    // 获取查询条件组织为map
-    AppVerifyUtils.getQueryCondition(conditionMap, queryRequestVo);
-    LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, ALIAS_SYS_MESSAGES_PAGE);
-    List<Map<String, Object>> messageList =(List<Map<String, Object>>) baseService.list(conditionMap);
+    try {
+      // 验证查询请求参数的必填项
+      AppVerifyUtils.verifyQueryParams(queryRequestVo);
 
+      Map<String, Object> conditionMap = new HashMap<String, Object>();
+      // userId = '1' and deptCode='610000530000'
+      // 获取查询条件组织为map
+      AppVerifyUtils.getQueryCondition(conditionMap, queryRequestVo);
+      LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, ALIAS_SYS_MESSAGES_PAGE);
+      List<Map<String, Object>> messageList =
+          (List<Map<String, Object>>) baseService.list(conditionMap);
 
-    String sign = "这是签名";
-    Page page = new Page();
-    page.setPageNo(1);
-    page.setPageSize(10);
-    page.setTotal(2);
+      String sign = "这是签名";
+      String sourceId = "";
+      int pageNo = 1;
+      int pageSize = 10;
+      int total = 2;
+      QueryResult result =
+          AppVerifyUtils.setQueryResult(sign, pageNo, pageSize, total, sourceId, messageList);
 
-    List<QueryResultData> data = new ArrayList<QueryResultData>();
-    QueryResultData aueryResultData = new QueryResultData();
-    aueryResultData.setSourceId("这是数据来源id---sourceId");
-    List<FieldValue> fieldValues = null;
-    FieldValue fieldValue = new FieldValue();
-    for (Map<String, Object> map : messageList) {
-      fieldValues = new ArrayList<FieldValue>();
-      Set<String> keySet = map.keySet();
-      for (String key : keySet) {
-        fieldValue = new FieldValue();
-        fieldValue.setField(key);
-        fieldValue.setValue(SyhzUtil.setDate(map.get(key)));
-        fieldValue.setIsCode(0);
-        fieldValues.add(fieldValue);
-      }
-      aueryResultData.setFieldValues(fieldValues);
-      data.add(aueryResultData);
+      return Result.ok(queryRequestVo.getJsonrpc(), queryRequestVo.getId(), result);
+    } catch (AppeErrorException e) {
+      return Result.fail(queryRequestVo.getJsonrpc(), queryRequestVo.getId(), e.getCode(), e.getMessage());
     }
-    QueryResult result = new QueryResult(data, page, sign);
-
-    return Result.ok(queryRequestVo.getJsonrpc(), queryRequestVo.getId(), result);
   }
-  
+
   @PostMapping(value = "/message/save")
   @ResponseBody
   public Object saveMessageInfo(@RequestBody Map<String, Object> requestBody) throws Exception {
     // 将参数转化为operationVo
     OperationRequestVo operationRequestVo = OperationRequestVo.dataToVo(requestBody);
-    
+
     // 验证参数
     AppVerifyUtils.verifyOperationParams(operationRequestVo);
-    
+
     Map<String, Object> operationMap = new HashMap<String, Object>();
     // 获取参数
     AppVerifyUtils.getOperationCondition(operationMap, operationRequestVo);
-    
-//    LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, ALIAS_SYS_MESSAGES_PAGE);
-//    Object operationObj = baseService.save(operationMap);
+
+    // LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, ALIAS_SYS_MESSAGES_PAGE);
+    // Object operationObj = baseService.save(operationMap);
     Object operationObj = "11111";
-    
+
     OperationResult result = new OperationResult();
     List<OperationResultData> operations = new ArrayList<OperationResultData>();
     OperationResultData operationResultData = new OperationResultData();
-    operationResultData.setOperationId(operationObj+"");
+    operationResultData.setOperationId(operationObj + "");
     operationResultData.setOperationCode("1");
     operations.add(operationResultData);
-    
+
     return Result.ok(operationRequestVo.getJsonrpc(), operationRequestVo.getId(), result);
   }
 }
