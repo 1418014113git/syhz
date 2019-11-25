@@ -196,7 +196,6 @@ public class CaseAssistClueController {
   public Object cancelDistribute(@RequestBody Map<String, Object> body) {
     ValidationUtils.notNull(body.get("assistId"), "assistId不能为空!");
     ValidationUtils.notNull(body.get("qbxsId"), "qbxsId不能为空!");
-    ValidationUtils.notNull(body.get("qbxsDeptId"), "qbxsDeptId不能为空!");
 
     try {
       Object obj = ajglQbxsService.cancelDistribute(body.get("assistId"), body.get("qbxsId"),body.get("qbxsDeptId"));
@@ -222,7 +221,6 @@ public class CaseAssistClueController {
   public Object delClue(@RequestBody Map<String, Object> body) {
     ValidationUtils.notNull(body.get("assistId"), "assistId不能为空!");
     ValidationUtils.notNull(body.get("qbxsId"), "qbxsId不能为空!");
-    ValidationUtils.notNull(body.get("qbxsDeptId"), "qbxsDeptId不能为空!");
 
     try {
       Object obj = ajglQbxsService.removeClue(body.get("assistId"), body.get("qbxsId"), body.get("qbxsDeptId"));
