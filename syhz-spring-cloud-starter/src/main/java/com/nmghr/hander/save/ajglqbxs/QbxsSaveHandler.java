@@ -4,17 +4,19 @@ import com.nmghr.basic.common.Constant;
 import com.nmghr.basic.core.common.LocalThreadStorage;
 import com.nmghr.basic.core.service.IBaseService;
 import com.nmghr.basic.core.service.handler.impl.AbstractSaveHandler;
-import com.nmghr.common.BusinessSign;
-import com.nmghr.hander.dto.BusinessSignParam;
 import com.nmghr.hander.save.cluster.DeptMapperSaveHandler;
 import com.nmghr.hander.save.common.BatchSaveHandler;
+import com.nmghr.service.ajglqbxs.AjglQbxsService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @SuppressWarnings("unchecked")
 @Service("qbxsSaveHandler")
@@ -27,12 +29,11 @@ public class QbxsSaveHandler extends AbstractSaveHandler {
   }
 
   @Autowired
-  private QbxsSignSaveHandler qbxsSignSaveHandler;
-
-  @Autowired
   private BatchSaveHandler batchSaveHandler;
   @Autowired
   private DeptMapperSaveHandler deptMapperSaveHandler;
+  @Autowired
+  private AjglQbxsService ajglQbxsService;
 
   /**
    * 批量导入数据增加方法
@@ -54,6 +55,118 @@ public class QbxsSaveHandler extends AbstractSaveHandler {
     Object curDeptName = body.get("curDeptName");
     Object assistId = body.get("assistId");
     Map<String, Object> bean = list.get(0);
+    saveHeads(type, creator, curDeptCode, curDeptName, assistId, bean);
+
+    List<Map<String, Object>> resets = (List<Map<String, Object>>) saveBaseAndDept(type, category, assistId, list);
+
+    List<Map<String, Object>> paramValues = new ArrayList<>(list.size());
+
+    int size = list.size();
+    for (int i = 0; i < size; i++) {
+      Map<String, Object> values = list.get(i);
+      Map<String, Object> base = resets.get(i);
+      int vIdx = 0;
+      for (Object str : values.values()) {
+        Map<String, Object> p = new HashMap<>();
+        p.put("assistId", assistId);
+        p.put("qbxsId", base.get("id"));
+        p.put("rowIndex", vIdx);
+        p.put("columnIndex", i);
+        p.put("value", str);
+        p.put("qbxsCategory", category);
+        p.put("creator", creator);
+        paramValues.add(p);
+        vIdx++;
+      }
+    }
+    Map<String, Object> params2 = new HashMap<>();
+    params2.put("list", paramValues);
+    params2.put("alias", "AJGLQBXSINFOBATCH");
+    params2.put("seqName", "AJGLQBXSINFO");
+    params2.put("subSize", 50);
+    batchSaveHandler.save(params2);
+
+
+    return ajglQbxsService.getClueTotal(String.valueOf(assistId));
+  }
+
+
+  private Object saveBaseAndDept(Object type, Object category, Object assistId, List<Map<String, Object>> list) throws Exception {
+    Map<String, Object> zhidui = getDeptInfos();
+    int size = list.size();
+    List<Map<String, Object>> baseList = new ArrayList<>(size);
+
+    for (int i = 0; i < size; i++) {
+      Map<String, Object> values = list.get(i);
+      String addr = String.valueOf(values.get("地址"));
+      List<Map<String, Object>> depts = (List<Map<String, Object>>) zhidui.get(getCityName(addr));
+      Boolean ff = false;
+      Object deptCode = null;
+      Object deptName = null;
+      Object deptId = null;
+      if (depts != null && depts.size() == 1) {
+        Map<String, Object> dept = depts.get(0);
+        //组装分发数据   线索分发 增加关联单位，增加待办
+        if ("2".equals(String.valueOf(type))) {
+          dept.put("clusterId", assistId);
+        }
+        if ("1".equals(String.valueOf(type))) {
+          dept.put("assistId", assistId);
+        }
+        Map<String, Object> p = new HashMap<>();
+        p.putAll(dept);
+        // 分配部门
+        deptId = deptMapperSaveHandler.save(p);
+        ff = true;
+        deptCode = p.get("deptCode");
+        deptName = p.get("deptName");
+      }
+      Map<String, Object> base = new HashMap<>();
+      base.put("assistId", assistId);
+      base.put("serialNumber", values.get("序号"));
+      base.put("address", addr);
+      base.put("qbxsDistribute", ff ? 2 : 1); // 1未分发
+      base.put("qbxsCategory", category);
+      base.put("qbxsSign", 1);//未签收
+      base.put("qbxsResult", 1);//未反馈
+      base.put("assistType", type);
+      if (ff && deptId!=null) {
+        base.put("receiveCode", deptCode);
+        base.put("receiveName", deptName);
+        base.put("deptId", deptId);
+      }
+      baseList.add(base);
+
+    }
+    List<Map<String, Object>> qbxsDeptList = new ArrayList<>(size);
+    Map<String, Object> params = new HashMap<>();
+    params.put("list", baseList);
+    params.put("alias", "AJGLQBXSBASEBATCH");
+    params.put("seqName", "AJGLQBXSBASE");
+    params.put("subSize", 20);
+    List<Map<String, Object>> baseRes = (List<Map<String, Object>>) batchSaveHandler.save(params);
+    for(Map<String, Object> map: baseRes){
+      if(map.get("receiveCode")!=null){
+        Map<String, Object> deptMap = new HashMap<>();
+        deptMap.put("assistDeptId",map.get("deptId"));
+        deptMap.put("deptCode",map.get("receiveCode"));
+        deptMap.put("qbxsId",map.get("id"));
+        deptMap.put("assistType", type);
+        deptMap.put("transferred",1);
+        qbxsDeptList.add(deptMap);
+      }
+    }
+    params = new HashMap<>();
+    params.put("list", qbxsDeptList);
+    params.put("alias", "AJGLQBXSDEPTBATCH");
+    params.put("seqName", "AJGLQBXSDEPT");
+    params.put("subSize", 20);
+    batchSaveHandler.save(params);
+    return baseList;
+  }
+
+
+  private void saveHeads(Object type, Object creator, Object curDeptCode, Object curDeptName, Object assistId, Map<String, Object> bean) {
     List<Map<String, Object>> paramTitles = new ArrayList<>(bean.keySet().size());
     int tIdx = 0;
     for (String str : bean.keySet()) {
@@ -68,102 +181,16 @@ public class QbxsSaveHandler extends AbstractSaveHandler {
       paramTitles.add(p);
       tIdx++;
     }
-    Map<String, Object> zhidui = new HashMap<>();
-    getDeptInfos(zhidui);
-    List<Map<String, Object>> paramValues = new ArrayList<>(list.size());
-    Map<String, Object> assistDepts = new HashMap<>();
-
-    int size = list.size();
-    int distribute = 0;
-    for (int i = 0; i < size; i++) {
-      Map<String, Object> values = list.get(i);
-      int vIdx = 0;
-      String xsId = assistId + "_" + i;
-      String addr = String.valueOf(values.get("地址"));
-      List<Map<String, Object>> depts = (List<Map<String, Object>>) zhidui.get(getCityName(addr));
-      Boolean ff = false;
-      if (depts != null && depts.size() == 1) {
-        Map<String, Object> dept = depts.get(0);
-        //组装分发数据   线索分发 增加关联单位，增加待办
-        if ("2".equals(String.valueOf(type))) {
-          dept.put("clusterId", assistId);
-        }
-        if ("1".equals(String.valueOf(type))) {
-          dept.put("assistId", assistId);
-        }
-        if (assistDepts.containsKey(String.valueOf(dept.get("deptCode")))) {
-          Map<String, Object> valData = (Map<String, Object>) assistDepts.get(String.valueOf(dept.get("deptCode")));
-          valData.put("clueCount", Integer.parseInt(String.valueOf(valData.get("clueCount"))) + 1);
-          assistDepts.put(String.valueOf(dept.get("deptCode")), valData);
-        } else {
-          Map<String, Object> valData = new HashMap<>();
-          valData.putAll(dept);
-          valData.put("clueCount", 1);
-          assistDepts.put(String.valueOf(dept.get("deptCode")), valData);
-        }
-        ff = true;
-        distribute++;
-      }
-      for (Object str : values.values()) {
-        Map<String, Object> p = new HashMap<>();
-        p.put("assistId", assistId);
-        p.put("ajglQbxsIdx", xsId);
-        p.put("rowIndex", vIdx);
-        p.put("columnIndex", i);
-        p.put("value", str);
-        p.put("qbxsCategory", category);
-        p.put("creator", creator);
-        p.put("status", ff ? 1 : 0);
-        paramValues.add(p);
-        vIdx++;
-      }
-    }
-
     Map<String, Object> params = new HashMap<>();
     params.put("list", paramTitles);
     params.put("alias", "AJGLQBXSBATCH");
     params.put("seqName", "AJGLQBXS");
     params.put("subSize", 50);
     batchSaveHandler.save(params);
-    params = new HashMap<>();
-    params.put("list", paramValues);
-    params.put("alias", "AJGLQBXSINFOBATCH");
-    params.put("seqName", "AJGLQBXSINFO");
-    params.put("subSize", 50);
-    batchSaveHandler.save(params);
-    //增加待办信息
-    if (assistDepts.size() > 0) {
-      params = new HashMap<>();
-      params.put("list", new ArrayList(assistDepts.values()));
-      deptMapperSaveHandler.save(params);
-
-      List<Map<String, Object>> signs = new ArrayList<>(list.size());
-      List<Map<String, Object>> depts = new ArrayList(assistDepts.values());
-      for (Map<String, Object> map : depts) {
-        Map<String, Object> signData = new HashMap<>();
-        signData.put("userId", creator);
-        signData.put("userName", creatorName);
-        signData.put("deptCode", curDeptCode);
-        signData.put("deptName", curDeptName);
-        signData.put("receiveDeptCode", map.get("deptCode"));
-        signData.put("receiveDeptName", map.get("deptName"));
-        signData.put("assistId", assistId);
-        signData.put("clueNum", map.get("clueCount"));
-        signs.add(signData);
-      }
-      Map<String, Object> signParam = new HashMap<>();
-      signParam.put("list", signs);
-      qbxsSignSaveHandler.save(signParam);
-    }
-
-    Map result = new HashMap();
-    result.put("total", list.size());
-    result.put("distribute", distribute);
-    return result;
   }
 
   private String getCityName(String str) {
-    if (str.contains("杨凌区")) {
+    if (str.contains("杨凌")) {
       return "杨凌区";
     }
     if (str.contains("西咸新区")) {
@@ -177,7 +204,8 @@ public class QbxsSaveHandler extends AbstractSaveHandler {
   }
 
 
-  private void getDeptInfos(Map<String, Object> zhidui) {
+  private Map<String, Object> getDeptInfos() {
+    Map<String, Object> zhidui = new HashMap<>();
     try {
       Map<String, Object> params = new HashMap<>();
       params.put("deptType", 2);
@@ -203,8 +231,9 @@ public class QbxsSaveHandler extends AbstractSaveHandler {
         }
       }
     } catch (Exception e) {
-      log.error("GETDEPTIDBYCODE error : " + e.getMessage());
+      log.error("DEPTINFOS error : " + e.getMessage());
     }
+    return zhidui;
   }
 
 }

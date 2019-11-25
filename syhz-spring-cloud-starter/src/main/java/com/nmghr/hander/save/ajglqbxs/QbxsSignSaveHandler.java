@@ -58,7 +58,7 @@ public class QbxsSignSaveHandler extends AbstractSaveHandler {
       params.put("list", adds);
       params.put("alias", "AJGLQBXSSIGNBATCH");
       params.put("seqName", "AJGLQBXSSIGN");
-      params.put("subSize", 50);
+      params.put("subSize", 20);
       batchSaveHandler.save(params);
     }
     return list.size();
