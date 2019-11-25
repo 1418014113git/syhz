@@ -59,7 +59,7 @@ public class BatchSaveHandler extends AbstractSaveHandler {
         throw new GlobalErrorException("999653", "提交数据有误");
       }
     }
-    return list.size();
+    return list;
   }
 
 

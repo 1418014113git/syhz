@@ -5,31 +5,29 @@ import com.nmghr.basic.common.exception.GlobalErrorException;
 import com.nmghr.basic.core.common.LocalThreadStorage;
 import com.nmghr.basic.core.service.IBaseService;
 import com.nmghr.basic.core.service.handler.impl.AbstractSaveHandler;
-import com.nmghr.common.GlobalConfig;
 import com.nmghr.common.WorkOrder;
 import com.nmghr.hander.dto.ApproveParam;
 import com.nmghr.hander.save.ajglqbxs.QbxsSignSaveHandler;
 import com.nmghr.hander.save.examine.ExamineSaveHandler;
-import com.nmghr.hander.update.examine.ExamineUpdateHandler;
-import com.nmghr.hander.update.notice.ExamineSubmitUpdateHandler;
 import com.nmghr.service.ajglqbxs.CaseAssistService;
-import com.nmghr.util.DateUtil;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
- * 案件集群战役
+ * 案件协查
  */
 @SuppressWarnings("unchecked")
-@Service("caseClusterSubmitSaveHandler")
-public class CaseClusterSubmitSaveHandler extends AbstractSaveHandler {
+@Service("caseAssistSubmitSaveHandler")
+public class CaseAssistSubmitSaveHandler extends AbstractSaveHandler {
 
-  public CaseClusterSubmitSaveHandler(IBaseService baseService) {
+  public CaseAssistSubmitSaveHandler(IBaseService baseService) {
     super(baseService);
   }
 
@@ -45,11 +43,11 @@ public class CaseClusterSubmitSaveHandler extends AbstractSaveHandler {
   @Override
   @Transactional
   public Object save(Map<String, Object> body) throws Exception {
-    if (!validName(String.valueOf(body.get("curDeptCode")), String.valueOf(body.get("clusterTitle")), body.get("id"))) {
-      throw new GlobalErrorException("999667", "集群战役标题已存在，请确认后重新输入！");
+    if (!validName(String.valueOf(body.get("curDeptCode")), String.valueOf(body.get("title")), body.get("id"))) {
+      throw new GlobalErrorException("999667", "案件协查标题已存在，请确认后重新输入！");
     }
-    if(!StringUtils.isEmpty(body.get("clusterNumber"))){
-      caseAssistService.checkNumber(String.valueOf(body.get("curDeptCode")),String.valueOf(body.get("clusterNumber")),body.get("id"));
+    if(body.get("assistNumber")!=null){
+      caseAssistService.checkNumber(String.valueOf(body.get("curDeptCode")),String.valueOf(body.get("assistNumber")),null);
     }
     if (body.containsKey("status") && null != body.get("status") && "1".equals(String.valueOf(body.get("status")))) {
       Object id = null;
@@ -94,7 +92,7 @@ public class CaseClusterSubmitSaveHandler extends AbstractSaveHandler {
     if (id != null) {
       params.put("id", id);
     }
-    LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJCLUSTERASSISTTITLECHECK");
+    LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJASSISTTITLECHECK");
     Map<String, Object> reset = (Map<String, Object>) baseService.get(params);
     if (reset == null) {
       return true;
@@ -103,7 +101,7 @@ public class CaseClusterSubmitSaveHandler extends AbstractSaveHandler {
   }
 
   /**
-   * 新增通知数据
+   * 查询线索数量
    *
    * @throws Exception e
    */
@@ -119,8 +117,14 @@ public class CaseClusterSubmitSaveHandler extends AbstractSaveHandler {
     return Integer.parseInt(String.valueOf(reset.get("num"))) > 0;
   }
 
+  /**
+   * 修改
+   * @param id
+   * @param params
+   * @throws Exception
+   */
   private void modify(String id, Map<String, Object> params) throws Exception {
-    LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJCLUSTERASSIST");
+    LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJASSIST");
     baseService.update(id, params);
   }
 
@@ -131,14 +135,14 @@ public class CaseClusterSubmitSaveHandler extends AbstractSaveHandler {
    * @throws Exception e
    */
   private Object create(Map<String, Object> params) throws Exception {
-    if(StringUtils.isEmpty(params.get("clusterNumber"))){
+    if(params.get("assistNumber")==null){
       //自动生成编号
-      params.put("clusterNumber", caseAssistService.number(String.valueOf(params.get("curDeptCode")), 1));
+      params.put("assistNumber", caseAssistService.number(String.valueOf(params.get("curDeptCode")), 1));
     }
     if(!StringUtils.isEmpty(params.get("acceptDept"))){
       params.put("checkDeptCode", params.get("acceptDept"));
     }
-    LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJCLUSTERASSIST");
+    LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJASSIST");
     return baseService.save(params);
   }
 
@@ -182,7 +186,7 @@ public class CaseClusterSubmitSaveHandler extends AbstractSaveHandler {
 
     // TODO 需要查线索数量
     Map<String, Object> paramMap = new HashMap<>();
-    paramMap.put("clusterId", assistId);
+    paramMap.put("assistId", assistId);
     LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJGLQBXSBASECLUECOUNT");
     List<Map<String, Object>> depts = (List<Map<String, Object>>) baseService.list(paramMap);
 
@@ -196,7 +200,6 @@ public class CaseClusterSubmitSaveHandler extends AbstractSaveHandler {
       signData.put("receiveDeptName", map.get("deptName"));
       signData.put("assistId", assistId);
       signData.put("clueNum", map.get("clueCount"));
-      signData.put("assistType", 2);
       signs.add(signData);
     }
     Map<String, Object> signParam = new HashMap<>();
