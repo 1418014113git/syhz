@@ -6,24 +6,32 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package com.nmghr.entity;
+package com.nmghr.common;
 
+import com.nmghr.basic.common.exception.ErrorInfoInterface;
 import com.nmghr.basic.common.exception.GlobalErrorException;
 
 /**
  * <功能描述/>
  *
  * @author kaven
- * @date 2019年11月23日 下午4:09:53
+ * @date 2019年11月25日 下午4:47:20
  * @version 1.0
  */
-public class ErrorEntity {
+public class AppeErrorException extends GlobalErrorException {
+
+  private static final long serialVersionUID = 1L;
   private String code; // 错误码
   private String message;// 错误详细信息
-
-  public ErrorEntity(String code, String message) {
+  
+  public AppeErrorException(String code, String message) {
+    super(code, message, null);
     this.code = code;
     this.message = message;
+  }
+  
+  public AppeErrorException(ErrorInfoInterface errorInfo, Object[] args) {
+    super(errorInfo, args);
   }
 
   public String getCode() {
@@ -45,12 +53,11 @@ public class ErrorEntity {
   @Override
   public String toString() {
     StringBuilder builder = new StringBuilder();
-    builder.append("Error [code=");
+    builder.append("AppeErrorException [code=");
     builder.append(code);
     builder.append(", message=");
     builder.append(message);
     builder.append(']');
     return builder.toString();
   }
-
 }

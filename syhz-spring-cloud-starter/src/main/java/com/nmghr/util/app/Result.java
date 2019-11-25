@@ -8,6 +8,8 @@
 
 package com.nmghr.util.app;
 
+import com.nmghr.entity.ErrorEntity;
+
 /**
  * 返回结果工具类.
  *
@@ -20,6 +22,7 @@ public class Result extends com.nmghr.basic.common.Result {
   private String jsonrpc;
   private String id;
   private Object result;
+  private ErrorEntity error;// 错误信息
 
   public String getJsonrpc() {
     return jsonrpc;
@@ -45,12 +48,20 @@ public class Result extends com.nmghr.basic.common.Result {
     this.result = result;
   }
   
+  public ErrorEntity getError() {
+    return error;
+  }
+
+  public void setError(ErrorEntity error) {
+    this.error = error;
+  }
+
   protected Result(Object code, String message) {
     super(code, message);
   }
   
   public Result(String jsonrpc, String id, Object result) {
-    super("", "");
+    super(null, null);
     this.jsonrpc = jsonrpc;
     this.id = id;
     this.result = result;
@@ -76,9 +87,28 @@ public class Result extends com.nmghr.basic.common.Result {
    * @return Result
    */
   public static Result ok(String jsonrpc, String id, Object result) {
-    return new Result(jsonrpc, id, result);
+    Result resultOk = new Result(null, null);
+    resultOk.setJsonrpc(jsonrpc);
+    resultOk.setId(id);
+    resultOk.setResult(result);
+    return resultOk;
   }
-
+  
+  /**
+   * 返回错误结果.
+   * 
+   * @param code 返回码
+   * @param errMessage 错误信息
+   * @return Result
+   */
+  public static Result fail(String jsonrpc, String id, String code, String message) {
+    Result resultFail = new Result(null, null);
+    resultFail.setJsonrpc(jsonrpc);
+    resultFail.setId(id);
+    ErrorEntity error = new ErrorEntity(code, message);
+    resultFail.setError(error);
+    return resultFail;
+  }
 
   @Override
   public String toString() {

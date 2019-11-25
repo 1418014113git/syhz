@@ -8,18 +8,25 @@
 
 package com.nmghr.util.app;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
-import com.nmghr.entity.ErrorEntity;
+import com.nmghr.common.AppeErrorException;
 import com.nmghr.entity.operation.Operation;
 import com.nmghr.entity.operation.OperationFieldValue;
 import com.nmghr.entity.operation.OperationParams;
 import com.nmghr.entity.operation.OperationRequest;
 import com.nmghr.entity.operation.OperationRequestData;
+import com.nmghr.entity.query.FieldValue;
+import com.nmghr.entity.query.Page;
 import com.nmghr.entity.query.QueryParams;
 import com.nmghr.entity.query.QueryRequest;
+import com.nmghr.entity.query.QueryResult;
+import com.nmghr.entity.query.QueryResultData;
 import com.nmghr.entity.query.UserInfo;
+import com.nmghr.util.SyhzUtil;
 import com.nmghr.vo.OperationRequestVo;
 import com.nmghr.vo.QueryRequestVo;
 
@@ -38,8 +45,7 @@ public class AppVerifyUtils {
    * @param queryRequestVo
    */
   public static void verifyQueryParams(QueryRequestVo queryRequestVo) {
-    verifyCommonParam(queryRequestVo.getJsonrpc(), queryRequestVo.getMethod(),
-        queryRequestVo.getId());
+    verifyCommonParam(queryRequestVo.getJsonrpc(), queryRequestVo.getMethod(),queryRequestVo.getId());
     verifyBodyParam(queryRequestVo.getParams());
   }
 
@@ -92,6 +98,36 @@ public class AppVerifyUtils {
       }
     }
   }
+  
+  public static QueryResult setQueryResult(String sign, int pageNo,int pageSize,int total,String sourceId,
+      List<Map<String, Object>> listData) {
+    Page page = new Page();
+    page.setPageNo(pageNo);
+    page.setPageSize(pageSize);
+    page.setTotal(total);
+    
+    List<QueryResultData> data = new ArrayList<QueryResultData>();
+    QueryResultData aueryResultData = new QueryResultData();
+    aueryResultData.setSourceId(sourceId);
+    List<FieldValue> fieldValues = null;
+    FieldValue fieldValue = new FieldValue();
+    for (Map<String, Object> map : listData) {
+      fieldValues = new ArrayList<FieldValue>();
+      Set<String> keySet = map.keySet();
+      for (String key : keySet) {
+        fieldValue = new FieldValue();
+        fieldValue.setField(key);
+        fieldValue.setValue(SyhzUtil.setDate(map.get(key)));
+        fieldValue.setIsCode(0);
+        fieldValue.setCodeValue("");
+        fieldValues.add(fieldValue);
+      }
+      aueryResultData.setFieldValues(fieldValues);
+      data.add(aueryResultData);
+    }
+    return new QueryResult(data, page, sign);
+  }
+  
 
   /**
    * 参数头验证
@@ -101,7 +137,7 @@ public class AppVerifyUtils {
   private static void verifyCommonParam(String jsonrpc, String method, String id) {
     SyhzAppValidationUtil.notNull(jsonrpc, "jsonrpc版本不能为空");
     if (!SyhzAppErrorEnmu.jsonrpcValue.equals(jsonrpc)) {
-      throw new ErrorEntity(SyhzAppErrorEnmu.ERROR_32600.getCode(), "jsonrpc版本不匹配");
+      throw new AppeErrorException(SyhzAppErrorEnmu.ERROR_32600.getCode(), "jsonrpc版本不匹配");
     }
 
     SyhzAppValidationUtil.notNull(method, "RPC方法名不能为空");
@@ -110,7 +146,7 @@ public class AppVerifyUtils {
     } else if (!SyhzAppErrorEnmu.method_operate.equals(method)) {
 
     } else {
-      throw new ErrorEntity(method, "未知的RPC方法名");
+      throw new AppeErrorException(method, "未知的RPC方法名");
     }
 
     SyhzAppValidationUtil.notNull(id, "客户端ID不能为空");
