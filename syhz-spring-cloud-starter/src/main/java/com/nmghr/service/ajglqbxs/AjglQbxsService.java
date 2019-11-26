@@ -452,6 +452,12 @@ public class AjglQbxsService {
     return syajList;
   }
 
+  /**
+   * 线索反馈时 案件侦办列表
+   * @param requestMap
+   * @return
+   * @throws Exception
+   */
   public Object feedBackZbAJList(Map<String, Object> requestMap) throws Exception {
     //查询
     LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJCLUSTERFEEDBACK");
@@ -508,14 +514,22 @@ public class AjglQbxsService {
           o.put("dhwd", 0);
         }
         if (!StringUtils.isEmpty(infos[2])) {
-          o.put("sajz", infos[2]);
-          pzdb += Integer.parseInt(String.valueOf(infos[2]));
+          int sajzOri = Integer.parseInt(String.valueOf(infos[2]));
+          if(sajzOri>0){
+            o.put("sajz", sajzOri);
+            sajz += sajzOri;
+          } else {
+            if(!StringUtils.isEmpty(aj.get("SAJZ"))){
+              o.put("sajz", aj.get("SAJZ"));
+              sajz += Integer.parseInt(String.valueOf(aj.get("SAJZ")));
+            }
+          }
         } else {
           o.put("sajz", 0);
         }
         if (!StringUtils.isEmpty(infos[3])) {
           o.put("pzdb", infos[3]);
-          sajz += Integer.parseInt(String.valueOf(infos[3]));
+          pzdb += Integer.parseInt(String.valueOf(infos[3]));
         } else {
           o.put("pzdb", 0);
         }
