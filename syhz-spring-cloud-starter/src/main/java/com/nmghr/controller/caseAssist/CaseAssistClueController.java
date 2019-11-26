@@ -58,6 +58,7 @@ public class CaseAssistClueController {
                            @RequestParam("category") Object category,
                            @RequestParam("curDeptCode") Object curDeptCode,
                            @RequestParam("curDeptName") Object curDeptName,
+                           @RequestParam("xfType") Object xfType,
                            @RequestParam("assistId") Object assistId) {
     try {
       if (null != mulFile) {
@@ -94,6 +95,7 @@ public class CaseAssistClueController {
           data.put("curDeptCode", curDeptCode);
           data.put("curDeptName", curDeptName);
           data.put("assistId", assistId);
+          data.put("xfType", xfType);
           data.put("list", params);
           ISaveHandler saveHandler = SpringUtils.getBean("qbxsSaveHandler", ISaveHandler.class);
           Object obj = saveHandler.save(data);
@@ -139,7 +141,16 @@ public class CaseAssistClueController {
       validId(param.get("assistId"));
       Map<String, Object> params = new HashMap<>();
       params.put("assistId", param.get("assistId"));
-      LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJGLQBXSBASECLUECOUNT");
+      String type = "";
+      if (param.containsKey("type") && !StringUtils.isEmpty(param.get("type"))) {
+        type = String.valueOf(param.get("type"));
+      }
+      if ("".equals(type) || "2".equals(type)) { // 集群战役
+        LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJGLQBXSBASECLUECOUNT");
+      }
+      if ("1".equals(type)) { // 案件协查
+        LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJASSISTGLQBXSBASECLUECOUNT");
+      }
       return Result.ok(baseService.list(params));
     } catch (Exception e) {
       if (e instanceof GlobalErrorException) {
