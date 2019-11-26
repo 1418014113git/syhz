@@ -179,13 +179,10 @@ public class CaseClusterSubmitSaveHandler extends AbstractSaveHandler {
    */
   private void createSignInfo(Object creator, Object creatorName, Object curDeptCode, Object curDeptName, Object assistId) throws Exception {
     List<Map<String, Object>> signs = new ArrayList<>();
-
-    // TODO 需要查线索数量
     Map<String, Object> paramMap = new HashMap<>();
-    paramMap.put("clusterId", assistId);
+    paramMap.put("assistId", assistId);
     LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJGLQBXSBASECLUECOUNT");
     List<Map<String, Object>> depts = (List<Map<String, Object>>) baseService.list(paramMap);
-
     for (Map<String, Object> map : depts) {
       Map<String, Object> signData = new HashMap<>();
       signData.put("userId", creator);
