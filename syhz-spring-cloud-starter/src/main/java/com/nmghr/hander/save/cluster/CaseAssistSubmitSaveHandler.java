@@ -204,5 +204,17 @@ public class CaseAssistSubmitSaveHandler extends AbstractSaveHandler {
     signParam.put("list", signs);
     qbxsSignSaveHandler.save(signParam);
   }
+  @Transactional
+  public Object saveDept(Map<String, Object> body) throws Exception {
+    LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJASSISTDEPT");
+    List<Map<String, Object>> rs = (List<Map<String, Object>>) baseService.list(body);
+    if (rs == null || rs.size() == 0) {
+      LocalThreadStorage.put(Constant.CONTROLLER_AUTO_INCREMENT, true);
+      LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJASSISTDEPT");
+      return baseService.save(body);
+    }
+    Map<String, Object> map = rs.get(0);
+    return map.get("id");
+  }
 
 }
