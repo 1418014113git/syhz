@@ -32,7 +32,7 @@ public class ExamineSaveHandler extends AbstractSaveHandler {
    * @throws Exception e
    */
   @Transactional
-  public void createApprove(ApproveParam params, Boolean checkFlag){
+	public Object createApprove(ApproveParam params, Boolean checkFlag) {
     try{
       Map<String, Object> approve = new HashMap<>();
       approve.put("type", params.getWdType());
@@ -48,21 +48,21 @@ public class ExamineSaveHandler extends AbstractSaveHandler {
       LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "WORKORDER");
       Object orderId = baseService.save(approve);
 
+      Object now = DateUtil.dateFormart(new Date(), DateUtil.yyyyMMddHHmmss);
       Map<String, Object> flow = new HashMap<String, Object>();
       flow.put("wdId", orderId); // wd_id 工单id
       flow.put("acceptedDept", params.getAcceptDept()); // accepted_dept 工单流接收部门ID
       flow.put("acceptedDeptName", params.getAcceptDeptName());
       flow.put("acceptedUser", params.getAcceptedUser()); // accepted_user 工单流接收人
       flow.put("wdFlowStatus", params.getWfStatus()); // wd_flow_status 工单流转状态: 1 待审批; 2 审批中; 3 已完成; 4驳回; 5已过期
+      flow.put("acceptedTime", now);
       if (checkFlag) {
-        Object now = DateUtil.dateFormart(new Date(), DateUtil.yyyyMMddHHmmss);
-        flow.put("acceptedTime", now);
         flow.put("updateTime", now);
         flow.put("updateUser", params.getUserName());
         flow.put("content", "审核通过");
       }
       LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "WORKORDERFLOW");
-      baseService.save(flow);
+			return baseService.save(flow);
     } catch (Exception e){
       throw new GlobalErrorException("999667","审核信息保存异常");
     }

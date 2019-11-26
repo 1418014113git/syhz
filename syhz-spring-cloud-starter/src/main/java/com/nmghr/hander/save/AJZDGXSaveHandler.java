@@ -49,26 +49,28 @@ public class AJZDGXSaveHandler extends AbstractSaveHandler {
     }
     String id = String.valueOf(requestBody.get("id"));
     Map<String, Object> ps = new HashMap<String, Object>();
+    //新增待认领案件到新部门
     ps.put("status", "3");
-    ps.put("noticeOrgId", requestBody.get("noticeOrgId"));
+    ps.put("noticeOrgId", requestBody.get("noticeOrgCode"));
+
     ps.put("ajbh", requestBody.get("ajbh"));
     LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "CHECKAJSIGN");
     List<Map<String, Object>> list = (List<Map<String, Object>>) baseService.list(ps);
     if (list != null && list.size() > 0) {
        return 1;
     }
-
     // 签收表添加
-    requestBody.put("noticeTime", new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").format(new Date()));// 通知时间
+    requestBody.put("noticeTime", new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));// 通知时间
     LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "BUSINESSSIGN");
+    requestBody.put("noticeOrgId",requestBody.get("noticeOrgCode"));
     baseService.save(requestBody);
 
-    // 当前签收状态
+    // 修改当前部门的案件状态
     Map<String, Object> param = new HashMap<String, Object>();
     param.put("status", "9");// 9:指定管辖
     param.put("signUserId", requestBody.get("userId"));
     param.put("signUserName", requestBody.get("userName"));
-    param.put("signTime", new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").format(new Date()));
+    param.put("signTime", new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
     param.put("updateUserId", requestBody.get("userId"));
     if (requestBody.get("revokeReason") != null) {
       param.put("revokeReason", requestBody.get("revokeReason"));
@@ -76,6 +78,7 @@ public class AJZDGXSaveHandler extends AbstractSaveHandler {
     param.put("noticeLx", requestBody.get("noticeType"));
     LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "BUSINESSSIGN");// 防止添加日志LocalThread 重写
     return baseService.update(id, param);
+
   }
 
 }

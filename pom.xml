@@ -16,7 +16,7 @@
   <parent>
     <groupId>com.nmghr.basic</groupId>
     <artifactId>nmghr-basic</artifactId>
-    <version>0.2.6</version>
+    <version>0.2.7</version>
   </parent>
 
   <repositories>
