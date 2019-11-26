@@ -174,12 +174,14 @@ public class AjglQbxsService {
     }
     LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJGLQBXSBASEDEL");
     baseService.remove(delMap);
-    //处理关联
-    Map<String, Object> baseP = new HashMap<>();
-    baseP.put("qbxsId", qbxsId);
-    baseP.put("qbxsDeptId", qbxsDeptId);
-    LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJGLQBXSDEPTDEL");
-    baseService.update("", baseP);
+    if(qbxsDeptId!=null){
+      //处理关联
+      Map<String, Object> baseP = new HashMap<>();
+      baseP.put("qbxsId", qbxsId);
+      baseP.put("qbxsDeptId", qbxsDeptId);
+      LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJGLQBXSDEPTDEL");
+      baseService.update("", baseP);
+    }
     return getClueTotal(String.valueOf(assistId));
   }
 
@@ -212,12 +214,13 @@ public class AjglQbxsService {
     baseService.update("", baseP);
 
     //处理关联
-    baseP = new HashMap<>();
-    baseP.put("qbxsId", qbxsId);
-    baseP.put("qbxsDeptId", qbxsDeptId);
-    LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJGLQBXSDEPTDEL");
-    baseService.update("", baseP);
-
+    if(qbxsDeptId!=null){
+      baseP = new HashMap<>();
+      baseP.put("qbxsId", qbxsId);
+      baseP.put("qbxsDeptId", qbxsDeptId);
+      LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJGLQBXSDEPTDEL");
+      baseService.update("", baseP);
+    }
     return getClueTotal(String.valueOf(assistId));
   }
 
