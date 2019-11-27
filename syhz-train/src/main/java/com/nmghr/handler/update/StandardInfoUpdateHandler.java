@@ -65,7 +65,7 @@ public class StandardInfoUpdateHandler extends AbstractUpdateHandler {
 				LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, ALIAS_TRAINWORKORDER);
 				baseService.update(workId, mapStatus);
 			}
-			if (status != 0 && adminFlag == 0 && depType != 4) {
+			if (status != 0 && adminFlag == 0 && depType != 4 && creationId.equals(authorId)) {
 				EnclosureAuditService.subimtaduit(workId, id, belong_sys, belong_mode, requestBody, baseService);
 			}
 		}
