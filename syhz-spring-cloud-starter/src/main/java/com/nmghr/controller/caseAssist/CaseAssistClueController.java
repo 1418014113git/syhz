@@ -58,8 +58,7 @@ public class CaseAssistClueController {
                            @RequestParam("category") Object category,
                            @RequestParam("curDeptCode") Object curDeptCode,
                            @RequestParam("curDeptName") Object curDeptName,
-                           @RequestParam("xfType") Object xfType,
-                           @RequestParam("assistId") Object assistId) {
+                           @RequestParam("assistId") Object assistId,Object xfType) {
     try {
       if (null != mulFile) {
         Collection<Map> list = ExcelUtil.importExcel(Map.class, mulFile.getInputStream(), 0);
