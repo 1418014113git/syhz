@@ -1,16 +1,25 @@
 package com.nmghr.controller.caseAssist;
 
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
+import com.nmghr.basic.common.Constant;
 import com.nmghr.basic.common.Result;
 import com.nmghr.basic.common.exception.GlobalErrorException;
+import com.nmghr.basic.core.common.LocalThreadStorage;
 import com.nmghr.basic.core.service.IBaseService;
 import com.nmghr.basic.core.service.handler.ISaveHandler;
 import com.nmghr.basic.core.util.SpringUtils;
+import com.nmghr.basic.core.util.ValidationUtils;
+import com.nmghr.common.WorkOrder;
+import com.nmghr.service.ajglqbxs.AjglQbxsFeedBackService;
+import com.nmghr.service.ajglqbxs.AjglQbxsService;
 import com.sargeraswang.util.ExcelUtil.ExcelUtil;
 import org.apache.commons.collections.IteratorUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -28,8 +37,16 @@ public class CaseAssistClueController {
   private static final Logger log = LoggerFactory.getLogger(CaseAssistClueController.class);
   @Autowired
   private IBaseService baseService;
+
+  @Autowired
+  private AjglQbxsService ajglQbxsService;
+
+  @Autowired
+  private AjglQbxsFeedBackService ajglQbxsFeedBackService;
+
   /**
    * 案件协查列表
+   *
    * @return
    */
   @PostMapping(value = "/upload")
@@ -41,7 +58,8 @@ public class CaseAssistClueController {
                            @RequestParam("category") Object category,
                            @RequestParam("curDeptCode") Object curDeptCode,
                            @RequestParam("curDeptName") Object curDeptName,
-                           @RequestParam("assistId") Object assistId){
+                           @RequestParam("xfType") Object xfType,
+                           @RequestParam("assistId") Object assistId) {
     try {
       if (null != mulFile) {
         Collection<Map> list = ExcelUtil.importExcel(Map.class, mulFile.getInputStream(), 0);
@@ -54,19 +72,19 @@ public class CaseAssistClueController {
 
           List<Map<String, Object>> params = IteratorUtils.toList(list.iterator());
 //          List<LinkedHashMap<String, Object>> params = IteratorUtils.toList(list.iterator());
-          if(params.size()>0){
+          if (params.size() > 0) {
             Map<String, Object> map = params.get(0);
 //            LinkedHashMap<String, Object> map = params.get(0);
             List<String> keys = IteratorUtils.toList(map.keySet().iterator());
             StringBuilder err = new StringBuilder();
-           if(!keys.contains("序号")){
-             err.append("标题必须包含《序号》;");
-           }
-            if(!keys.contains("地址")){
+            if (!keys.contains("序号")) {
+              err.append("标题必须包含《序号》;");
+            }
+            if (!keys.contains("地址")) {
               err.append("标题必须包含《地址》;");
             }
-            if(err.length()>0){
-             return Result.fail("999668", err.toString());
+            if (err.length() > 0) {
+              return Result.fail("999668", err.toString());
             }
           }
           Map<String, Object> data = new HashMap<>();
@@ -77,6 +95,7 @@ public class CaseAssistClueController {
           data.put("curDeptCode", curDeptCode);
           data.put("curDeptName", curDeptName);
           data.put("assistId", assistId);
+          data.put("xfType", xfType);
           data.put("list", params);
           ISaveHandler saveHandler = SpringUtils.getBean("qbxsSaveHandler", ISaveHandler.class);
           Object obj = saveHandler.save(data);
@@ -100,80 +119,346 @@ public class CaseAssistClueController {
     }
     return Result.fail("999669", "保存失败");
   }
+
   /**
    * 协查线索列表
+   *
    * @return
    */
-  public Object clueList(){
+  public Object clueList() {
     return null;
   }
+
   /**
    * 协查线索列表简版
+   *
    * @return
    */
-  public Object simpleList(){
-    return null;
+  @GetMapping("/simpleList")
+  @ResponseBody
+  public Object simpleList(@RequestParam Map<String, Object> param) {
+    try {
+      validId(param.get("assistId"));
+      Map<String, Object> params = new HashMap<>();
+      params.put("assistId", param.get("assistId"));
+      String type = "";
+      if (param.containsKey("type") && !StringUtils.isEmpty(param.get("type"))) {
+        type = String.valueOf(param.get("type"));
+      }
+      if ("".equals(type) || "2".equals(type)) { // 集群战役
+        LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJGLQBXSBASECLUECOUNT");
+      }
+      if ("1".equals(type)) { // 案件协查
+        LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJASSISTGLQBXSBASECLUECOUNT");
+      }
+      return Result.ok(baseService.list(params));
+    } catch (Exception e) {
+      if (e instanceof GlobalErrorException) {
+        GlobalErrorException ge = (GlobalErrorException) e;
+        if (String.valueOf(ge.getCode()).contains("999")) {
+          return Result.fail("999667", ge.getMessage());
+        }
+      }
+    }
+    return Result.fail("999668", "查询异常");
   }
-  /**
-   * 线索分发时的线索列表
-   * @return
-   */
-  public Object clues(){
-    return null;
-  }
+
   /**
    * 协查线索分发
+   *
    * @return
    */
-  public Object arrange(){
-    return null;
-  }
-  /**
-   * 协查线索取消分发
-   * @return
-   */
-  public Object cancelArrange(){
-    return null;
+  @PostMapping("/distribute")
+  @ResponseBody
+  public Object distribute(@RequestBody Map<String, Object> body) {
+    ValidationUtils.notNull(body.get("assistId"), "assistId不能为空!");
+    ValidationUtils.notNull(body.get("ids"), "线索不能为空!");
+    ValidationUtils.notNull(body.get("acceptDeptName"), "acceptDeptName不能为空!");
+    ValidationUtils.notNull(body.get("acceptDeptCode"), "acceptDeptCode不能为空!");
+    ValidationUtils.notNull(body.get("curDeptCode"), "curDeptCode不能为空!");
+    if (body.get("curDeptType") != null) {
+      ValidationUtils.notNull(body.get("curDeptName"), "curDeptName不能为空!");
+      ValidationUtils.notNull(body.get("userId"), "userId不能为空!");
+      ValidationUtils.notNull(body.get("userName"), "userName不能为空!");
+    }
+
+    try {
+      body.put("assistType",2);
+      Object obj = ajglQbxsService.distributeClue(body);
+      return Result.ok(obj);
+    } catch (Exception e) {
+      if (e instanceof GlobalErrorException) {
+        GlobalErrorException ge = (GlobalErrorException) e;
+        if (String.valueOf(ge.getCode()).contains("999")) {
+          return Result.fail("999667", ge.getMessage());
+        }
+      }
+    }
+    return Result.fail("999668", "提交失败");
   }
 
   /**
    * 协查线索取消分发
+   *
    * @return
    */
-  public Object delClue(){
-    return null;
+  @PostMapping("/cancelDistribute")
+  @ResponseBody
+  public Object cancelDistribute(@RequestBody Map<String, Object> body) {
+    ValidationUtils.notNull(body.get("assistId"), "assistId不能为空!");
+    ValidationUtils.notNull(body.get("qbxsId"), "qbxsId不能为空!");
+
+    try {
+      Object obj = ajglQbxsService.cancelDistribute(body.get("assistId"), body.get("qbxsId"),body.get("qbxsDeptId"));
+      return Result.ok(obj);
+    } catch (Exception e) {
+      if (e instanceof GlobalErrorException) {
+        GlobalErrorException ge = (GlobalErrorException) e;
+        if (String.valueOf(ge.getCode()).contains("999")) {
+          return Result.fail("999667", ge.getMessage());
+        }
+      }
+    }
+    return Result.fail("999668", "提交失败");
   }
 
   /**
-   * 案件协查线索详情
+   * 协查线索 删除
+   *
    * @return
    */
-  public Object clueDetail(){
-    return null;
+  @PostMapping("/delete")
+  @ResponseBody
+  public Object delClue(@RequestBody Map<String, Object> body) {
+    ValidationUtils.notNull(body.get("assistId"), "assistId不能为空!");
+    ValidationUtils.notNull(body.get("qbxsId"), "qbxsId不能为空!");
+
+    try {
+      Object obj = ajglQbxsService.removeClue(body.get("assistId"), body.get("qbxsId"), body.get("qbxsDeptId"));
+      return Result.ok(obj);
+    } catch (Exception e) {
+      if (e instanceof GlobalErrorException) {
+        GlobalErrorException ge = (GlobalErrorException) e;
+        if (String.valueOf(ge.getCode()).contains("999")) {
+          return Result.fail("999667", ge.getMessage());
+        }
+      }
+    }
+    return Result.fail("999668", "提交失败");
   }
 
   /**
-   * 案件协查情况统计
+   * 反馈线索列表
+   *
    * @return
    */
-  public Object statistics(){
-    return null;
+  @GetMapping("/getCluesNum")
+  @ResponseBody
+  public Object getCluesNum(@RequestParam Map<String, Object> body) {
+    ValidationUtils.notNull(body.get("assistId"), "集群战役Id不能为空!");
+    try {
+      Object obj = ajglQbxsService.getClueTotal(String.valueOf(body.get("assistId")));
+      return Result.ok(obj);
+    } catch (Exception e) {
+      if (e instanceof GlobalErrorException) {
+        GlobalErrorException ge = (GlobalErrorException) e;
+        if (String.valueOf(ge.getCode()).contains("999")) {
+          return Result.fail("999667", ge.getMessage());
+        }
+      }
+    }
+    return Result.fail("999887", "请求异常");
   }
 
   /**
-   * 线索协查战国反馈表
+   * 反馈线索列表
+   *
    * @return
    */
-  public Object detailCount(){
-    return null;
+  @GetMapping("/feedBackClues")
+  @ResponseBody
+  public Object feedBackClues(@RequestParam Map<String, Object> body) {
+    ValidationUtils.notNull(body.get("assistId"), "集群战役Id不能为空!");
+    try {
+      if(body.get("reginCode")!=null){
+        body.put("cityCode",body.get("reginCode"));
+      } else {
+        if(body.get("cityCode")!=null){
+          body.put("cityCode",body.get("cityCode"));
+        }
+      }
+      Object obj = ajglQbxsService.feedBackList(body);
+      return Result.ok(obj);
+    } catch (Exception e) {
+      if (e instanceof GlobalErrorException) {
+        GlobalErrorException ge = (GlobalErrorException) e;
+        if (String.valueOf(ge.getCode()).contains("999")) {
+          return Result.fail("999667", ge.getMessage());
+        }
+      }
+    }
+    return Result.fail("999887", "请求异常");
   }
 
   /**
    * 线索反馈
+   *
    * @return
    */
-  public Object feedBack(){
+  @PostMapping("/feedBack")
+  @ResponseBody
+  public Object feedBack(@RequestBody Map<String, Object> body) {
+    ValidationUtils.notNull(body.get("type"), "处理类型不能为空!");
+    ValidationUtils.notNull(body.get("fbId"), "反馈id不能为空!");
+    if ("result".equals(body.get("type"))) {
+      ValidationUtils.notNull(body.get("qbxsResult"), "反馈结果不能为空!");
+    } else if ("saveSyajs".equals(body.get("type")) || "deleteSyajs".equals(body.get("type"))) {
+      ValidationUtils.notNull(body.get("syajs"), "syajs不能为空!");
+    } else if ("saveZbxss".equals(body.get("type")) || "deleteZbxss".equals(body.get("type"))) {
+      ValidationUtils.notNull(body.get("zbxss"), "zbxss不能为空!");
+    } else {
+      return Result.fail("999887", "参数异常");
+    }
+    try {
+      return Result.ok(ajglQbxsFeedBackService.feedBack(body));
+    } catch (Exception e) {
+      if (e instanceof GlobalErrorException) {
+        GlobalErrorException ge = (GlobalErrorException) e;
+        if (String.valueOf(ge.getCode()).contains("999")) {
+          return Result.fail("999667", ge.getMessage());
+        }
+      }
+    }
+    return Result.fail("999887", "请求异常");
+  }
+
+  /**
+   * 反馈线索列表
+   *
+   * @return
+   */
+  @GetMapping("/feedBack/detail")
+  @ResponseBody
+  public Object feedBackAJList(@RequestParam Map<String, Object> param) {
+    ValidationUtils.notNull(param.get("fbId"), "fbId不能为空!");
+    try {
+      if ("detail".equals(param.get("type"))) {
+        return ajglQbxsService.feedBackDetail(param);
+      }
+      if ("ys".equals(param.get("type"))) {
+        return ajglQbxsService.feedBackSyAJList(param);
+      }
+      if ("zb".equals(param.get("type"))) {
+        return ajglQbxsService.feedBackZbAJList(param);
+      }
+      return new ArrayList<>();
+    } catch (Exception e) {
+      if (e instanceof GlobalErrorException) {
+        GlobalErrorException ge = (GlobalErrorException) e;
+        if (String.valueOf(ge.getCode()).contains("999")) {
+          return Result.fail("999667", ge.getMessage());
+        }
+      }
+    }
+    return Result.fail("999887", "请求异常");
+  }
+
+  /**
+   * 线索协查战国反馈表
+   *
+   * @return
+   */
+  @GetMapping("/detailCount")
+  @ResponseBody
+  public Object detailCount(@RequestParam Map<String, Object> requestMap) {
+    try {
+      return ajglQbxsService.feedBackResultList(requestMap);
+    } catch (Exception e) {
+      if (e instanceof GlobalErrorException) {
+        GlobalErrorException ge = (GlobalErrorException) e;
+        if (String.valueOf(ge.getCode()).contains("999")) {
+          return Result.fail("999667", ge.getMessage());
+        }
+      }
+    }
+    return Result.fail("999887", "请求异常");
+  }
+
+  /**
+   * 案件协查情况统计
+   *
+   * @return
+   */
+  @GetMapping("/ajSearch")
+  @ResponseBody
+  public Object ajSearch(@RequestParam Map<String, Object> requestMap) {
+    try {
+      Map<String, Object> params = new HashMap<>();
+      params.put("fbId", requestMap.get("fbId"));
+      params.put("assistId", requestMap.get("assistId"));
+      params.put("type", requestMap.get("type"));
+      List ajbhs = getAjbhs(params);
+      params = new HashMap<>();
+      params.put("departCode", requestMap.get("deptCode"));
+      params.put("ajmc", requestMap.get("ajmc"));
+      if (ajbhs != null) {
+        params.put("ajbhs", ajbhs);
+      }
+      LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJASSISTSEARCH");
+      return baseService.list(params);
+    } catch (Exception e) {
+      if (e instanceof GlobalErrorException) {
+        GlobalErrorException ge = (GlobalErrorException) e;
+        if (String.valueOf(ge.getCode()).contains("999")) {
+          return Result.fail("999667", ge.getMessage());
+        }
+      }
+    }
+    return Result.fail("999887", "请求异常");
+  }
+
+  private List getAjbhs(Map<String, Object> params) throws Exception {
+    if ("1".equals(params.get("type"))) {
+      LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJCLUSTERFEEDBACK");
+      Map<String, Object> fb = (Map<String, Object>) baseService.get(params);
+      if (fb == null) {
+        return null;
+      }
+      Object ys = fb.get("syajs");
+      if (ys == null || StringUtils.isEmpty(ys)) {
+        return null;
+      }
+      return JSONArray.parseArray(String.valueOf(ys)).toJavaList(String.class);
+    }
+    if ("2".equals(params.get("type"))) {
+      //查询
+      LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJCLUSTERFEEDBACK");
+      Map<String, Object> fb = (Map<String, Object>) baseService.get(params);
+      if (fb == null) {
+        return null;
+      }
+      Object zb = fb.get("zbxss");
+      if (zb == null || StringUtils.isEmpty(zb)) {
+        return null;
+      }
+      Map<String, Object> zbJson = JSONObject.toJavaObject(JSONObject.parseObject(String.valueOf(zb)), Map.class);
+      if (zbJson == null) {
+        return null;
+      }
+      List<String> ajbhs = IteratorUtils.toList(zbJson.keySet().iterator());
+      if (ajbhs == null || ajbhs.size() == 0) {
+        return null;
+      } else {
+        return ajbhs;
+      }
+    }
     return null;
+  }
+
+
+  private void validId(Object id) {
+    ValidationUtils.notNull(id, "id不能为空!");
+    ValidationUtils.regexp(id, "^\\d+$", "非法输入");
   }
 
 }

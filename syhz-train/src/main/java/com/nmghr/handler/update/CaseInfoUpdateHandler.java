@@ -66,7 +66,7 @@ public class CaseInfoUpdateHandler extends AbstractUpdateHandler {
 				LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, ALIAS_TRAINWORKORDER);
 				baseService.update(workId, mapStatus);
 			}
-			if (status != 0 && adminFlag == 0 && depType != 4) {
+			if (status != 0 && adminFlag == 0 && depType != 4 && creationId.equals(authorId)) {// 管理员提交自己默认审核通过
 				EnclosureAuditService.subimtaduit(workId, id, belong_sys, belong_mode, requestBody, baseService);
 			}
 		}
