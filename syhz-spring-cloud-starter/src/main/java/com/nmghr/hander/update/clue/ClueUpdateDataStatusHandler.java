@@ -22,7 +22,7 @@ public class ClueUpdateDataStatusHandler extends AbstractUpdateHandler {
     @Override
     @Transactional
     public Object update(String id, Map<String, Object> requestBody) throws Exception {
-        LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "QBXXCLUDATASTATUSE");
+        LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "QBXXCLUEDATASTATUSE");
         baseService.update(id, requestBody);
         return true;
     }

@@ -28,7 +28,9 @@ public class ClueQueryHandler extends AbstractQueryHandler {
     @Override
     @Transactional
     public Object list(Map<String, Object> requestMap) throws Exception {
-        requestMap.put("collectionLocation", requestMap.get("collectionLocation").toString());
+        if (ObjectUtils.isEmpty(requestMap.get("dataStatus"))) {
+            requestMap.put("dataStatus", DATA_STATUS_YES);
+        }
         LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "QBXXCLUE");
         return baseService.list(requestMap);
     }
