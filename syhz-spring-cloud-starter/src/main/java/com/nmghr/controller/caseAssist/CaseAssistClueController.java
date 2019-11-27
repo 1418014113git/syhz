@@ -58,7 +58,7 @@ public class CaseAssistClueController {
                            @RequestParam("category") Object category,
                            @RequestParam("curDeptCode") Object curDeptCode,
                            @RequestParam("curDeptName") Object curDeptName,
-                           @RequestParam("assistId") Object assistId,Object xfType) {
+                           @RequestParam("assistId") Object assistId, Object xfType) {
     try {
       if (null != mulFile) {
         Collection<Map> list = ExcelUtil.importExcel(Map.class, mulFile.getInputStream(), 0);
@@ -182,7 +182,6 @@ public class CaseAssistClueController {
     }
 
     try {
-      body.put("assistType",2);
       Object obj = ajglQbxsService.distributeClue(body);
       return Result.ok(obj);
     } catch (Exception e) {
@@ -302,7 +301,7 @@ public class CaseAssistClueController {
   /**
    * 线索反馈
    *
-   * @return
+   * @return Object o
    */
   @PostMapping("/feedBack")
   @ResponseBody
