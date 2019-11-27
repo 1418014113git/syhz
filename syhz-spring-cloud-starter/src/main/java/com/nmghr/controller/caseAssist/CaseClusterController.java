@@ -443,6 +443,7 @@ public class CaseClusterController {
     ValidationUtils.notNull(body.get("assistId"), "status不能为空!");
     ValidationUtils.notNull(body.get("signId"), "status不能为空!");
     try {
+      body.put("assistType", 2);
       return Result.ok(ajglSignService.signing(body));
     } catch (Exception e) {
       if (e instanceof GlobalErrorException) {

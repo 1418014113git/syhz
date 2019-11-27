@@ -20,6 +20,7 @@ public class CaseAssistService {
   @Autowired
   private IBaseService baseService;
   private static Map<String, String> DeptJP = new HashedMap();
+  private static Map<String, String> DeptAssist = new HashedMap();
 
   static {
     DeptJP.put("610000", "SX");
@@ -35,6 +36,20 @@ public class CaseAssistService {
     DeptJP.put("611000", "SL");
     DeptJP.put("611400", "YLX");
     DeptJP.put("616200", "XX");
+
+    DeptAssist.put("610000", "SX");
+    DeptAssist.put("610100", "XA");
+    DeptAssist.put("610200", "TC");
+    DeptAssist.put("610300", "BJ");
+    DeptAssist.put("610400", "XY");
+    DeptAssist.put("610500", "WN");
+    DeptAssist.put("610600", "YA");
+    DeptAssist.put("610700", "HZ");
+    DeptAssist.put("610800", "YL");
+    DeptAssist.put("610900", "AK");
+    DeptAssist.put("611000", "SL");
+    DeptAssist.put("611400", "YLX");
+    DeptAssist.put("616200", "XX");
   }
 
 
@@ -73,6 +88,52 @@ public class CaseAssistService {
   }
 
   /**
+   * 检查案件协查编号是否重复
+   * @param dept
+   * @param number
+   * @return
+   * @throws Exception
+   */
+  public Boolean checkAssistNumber(String dept, String number, String assistId) throws Exception {
+    Map<String, Object> params = new HashMap<>();
+    params.put("deptCode", dept);
+    params.put("number", number);
+    LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJASSISTNUMBERCHECK");
+    List<Map<String, Object>> list = (List<Map<String, Object>>) baseService.list(params);
+    if ("".equals(assistId)) {
+      if (list != null && list.size() > 0) {
+        throw new GlobalErrorException("999887", "案件协查编号重复");
+      }
+    } else {
+      Map<String, Object> assistMap = list.get(0);
+      if (!String.valueOf(assistMap.get("id")).equals(assistId)) {
+        throw new GlobalErrorException("999887", "案件协查编号重复");
+      }
+    }
+
+    dept = dept.substring(0, 6);
+    if (!DeptAssist.containsKey(dept)) {
+      throw new GlobalErrorException("999887", "部门编号不正确");
+    }
+    if ("611400".equals(dept)) {
+      if (!String.valueOf(DeptAssist.get(dept)).equals(number.substring(0, 3))) {
+        throw new GlobalErrorException("999887", "编号前缀应为YLX");
+      }
+      if (number.length() < 10) {
+        throw new GlobalErrorException("999887", "编号格式不正确");
+      }
+    } else {
+      if (!String.valueOf(DeptAssist.get(dept)).equals(number.substring(0, 2))) {
+        throw new GlobalErrorException("999887", "编号前缀应为" + String.valueOf(DeptAssist.get(dept)));
+      }
+      if (number.length() < 9) {
+        throw new GlobalErrorException("999887", "编号格式不正确");
+      }
+    }
+    return true;
+  }
+
+  /**
    * 根据业务id 获取线索的总数和已分配的数量
    *
    * @param dept
@@ -87,7 +148,7 @@ public class CaseAssistService {
     if (rs == null) {
       return initNumber(dept.substring(0, 6));
     }
-    String number = type == 1 ? String.valueOf(rs.get("clusterNumber")) : String.valueOf(rs.get("ASSISTNumber"));
+    String number = type == 1 ? String.valueOf(rs.get("clusterNumber")) : String.valueOf(rs.get("assistNumber"));
     return getNumber(dept.substring(0, 6), number);
   }
 
@@ -96,7 +157,6 @@ public class CaseAssistService {
     if ("611400".equals(dept)) {
       int year = Integer.parseInt(String.valueOf(nStr.substring(3, 7)));
       int ser = Integer.parseInt(String.valueOf(nStr.substring(7)));
-      ;
       int thisYear = Calendar.getInstance().get(Calendar.YEAR);
       if (!String.valueOf(thisYear).equals(nStr.substring(3, 7))) {
         ser = 1;
@@ -116,7 +176,6 @@ public class CaseAssistService {
     }
     int year = Integer.parseInt(String.valueOf(nStr.substring(2, 6)));
     int ser = Integer.parseInt(String.valueOf(nStr.substring(6)));
-    ;
     int thisYear = Calendar.getInstance().get(Calendar.YEAR);
     if (!String.valueOf(thisYear).equals(nStr.substring(2, 6))) {
       ser = 1;

@@ -8,6 +8,7 @@ import com.nmghr.basic.core.common.LocalThreadStorage;
 import com.nmghr.basic.core.page.Paging;
 import com.nmghr.basic.core.service.IBaseService;
 import com.nmghr.hander.save.ajglqbxs.QbxsSignSaveHandler;
+import com.nmghr.hander.save.cluster.CaseAssistSubmitSaveHandler;
 import com.nmghr.hander.save.cluster.DeptMapperSaveHandler;
 import com.nmghr.hander.save.common.BatchSaveHandler;
 import org.apache.commons.collections.IteratorUtils;
@@ -29,6 +30,10 @@ public class AjglQbxsService {
 
   @Autowired
   private DeptMapperSaveHandler deptMapperSaveHandler;
+
+  @Autowired
+  private CaseAssistSubmitSaveHandler caseAssistSubmitSaveHandler;
+
   @Autowired
   private QbxsSignSaveHandler qbxsSignSaveHandler;
 
@@ -47,15 +52,28 @@ public class AjglQbxsService {
     // 查询未分配的线索 ids
     //增加部门表数据  assistId deptcode name cluecount
     //修改线索状态  qbxs_base
-    // 分配部门
     String ids = String.valueOf(body.get("ids"));
-    Map<String, Object> deptP = new HashMap<>();
-    deptP.put("clusterId", body.get("assistId"));
-    deptP.put("deptCode", body.get("acceptDeptCode"));
-    deptP.put("deptName", body.get("acceptDeptName"));
+    // 分配部门
+    String type = "";
+    if (body.containsKey("type") && !StringUtils.isEmpty(body.get("type"))) {
+      type = String.valueOf(body.get("type"));
+    }
+    Object id = "";
+    if ("".equals(type) || "2".equals(type)) { // 集群战役
+      Map<String, Object> deptP = new HashMap<>();
+      deptP.put("clusterId", body.get("assistId"));
+      deptP.put("deptCode", body.get("acceptDeptCode"));
+      deptP.put("deptName", body.get("acceptDeptName"));
 //    deptP.put("parentCode", body.get("curDeptCode"));
-    Object id = deptMapperSaveHandler.save(deptP);
-
+      id = deptMapperSaveHandler.save(deptP);
+    }
+    if ("1".equals(type)) { // 案件协查
+      Map<String, Object> deptP = new HashMap<>();
+      deptP.put("assistId", body.get("assistId"));
+      deptP.put("deptCode", body.get("acceptDeptCode"));
+      deptP.put("deptName", body.get("acceptDeptName"));
+      id = caseAssistSubmitSaveHandler.saveDept(deptP);
+    }
     Map<String, Object> baseP = new HashMap<>();
     baseP.put("ids", ids);
     baseP.put("qbxsDistribute", 2);
@@ -67,9 +85,15 @@ public class AjglQbxsService {
 
     Map<String, Object> param = new HashMap<>();
     param.put("qbxsIds",ids);
-    param.put("clusterId",body.get("assistId"));
-    param.put("deptCode",body.get("curDeptCode"));
-    LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJGLQBXSDEPTIDS");
+    param.put("deptCode", body.get("curDeptCode"));
+    if ("".equals(type) || "2".equals(type)) { // 集群战役
+      param.put("clusterId", body.get("assistId"));
+      LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJGLQBXSDEPTIDS");
+    }
+    if ("1".equals(type)) { // 案件协查
+      param.put("assistId", body.get("assistId"));
+      LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJASSISTGLQBXSDEPTIDS");
+    }
     List<Map<String, Object>> mappIds = (List<Map<String, Object>>) baseService.list(param);
     if(mappIds!=null && mappIds.size()>0){
       List<Object> deptIds = new ArrayList<>();
@@ -225,7 +249,7 @@ public class AjglQbxsService {
   }
 
   /**
-   * 线索列表
+   * 线索反馈列表
    *
    * @param requestMap
    * @return
@@ -235,8 +259,11 @@ public class AjglQbxsService {
     int pageNum = Integer.parseInt(String.valueOf(requestMap.get("pageNum")));
     int pageSize = Integer.parseInt(String.valueOf(requestMap.get("pageSize")));
 
-    Map<String, Object> result = new HashMap<>();
     Map<String, Object> params = new HashMap<>();
+    params.put("assistType",requestMap.get("assistType"));
+    if(StringUtils.isEmpty(requestMap.get("assistType"))){
+      params.put("assistType",2);
+    }
     params.put("assistId", requestMap.get("assistId"));
     //查询标题
     LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJGLQBXSBYASSIST");
@@ -248,10 +275,17 @@ public class AjglQbxsService {
     for (Map<String, Object> map : titles) {
       heads.add(Integer.parseInt(String.valueOf(map.get("qbxsIndex"))), map.get("title"));
     }
+    Map<String, Object> result = new HashMap<>();
     result.put("titles", heads);
 
     //根据条件查询线索
-    LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJGLQBXSBASEFEEDBACELIST");
+    if(StringUtils.isEmpty(requestMap.get("assistType"))|| "2".equals(String.valueOf(requestMap.get("assistType")))){
+      LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJGLQBXSBASEFEEDBACELIST");
+    } else if("1".equals(String.valueOf(requestMap.get("assistType")))) {
+      LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJASSISTQBXSFEEDBACELIST");
+    } else {
+      return new ArrayList();
+    }
     Paging pages = (Paging) baseService.page(requestMap, pageNum, pageSize);
     if (pages == null || pages.getList() == null || pages.getList().size() == 0) {
       result.put("list", new ArrayList<>());
@@ -270,30 +304,33 @@ public class AjglQbxsService {
         base.put("syajs", 0);
       }
       if (base.get("zbxsAjbhs") != null) {
-        int dhwd = 0, pzdb = 0, sajz = 0;
+        int dhwd = 0, pzdb = 0, sajz = 0, zhrys=0,yjss=0;
         List<String> ajbhs = new ArrayList<>();
         Map<String, Object> zbmap = JSONObject.toJavaObject(JSONObject.parseObject(String.valueOf(base.get("zbxsAjbhs"))), Map.class);
         for (String key : zbmap.keySet()) {
           String[] info = String.valueOf(zbmap.get(key)).split(",");
-          if(info.length==4){
+          if(info.length==6) {
             dhwd += Integer.parseInt(info[1]);
             sajz += Integer.parseInt(info[2]);
             pzdb += Integer.parseInt(info[3]);
-            ajbhs.add(key);
-          } else {
-            ajbhs.add(key);
+            zhrys += Integer.parseInt(info[4]);
+            yjss += Integer.parseInt(info[5]);
           }
-
+          ajbhs.add(key);
         }
         base.put("dhwd", dhwd);
         base.put("sajz", sajz);
         base.put("pzdb", pzdb);
+        base.put("zhrys", zhrys);
+        base.put("yjss", yjss);
         base.putAll(getAjInfoData(ajbhs));
       } else {
         base.put("dhwd", 0);
         base.put("sajz", 0);
         base.put("pzdb", 0);
         base.put("xsjl", 0);
+        base.put("zhrys", 0);
+        base.put("yjss", 0);
         base.put("larqCount", 0);
         base.put("parqCount", 0);
       }
@@ -329,10 +366,20 @@ public class AjglQbxsService {
   public Object ajglQbxsList(Map<String, Object> requestMap) throws Exception {
     int pageNum = Integer.parseInt(String.valueOf(requestMap.get("pageNum")));
     int pageSize = Integer.parseInt(String.valueOf(requestMap.get("pageSize")));
-    Map<String, Object> result = new HashMap<>();
+    String type = "";
+    if (requestMap.containsKey("type") && !StringUtils.isEmpty(requestMap.get("type"))) {
+      type = String.valueOf(requestMap.get("type"));
+    }
+
+    //查询标题
     Map<String, Object> params = new HashMap<>();
     params.put("assistId", requestMap.get("assistId"));
-    //查询标题
+    if ("".equals(type) || "2".equals(type)) { // 集群战役
+      params.put("assistType",2);
+    }
+    if ("1".equals(type)) { // 案件协查
+      params.put("assistType",1);
+    }
     LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJGLQBXSBYASSIST");
     List<Map<String, Object>> titles = (List<Map<String, Object>>) baseService.list(params);
     if (titles == null || titles.size() == 0) {
@@ -342,10 +389,16 @@ public class AjglQbxsService {
     for (Map<String, Object> map : titles) {
       heads.add(Integer.parseInt(String.valueOf(map.get("qbxsIndex"))), map.get("title"));
     }
+    Map<String, Object> result = new HashMap<>();
     result.put("titles", heads);
 
     //根据条件查询线索
-    LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJGLQBXSBASE");
+    if ("".equals(type) || "2".equals(type)) { // 集群战役
+      LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJGLQBXSBASE");
+    }
+    if ("1".equals(type)) { // 案件协查
+      LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJASSISTGLQBXSBASE");
+    }
     Map<String, Object> baseData = new HashMap<>();
     StringBuilder sbd = new StringBuilder();
     Paging pages = (Paging) baseService.page(requestMap, pageNum, pageSize);
@@ -485,7 +538,7 @@ public class AjglQbxsService {
       return new ArrayList();
     }
     List zbajList = new ArrayList();
-    int ajCount = 0, larqCount = 0, parqCount = 0, dh = 0, xsjl = 0, pzdb = 0, sajz = 0;
+    int ajCount = 0, larqCount = 0, parqCount = 0, dh = 0, xsjl = 0, pzdb = 0, sajz = 0,zhrys=0,yjss=0;
     for (Map<String, Object> aj : ajList) {
       if (ajbhs.contains(String.valueOf(aj.get("AJBH")))) {
         String zbInfo = String.valueOf(zbJson.get(String.valueOf(aj.get("AJBH"))));
@@ -499,21 +552,21 @@ public class AjglQbxsService {
           o.put("larq", aj.get("LARQ"));
           larqCount++;
         } else {
-          o.put("larq", "");
+          o.put("larq", 0);
         }
         if (!StringUtils.isEmpty(aj.get("PARQ"))) {
           o.put("parq", aj.get("PARQ"));
           parqCount++;
         } else {
-          o.put("parq", "");
+          o.put("parq", 0);
         }
-        if (!StringUtils.isEmpty(infos[1])) {
+        if (infos.length>1 && !StringUtils.isEmpty(infos[1])) {
           o.put("dhwd", infos[1]);
           dh += Integer.parseInt(String.valueOf(infos[1]));
         } else {
           o.put("dhwd", 0);
         }
-        if (!StringUtils.isEmpty(infos[2])) {
+        if (infos.length>2 && !StringUtils.isEmpty(infos[2])) {
           int sajzOri = Integer.parseInt(String.valueOf(infos[2]));
           if(sajzOri>0){
             o.put("sajz", sajzOri);
@@ -522,16 +575,40 @@ public class AjglQbxsService {
             if(!StringUtils.isEmpty(aj.get("SAJZ"))){
               o.put("sajz", aj.get("SAJZ"));
               sajz += Integer.parseInt(String.valueOf(aj.get("SAJZ")));
+            } else {
+              o.put("sajz", 0);
             }
           }
         } else {
           o.put("sajz", 0);
         }
-        if (!StringUtils.isEmpty(infos[3])) {
+        if (infos.length>3 && !StringUtils.isEmpty(infos[3])) {
           o.put("pzdb", infos[3]);
           pzdb += Integer.parseInt(String.valueOf(infos[3]));
         } else {
           o.put("pzdb", 0);
+        }
+        if (infos.length>4 && !StringUtils.isEmpty(infos[4])) {
+          int zhrysOri = Integer.parseInt(String.valueOf(infos[4]));
+          if(zhrysOri>0){
+            o.put("zhrys", zhrysOri);
+            zhrys += zhrysOri;
+          } else {
+            if(!StringUtils.isEmpty(aj.get("ZHRYS"))){
+              o.put("zhrys", aj.get("ZHRYS"));
+              zhrys += Integer.parseInt(String.valueOf(aj.get("ZHRYS")));
+            } else {
+              o.put("zhrys", 0);
+            }
+          }
+        } else {
+          o.put("zhrys", 0);
+        }
+        if (infos.length>5 && !StringUtils.isEmpty(infos[5])) {
+          o.put("yjss", infos[5]);
+          yjss += Integer.parseInt(String.valueOf(infos[5]));
+        } else {
+          o.put("yjss", 0);
         }
         if (!StringUtils.isEmpty(aj.get("ryclcs"))) {
           o.put("ryclcs", aj.get("ryclcs"));
@@ -554,6 +631,8 @@ public class AjglQbxsService {
     count.put("pzdb", pzdb);
     count.put("sajz", sajz);
     count.put("ryclcs", xsjl);
+    count.put("zhrys", zhrys);
+    count.put("yjss", yjss);
     zbajList.add(count);
     return zbajList;
   }
@@ -561,12 +640,22 @@ public class AjglQbxsService {
 
   public Object feedBackResultList(Map<String, Object> requestMap) throws Exception {
     //查询
-    LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJCLUSTERTJFKXX");
+    String type = "";
+    if (requestMap.containsKey("type") && !StringUtils.isEmpty(requestMap.get("type"))) {
+      type = String.valueOf(requestMap.get("type"));
+    }
+    if ("".equals(type) || "2".equals(type)) { // 集群战役
+      LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJCLUSTERTJFKXX");
+    }
+    if ("1".equals(type)) { // 案件协查
+      LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJASSISTTJFKXX");
+    }
     List<Map<String, Object>> list = (List<Map<String, Object>>) baseService.list(requestMap);
     if (list == null || list.size() == 0) {
       return new ArrayList();
     }
-    int xsNumSum = 0, csSum = 0, cfSum = 0, whcSum = 0, laNum = 0, paNum = 0, dhwdSum = 0, pzdbSum = 0, sajzSum = 0, xsjlSum = 0, ysajList=0;
+    int xsNumSum = 0, csSum = 0, cfSum = 0, whcSum = 0, laNum = 0, paNum = 0, dhwdSum = 0, pzdbSum = 0,
+        sajzSum = 0, xsjlSum = 0, ysajList=0,zhrysSum=0, yjssSum=0;
     Map<String, Object> resList = new LinkedHashMap<>();
     for (Map<String, Object> m : list) {
       if (m.get("ysajList") != null) {
@@ -577,51 +666,50 @@ public class AjglQbxsService {
         m.put("ysajList", 0);
       }
       if (m.get("zbajList") != null) {
-        int dhwd = 0, pzdb = 0, sajz = 0;
+        int dhwd = 0, pzdb = 0, sajz = 0, zhrys=0,yjss=0;
         String[] zbs = String.valueOf(m.get("zbajList")).split("_");
         List<String> ajbhs = new ArrayList<>();
         for (String s : zbs) {
           Map<String, Object> zbmap = JSONObject.toJavaObject(JSONObject.parseObject(s), Map.class);
           for (String key : zbmap.keySet()) {
             String[] info = String.valueOf(zbmap.get(key)).split(",");
-            if(info.length==4){
+            if(info.length==6){
               dhwd += Integer.parseInt(info[1]);
               sajz += Integer.parseInt(info[2]);
               pzdb += Integer.parseInt(info[3]);
-              ajbhs.add(key);
-            } else {
-              ajbhs.add(key);
+              zhrys += Integer.parseInt(info[4]);
+              yjss += Integer.parseInt(info[5]);
             }
-
+            ajbhs.add(key);
           }
         }
         m.put("dhwd", dhwd);
         m.put("sajz", sajz);
         m.put("pzdb", pzdb);
+        m.put("zhrys", zhrys);
+        m.put("yjss", yjss);
         Map res = getAjInfoData(ajbhs);
         m.putAll(res);
         dhwdSum += dhwd;
         sajzSum += sajz;
         pzdbSum += pzdb;
+        zhrysSum += zhrys;
+        yjssSum += yjss;
         if(res.containsKey("xsjl") && !StringUtils.isEmpty(res.get("xsjl"))){
           xsjlSum += Integer.parseInt(String.valueOf(res.get("xsjl")));
-        } else {
-          xsjlSum += 0;
         }
         if(res.containsKey("larqCount") && !StringUtils.isEmpty(res.get("larqCount"))){
           laNum += Integer.parseInt(String.valueOf(res.get("larqCount")));
-        } else {
-          laNum += 0;
         }
         if(res.containsKey("parqCount") && !StringUtils.isEmpty(res.get("parqCount"))){
           paNum += Integer.parseInt(String.valueOf(res.get("parqCount")));
-        } else {
-          paNum += 0;
         }
       } else {
         m.put("dhwd", 0);
         m.put("sajz", 0);
         m.put("pzdb", 0);
+        m.put("zhrys", 0);
+        m.put("yjss", 0);
         m.put("xsjl", 0);
         m.put("larqCount", 0);
         m.put("parqCount", 0);
@@ -656,8 +744,10 @@ public class AjglQbxsService {
     count.put("parqCount", paNum);
     count.put("dhwd", dhwdSum);
     count.put("pzdb", pzdbSum);
-    count.put("sajz", sajzSum);
+    count.put("zhrys", zhrysSum);
+    count.put("yjss", yjssSum);
     count.put("xsjl", xsjlSum);
+    count.put("sajz", sajzSum);
     count.put("ysajList", ysajList);
 
     BigDecimal hcSum = new BigDecimal(String.valueOf(csSum+cfSum));
@@ -669,7 +759,12 @@ public class AjglQbxsService {
     }
 
     if("1".equals(requestMap.get("curDeptType"))||"2".equals(requestMap.get("curDeptType"))){
-      LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJCLUSTERTJZDFKXX");
+      if ("".equals(type) || "2".equals(type)) { // 集群战役
+        LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJCLUSTERTJZDFKXX");
+      }
+      if ("1".equals(type)) { // 案件协查
+        LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJASSISTTJZDFKXX");
+      }
       List<Map<String, Object>> deptRes = (List<Map<String, Object>>) baseService.list(requestMap);
       if (deptRes == null || deptRes.size() == 0) {
         return new ArrayList();
