@@ -184,7 +184,7 @@ public class CaseAssistExportController {
         c12.setCellStyle(cStyle);
         rowIndex++;
       }
-      CellRangeAddress kong = new CellRangeAddress(rowIndex, rowIndex, 0, 10); //空行
+      CellRangeAddress kong = new CellRangeAddress(rowIndex, rowIndex, 0, 12); //空行
       sheet.addMergedRegion(kong);
       RegionUtil.setBorderBottom(BorderStyle.THIN, kong, sheet);
       RegionUtil.setBorderLeft(BorderStyle.THIN, kong, sheet);
@@ -214,7 +214,7 @@ public class CaseAssistExportController {
       RegionUtil.setBorderRight(BorderStyle.THIN, tbrAT, sheet);
       RegionUtil.setBorderTop(BorderStyle.THIN, tbrAT, sheet);
 
-      CellRangeAddress tbrA = new CellRangeAddress(rowIndex, rowIndex, 8, 10); //填报人
+      CellRangeAddress tbrA = new CellRangeAddress(rowIndex, rowIndex, 8, 12); //填报人
       sheet.addMergedRegion(tbrA);
       RegionUtil.setBorderBottom(BorderStyle.THIN, tbrA, sheet);
       RegionUtil.setBorderLeft(BorderStyle.THIN, tbrA, sheet);
@@ -226,7 +226,7 @@ public class CaseAssistExportController {
       XSSFCell remarkC = sheet.createRow(rowIndex).createCell(0);
       remarkC.setCellValue(config.getString("remark"));
 
-      CellRangeAddress cra = new CellRangeAddress(rowIndex, rowIndex + 3, 0, 10); //说明
+      CellRangeAddress cra = new CellRangeAddress(rowIndex, rowIndex + 3, 0, 12); //说明
       sheet.addMergedRegion(cra);
       RegionUtil.setBorderBottom(BorderStyle.THIN, cra, sheet);
       RegionUtil.setBorderLeft(BorderStyle.THIN, cra, sheet);
@@ -261,7 +261,8 @@ public class CaseAssistExportController {
         return new ArrayList<>();
       }
       int xsNumSum = 0, csSum = 0, cfSum = 0, whcSum = 0, laNum = 0, paNum = 0, dhwdSum = 0, pzdbSum = 0,
-          sajzSum = 0, xsjlSum = 0, ysajList = 0,zhrysSum=0, yjssSum=0;
+          xsjlSum = 0, ysajList = 0,zhrysSum=0, yjssSum=0;
+      double sajzSum = 0;
       for (Map<String, Object> m : list) {
         m.put("cityCode", String.valueOf(m.get("applyDeptCode")).substring(0, 4) + "00");
         if (m.get("ysajList") != null) {
@@ -272,7 +273,8 @@ public class CaseAssistExportController {
           m.put("ysajList", 0);
         }
         if (m.get("zbajList") != null) {
-          int dhwd = 0, pzdb = 0, sajz = 0, zhrys=0,yjss=0;
+          int dhwd = 0, pzdb = 0, zhrys=0,yjss=0;
+          double sajz = 0;
           String[] zbs = String.valueOf(m.get("zbajList")).split("_");
           List<String> ajbhs = new ArrayList<>();
           for (String s : zbs) {
@@ -281,7 +283,7 @@ public class CaseAssistExportController {
               String[] info = String.valueOf(zbmap.get(key)).split(",");
               if(info.length==6){
                 dhwd += Integer.parseInt(info[1]);
-                sajz += Integer.parseInt(info[2]);
+                sajz += Double.parseDouble(info[2]);
                 pzdb += Integer.parseInt(info[3]);
                 zhrys += Integer.parseInt(info[4]);
                 yjss += Integer.parseInt(info[5]);
@@ -324,14 +326,15 @@ public class CaseAssistExportController {
         int cs = Integer.parseInt(String.valueOf(m.get("cs")));
         int cf = Integer.parseInt(String.valueOf(m.get("cf")));
         int whc = Integer.parseInt(String.valueOf(m.get("whc")));
-        xsNumSum += Integer.parseInt(String.valueOf(m.get("xsNum")));
+        int xsNum = Integer.parseInt(String.valueOf(m.get("xsNum")));
         csSum += cs;
         cfSum += cf;
         whcSum += whc;
+        xsNumSum += xsNum;
         int hcs = cs + cf;
         BigDecimal hc = new BigDecimal(String.valueOf(hcs));
-        if (whc > 0) {
-          hc = hc.divide(new BigDecimal(String.valueOf(m.get("whc"))), 2, RoundingMode.DOWN).multiply(new BigDecimal("100")).setScale(0, RoundingMode.DOWN);
+        if (xsNum > 0) {
+          hc = hc.divide(new BigDecimal(String.valueOf(xsNum)), 2, RoundingMode.DOWN).multiply(new BigDecimal("100")).setScale(0, RoundingMode.DOWN);
           m.put("hcl", hc.intValue());
         } else {
           m.put("hcl", 0);
@@ -355,8 +358,8 @@ public class CaseAssistExportController {
       count.put("ysajList", ysajList);
 
       BigDecimal hcSum = new BigDecimal(String.valueOf(csSum + cfSum));
-      if (whcSum > 0) {
-        hcSum = hcSum.divide(new BigDecimal(String.valueOf(whcSum)), 2, RoundingMode.DOWN).multiply(new BigDecimal("100")).setScale(0, RoundingMode.DOWN);
+      if (xsNumSum > 0) {
+        hcSum = hcSum.divide(new BigDecimal(String.valueOf(xsNumSum)), 2, RoundingMode.DOWN).multiply(new BigDecimal("100")).setScale(0, RoundingMode.DOWN);
         count.put("hcl", hcSum.intValue());
       } else {
         count.put("hcl", 0);
