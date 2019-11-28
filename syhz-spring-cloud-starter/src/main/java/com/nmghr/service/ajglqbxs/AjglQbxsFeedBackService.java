@@ -83,16 +83,18 @@ public class AjglQbxsFeedBackService {
         baseService.update(fbId, param);
       }
     }
-    //案件编号,捣毁窝点,涉案金额,批准逮捕
+    //案件编号,捣毁窝点,涉案金额,批准逮捕,抓获,移诉
     if ("saveZbxss".equals(body.get("type"))) {
+      String[] arr = String.valueOf(body.get("zbxss")).split(",");
+      if(arr.length<6){
+        throw new GlobalErrorException("999889", "zbxss格式不正确");
+      }
       Map<String, Object> param = new HashMap<>();
       if (feedBack.get("zbxss") == null || StringUtils.isEmpty(feedBack.get("zbxss"))) {
-        String[] arr = String.valueOf(body.get("zbxss")).split(",");
         Map<String, Object> zbxss = new HashMap<>();
         zbxss.put(arr[0],body.get("zbxss"));
         param.put("zbxss", JSONObject.toJSONString(zbxss));
       } else {
-        String[] arr = String.valueOf(body.get("zbxss")).split(",");
         JSONObject zbxss = JSONObject.parseObject(String.valueOf(feedBack.get("zbxss")));
         zbxss.put(arr[0],body.get("zbxss"));
         param.put("zbxss", JSONObject.toJSONString(zbxss));
