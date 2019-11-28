@@ -19,6 +19,7 @@ import com.nmghr.basic.core.service.handler.IUpdateHandler;
 import com.nmghr.basic.core.util.SpringUtils;
 import com.nmghr.basic.core.util.ValidationUtils;
 import com.sargeraswang.util.ExcelUtil.ExcelUtil;
+import org.frameworkset.util.ObjectUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.web.bind.annotation.*;
@@ -155,13 +156,15 @@ public class ClueController {
 
     @GetMapping("/excel")
     public Object excel(@RequestParam Map<String, Object> requestParam, HttpServletResponse response) throws Exception {
-        IQueryHandler depService = SpringUtils.getBean("clueDeptService", IQueryHandler.class);
-        Map<String, Object> p = new HashMap<String, Object>();
-        p.put("deptCode", requestParam.get("deptList"));
-        List<Map<String, Object>> deptList = (List<Map<String, Object>>)depService.list(p);
-        Map<String, Object> deptNow = (Map<String, Object>)depService.get(p);
-        deptList.add(deptNow);
-        requestParam.put("deptList", deptList);
+        if(!ObjectUtils.isEmpty(requestParam.get("deptList"))){
+            IQueryHandler depService = SpringUtils.getBean("clueDeptService", IQueryHandler.class);
+            Map<String, Object> p = new HashMap<String, Object>();
+            p.put("deptCode", requestParam.get("deptList"));
+            List<Map<String, Object>> deptList = (List<Map<String, Object>>)depService.list(p);
+            Map<String, Object> deptNow = (Map<String, Object>)depService.get(p);
+            deptList.add(deptNow);
+            requestParam.put("deptList", deptList);
+        }
         requestParam.put("dataStatus", 1);
         LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "QBXXCLUE");
         List<Map<String, Object>> list = (List<Map<String, Object>>) baseService.list(requestParam);
