@@ -19,9 +19,9 @@ import com.nmghr.basic.core.service.handler.IUpdateHandler;
 import com.nmghr.basic.core.util.SpringUtils;
 import com.nmghr.basic.core.util.ValidationUtils;
 import com.sargeraswang.util.ExcelUtil.ExcelUtil;
+import org.frameworkset.util.ObjectUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.ServletOutputStream;
@@ -52,6 +52,14 @@ public class ClueController {
         int pageSize = Integer.valueOf(requestParam.get("pageSize") + "");
         IQueryHandler queryHandler = SpringUtils.getBean("clueQueryHandler", IQueryHandler.class);
         return queryHandler.page(requestParam, currentPage, pageSize);
+    }
+
+    // 导出前查询记录数
+    @PostMapping(value = "/listCount")
+    public Object listCount(@RequestBody Map<String, Object> requestParam) throws Exception {
+        IQueryHandler queryHandler = SpringUtils.getBean("clueQueryHandler", IQueryHandler.class);
+        List resultList = (List)queryHandler.list(requestParam);
+        return resultList.size();
     }
 
     // 添加线索
@@ -147,14 +155,16 @@ public class ClueController {
     }
 
     @GetMapping("/excel")
-    public void excel(@RequestParam Map<String, Object> requestParam, HttpServletResponse response) throws Exception {
-        IQueryHandler depService = SpringUtils.getBean("clueDeptService", IQueryHandler.class);
-        Map<String, Object> p = new HashMap<String, Object>();
-        p.put("deptCode", requestParam.get("deptList"));
-        List<Map<String, Object>> deptList = (List<Map<String, Object>>)depService.list(p);
-        Map<String, Object> deptNow = (Map<String, Object>)depService.get(p);
-        deptList.add(deptNow);
-        requestParam.put("deptList", deptList);
+    public Object excel(@RequestParam Map<String, Object> requestParam, HttpServletResponse response) throws Exception {
+        if(!ObjectUtils.isEmpty(requestParam.get("deptList"))){
+            IQueryHandler depService = SpringUtils.getBean("clueDeptService", IQueryHandler.class);
+            Map<String, Object> p = new HashMap<String, Object>();
+            p.put("deptCode", requestParam.get("deptList"));
+            List<Map<String, Object>> deptList = (List<Map<String, Object>>)depService.list(p);
+            Map<String, Object> deptNow = (Map<String, Object>)depService.get(p);
+            deptList.add(deptNow);
+            requestParam.put("deptList", deptList);
+        }
         requestParam.put("dataStatus", 1);
         LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "QBXXCLUE");
         List<Map<String, Object>> list = (List<Map<String, Object>>) baseService.list(requestParam);
@@ -218,6 +228,7 @@ public class ClueController {
             if (bos != null)
                 bos.close();
         }
+        return true;
     }
 
     private void validParams(Map<String, Object> body) {
@@ -230,7 +241,7 @@ public class ClueController {
         ValidationUtils.notNull(body.get("collectionTypeId"), "采集类型不能为空!");
         ValidationUtils.notNull(body.get("collectionLocation"), "采集地点不能为空!");
         ValidationUtils.notNull(body.get("locationDetailed"), "详细地址不能为空!");
-//    ValidationUtils.notNull(body.get("collectionCoordinate"), "位置信息不能为空!");
+        ValidationUtils.notNull(body.get("collectionCoordinate"), "位置信息不能为空!");
     }
 
     private void validId(Object id) {
