@@ -47,7 +47,11 @@ public class CaseAssistSubmitSaveHandler extends AbstractSaveHandler {
       throw new GlobalErrorException("999667", "案件协查标题已存在，请确认后重新输入！");
     }
     if(body.get("assistNumber")!=null){
-      caseAssistService.checkNumber(String.valueOf(body.get("curDeptCode")),String.valueOf(body.get("assistNumber")),null);
+      String assistId = "";
+      if (body.containsKey("id") && !StringUtils.isEmpty(body.get("id"))) {
+        assistId = String.valueOf(body.get("id"));
+      }
+      caseAssistService.checkAssistNumber(String.valueOf(body.get("curDeptCode")),String.valueOf(body.get("assistNumber")), assistId);
     }
     if (body.containsKey("status") && null != body.get("status") && "1".equals(String.valueOf(body.get("status")))) {
       Object id = null;
@@ -71,7 +75,7 @@ public class CaseAssistSubmitSaveHandler extends AbstractSaveHandler {
         id = body.get("id");
         modify(String.valueOf(id), body);
       }
-      if ("5".equals(String.valueOf(body.get("status")))) {
+      if ("4".equals(String.valueOf(body.get("status")))) {
         // 判断线索是否已导入
         if(!validNum(id)){
           throw new GlobalErrorException("999667", "未导入线索，请导入线索后再提交！");
@@ -129,7 +133,7 @@ public class CaseAssistSubmitSaveHandler extends AbstractSaveHandler {
   }
 
   /**
-   * 新增集群战役
+   * 新增案件协查
    *
    * @param params Map
    * @throws Exception e
@@ -155,13 +159,13 @@ public class CaseAssistSubmitSaveHandler extends AbstractSaveHandler {
    */
   private void createApprove(Map<String, Object> params, Object clusterId, Boolean checkFlag) {
     ApproveParam approve = new ApproveParam();
-    approve.setWdType(WorkOrder.caseCluster.getType());
+    approve.setWdType(WorkOrder.caseAssist.getType());
     approve.setWdStatus(checkFlag ? 3 : 1);
     approve.setUserId(params.get("userId"));
     approve.setUserName(params.get("userName"));
     approve.setCurDeptId(params.get("curDeptId"));
     approve.setCurDeptName(params.get("curDeptName"));
-    approve.setWdTable(WorkOrder.caseCluster.getTable());
+    approve.setWdTable(WorkOrder.caseAssist.getTable());
     approve.setWdValue(clusterId);
     approve.setAcceptDept(params.get("acceptDeptId"));
     approve.setAcceptDeptName(params.get("acceptDeptName"));
@@ -185,9 +189,8 @@ public class CaseAssistSubmitSaveHandler extends AbstractSaveHandler {
     List<Map<String, Object>> signs = new ArrayList<>();
     Map<String, Object> paramMap = new HashMap<>();
     paramMap.put("assistId", assistId);
-    LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJGLQBXSBASECLUECOUNT");
+    LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJASSISTGLQBXSBASECLUECOUNT");
     List<Map<String, Object>> depts = (List<Map<String, Object>>) baseService.list(paramMap);
-
     for (Map<String, Object> map : depts) {
       Map<String, Object> signData = new HashMap<>();
       signData.put("userId", creator);
@@ -197,6 +200,7 @@ public class CaseAssistSubmitSaveHandler extends AbstractSaveHandler {
       signData.put("receiveDeptCode", map.get("deptCode"));
       signData.put("receiveDeptName", map.get("deptName"));
       signData.put("assistId", assistId);
+      signData.put("assistType", 1);
       signData.put("clueNum", map.get("clueCount"));
       signs.add(signData);
     }
@@ -204,6 +208,7 @@ public class CaseAssistSubmitSaveHandler extends AbstractSaveHandler {
     signParam.put("list", signs);
     qbxsSignSaveHandler.save(signParam);
   }
+
   @Transactional
   public Object saveDept(Map<String, Object> body) throws Exception {
     LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJASSISTDEPT");
@@ -216,5 +221,4 @@ public class CaseAssistSubmitSaveHandler extends AbstractSaveHandler {
     Map<String, Object> map = rs.get(0);
     return map.get("id");
   }
-
 }

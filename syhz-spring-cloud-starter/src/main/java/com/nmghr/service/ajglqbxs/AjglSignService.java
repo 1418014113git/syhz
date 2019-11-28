@@ -10,6 +10,7 @@ import com.nmghr.util.DateUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.util.*;
 
@@ -46,17 +47,32 @@ public class AjglSignService {
 
     Map<String, Object> p = new HashMap<>();
     p.put("assistId", body.get("assistId"));
-    p.put("assistType", 2);
+    p.put("assistType", body.get("assistType"));
     p.put("deptCode", body.get("deptCode"));
     p.put("qbxSign", 1);
-    LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJGLQBXSSIGNLIST");
+
+    String assistType = "";
+    if (body.containsKey("assistType") && !StringUtils.isEmpty(body.get("assistType"))) {
+      assistType = String.valueOf(body.get("assistType"));
+    }
+    String alias = "";
+    if ("".equals(assistType) || "2".equals(assistType)) {
+      LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJGLQBXSSIGNLIST");
+      alias = "AJCLUSTERFEEDBACK";
+    }else if ("1".equals(assistType)) {
+      LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJASSISTGLQBXSSIGNLIST");
+      alias = "AJASSISTFEEDBACK";
+    } else {
+      throw new GlobalErrorException("999889","assistType异常");
+    }
     List<Map<String, Object>> list = (List<Map<String, Object>>) baseService.list(p);
+
     if(list!=null && list.size()>0){
       for(Map<String, Object> map: list){
-        LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJCLUSTERFEEDBACK");
+        LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, alias);
         List<Map<String, Object>> obj = (List<Map<String, Object>>) baseService.list(map);
         if(obj==null || obj.size()==0){
-          LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJCLUSTERFEEDBACK");
+          LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, alias);
           baseService.save(map);
         }
       }
