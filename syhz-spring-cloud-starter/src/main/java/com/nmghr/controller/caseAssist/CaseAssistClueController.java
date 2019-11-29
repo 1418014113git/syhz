@@ -58,7 +58,7 @@ public class CaseAssistClueController {
                            @RequestParam("category") Object category,
                            @RequestParam("curDeptCode") Object curDeptCode,
                            @RequestParam("curDeptName") Object curDeptName,
-                           @RequestParam("assistId") Object assistId, Object xfType) {
+                           @RequestParam("assistId") Object assistId,Object xfType) {
     try {
       if (null != mulFile) {
         Collection<Map> list = ExcelUtil.importExcel(Map.class, mulFile.getInputStream(), 0);
@@ -182,6 +182,7 @@ public class CaseAssistClueController {
     }
 
     try {
+      body.put("assistType",2);
       Object obj = ajglQbxsService.distributeClue(body);
       return Result.ok(obj);
     } catch (Exception e) {
@@ -301,7 +302,7 @@ public class CaseAssistClueController {
   /**
    * 线索反馈
    *
-   * @return Object o
+   * @return
    */
   @PostMapping("/feedBack")
   @ResponseBody
@@ -414,6 +415,46 @@ public class CaseAssistClueController {
     }
     return Result.fail("999887", "请求异常");
   }
+
+
+  /**
+   * 案件协查集群战役待反馈
+   *
+   * @return
+   */
+  @GetMapping("/assistNeedFeedBack")
+  @ResponseBody
+  public Object assistNeedFeedBack(@RequestParam Map<String, Object> param) {
+    ValidationUtils.notNull(param.get("deptCode"), "deptCode不能为空!");
+    try {
+      List<Map<String, Object>> result = new ArrayList();
+      Map<String, Object> map = new HashMap<>();
+      map.put("assistType", 2);
+      map.put("num", 0);
+      LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJCLUSTERNEEDFEEDBACK");
+      Map<String, Object> obj= (Map<String, Object>) baseService.get(String.valueOf(param.get("deptCode")));
+      if(obj!=null && obj.containsKey("num")){
+        map.putAll(obj);
+      }
+      result.add(map);
+//      LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJCLUSTERNEEDFEEDBACK");
+//      baseService.get(dept);
+      map = new HashMap<>();
+      map.put("assistType", 1);
+      map.put("num", 0);
+      result.add(map);
+      return result;
+    } catch (Exception e) {
+      if (e instanceof GlobalErrorException) {
+        GlobalErrorException ge = (GlobalErrorException) e;
+        if (String.valueOf(ge.getCode()).contains("999")) {
+          return Result.fail("999667", ge.getMessage());
+        }
+      }
+    }
+    return Result.fail("999887", "请求异常");
+  }
+
 
   private List getAjbhs(Map<String, Object> params) throws Exception {
     if ("1".equals(params.get("type"))) {
