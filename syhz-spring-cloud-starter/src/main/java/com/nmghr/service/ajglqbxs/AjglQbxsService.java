@@ -777,8 +777,8 @@ public class AjglQbxsService {
     count.put("ysajList", ysajList);
 
     BigDecimal hcSum = new BigDecimal(String.valueOf(csSum + cfSum));
-    if (whcSum > 0) {
-      hcSum = hcSum.divide(new BigDecimal(String.valueOf(whcSum)), 2, RoundingMode.DOWN).multiply(new BigDecimal("100")).setScale(0, RoundingMode.DOWN);
+    if (xsNumSum > 0) {
+      hcSum = hcSum.divide(new BigDecimal(String.valueOf(xsNumSum)), 2, RoundingMode.DOWN).multiply(new BigDecimal("100")).setScale(0, RoundingMode.DOWN);
       count.put("hcl", hcSum.intValue());
     } else {
       count.put("hcl", 0);
