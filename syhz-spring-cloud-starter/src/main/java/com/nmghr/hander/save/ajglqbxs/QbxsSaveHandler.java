@@ -14,10 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @SuppressWarnings("unchecked")
 @Service("qbxsSaveHandler")
@@ -46,7 +43,7 @@ public class QbxsSaveHandler extends AbstractSaveHandler {
   public Object save(Map<String, Object> body) throws Exception {
     //添加标题信息
     //添加明细数据
-    List<Map<String, Object>> list = (List<Map<String, Object>>) body.get("list");
+    List<LinkedHashMap<String, Object>> list = (List<LinkedHashMap<String, Object>>) body.get("list");
     if (list == null || list.size() == 0) {
       return null;
     }
@@ -57,7 +54,7 @@ public class QbxsSaveHandler extends AbstractSaveHandler {
     Object curDeptCode = body.get("curDeptCode");
     Object curDeptName = body.get("curDeptName");
     Object assistId = body.get("assistId");
-    Map<String, Object> bean = list.get(0);
+    LinkedHashMap<String, Object> bean = list.get(0);
     saveHeads(type, creator, curDeptCode, curDeptName, assistId, bean);
 
     List<Map<String, Object>> resets =
@@ -95,7 +92,7 @@ public class QbxsSaveHandler extends AbstractSaveHandler {
   }
 
 
-  private Object saveBaseAndDept(Object type, Object category, Object assistId, List<Map<String, Object>> list, String xfType, String curDeptCode) throws Exception {
+  private Object saveBaseAndDept(Object type, Object category, Object assistId, List<LinkedHashMap<String, Object>> list, String xfType, String curDeptCode) throws Exception {
     Map<String, Object> zhidui = getDeptInfos(xfType, curDeptCode);
 
     int size = list.size();
@@ -198,6 +195,7 @@ public class QbxsSaveHandler extends AbstractSaveHandler {
   }
 
   private String getCityName(String str) {
+    str = str.replaceAll("[`~!@#$%^&*()_\\-+=<>?:\"{}|,.\\/;'\\[\\]·~！@#￥%……&*（）——\\-+={}|《》？：“”【】、；‘’，。、]","");
     if (str.contains("杨凌")) {
       return "杨凌区";
     }
