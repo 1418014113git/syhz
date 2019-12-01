@@ -273,7 +273,7 @@ public class AjglQbxsService {
     }
     List<Object> heads = new ArrayList<>();
     for (Map<String, Object> map : titles) {
-      heads.add(Integer.parseInt(String.valueOf(map.get("qbxsIndex"))), map.get("title"));
+      heads.add(map.get("title"));
     }
     Map<String, Object> result = new HashMap<>();
     result.put("titles", heads);
@@ -388,7 +388,7 @@ public class AjglQbxsService {
     }
     List<Object> heads = new ArrayList<>();
     for (Map<String, Object> map : titles) {
-      heads.add(Integer.parseInt(String.valueOf(map.get("qbxsIndex"))), map.get("title"));
+      heads.add(map.get("title"));
     }
     Map<String, Object> result = new HashMap<>();
     result.put("titles", heads);
@@ -443,12 +443,12 @@ public class AjglQbxsService {
       if (valMap.containsKey(String.valueOf(map.get("qbxsId")))) {
         Map<String, Object> valData = (Map<String, Object>) valMap.get(String.valueOf(map.get("qbxsId")));
         List<Object> vals = (List<Object>) valData.get("data");
-        vals.add(Integer.parseInt(String.valueOf(map.get("rowIndex"))), map.get("value"));
+        vals.add(map.get("value"));
         valMap.put(String.valueOf(map.get("qbxsId")), valData);
       } else {
         Map<String, Object> baseInfo = (Map<String, Object>) baseData.get(String.valueOf(map.get("qbxsId")));
         List<Object> vals = new ArrayList<>();
-        vals.add(Integer.parseInt(String.valueOf(map.get("rowIndex"))), map.get("value"));
+        vals.add(map.get("value"));
         Map<String, Object> valData = new HashMap<String, Object>();
         valData.putAll(baseInfo);
         valData.put("data", vals);
