@@ -65,16 +65,19 @@ public class CaseClusterController {
     if (params.get("pageSize") != null && !StringUtils.isEmpty(params.get("pageSize"))) {
       pageSize = Integer.parseInt(String.valueOf(params.get("pageSize")));
     }
-    if(params.get("reginCode")!=null){
-      params.put("queryDeptCode",params.get("reginCode"));
+    if(!StringUtils.isEmpty(params.get("reginCode"))){
+      params.put("cityCode",params.get("reginCode"));
     } else {
-      if(params.get("cityCode")!=null){
-        params.put("queryDeptCode",params.get("cityCode"));
-      } else {
-        if(params.get("provinceCode")!=null){
-          params.put("queryDeptCode",params.get("provinceCode"));
+      if(StringUtils.isEmpty(params.get("cityCode"))){
+        if(!StringUtils.isEmpty(params.get("provinceCode"))){
+          params.put("cityCode",params.get("provinceCode"));
         }
       }
+    }
+    if(!StringUtils.isEmpty(params.get("isCheck"))&&Boolean.valueOf(String.valueOf(params.get("isCheck")))){
+      params.put("isCheck",0);
+    } else {
+      params.put("isCheck",3);
     }
     try {
       LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJCLUSTERASSIST");

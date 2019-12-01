@@ -40,7 +40,15 @@ public class AjglQbxsFeedBackService {
     Map<String, Object> backP = new HashMap<>();
     backP.put("fbId", body.get("fbId"));
     backP.put("assistId", body.get("assistId"));
-    LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJCLUSTERFEEDBACK");
+    String assistType = String.valueOf(body.get("assistType"));
+    String feedBack_alias = "";
+    if ("1".equals(assistType)) { // 案件协查
+      feedBack_alias = "AJASSISTFEEDBACK";
+    }
+    if ("".equals(assistType) || "2".equals(assistType)) { // 集群战役
+      feedBack_alias = "AJCLUSTERFEEDBACK";
+    }
+    LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, feedBack_alias);
     Map<String, Object> feedBack = (Map<String, Object>) baseService.get(backP);
     if(feedBack==null){
       throw new GlobalErrorException("999889", "线索不存在");
@@ -70,7 +78,7 @@ public class AjglQbxsFeedBackService {
         }
         param.put("syajs", JSONArray.toJSONString(array));
       }
-      LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJCLUSTERFEEDBACK");
+      LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, feedBack_alias);
       baseService.update(fbId, param);
     }
     if ("deleteSyajs".equals(body.get("type"))) {
@@ -79,7 +87,7 @@ public class AjglQbxsFeedBackService {
         JSONArray array = JSONArray.parseArray(String.valueOf(feedBack.get("syajs")));
         array.remove(String.valueOf(body.get("syajs")));
         param.put("syajs", JSONArray.toJSONString(array));
-        LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJCLUSTERFEEDBACK");
+        LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, feedBack_alias);
         baseService.update(fbId, param);
       }
     }
@@ -99,7 +107,7 @@ public class AjglQbxsFeedBackService {
         zbxss.put(arr[0],body.get("zbxss"));
         param.put("zbxss", JSONObject.toJSONString(zbxss));
       }
-      LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJCLUSTERFEEDBACK");
+      LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, feedBack_alias);
       baseService.update(fbId, param);
     }
     if ("deleteZbxss".equals(body.get("type"))) {
@@ -109,7 +117,7 @@ public class AjglQbxsFeedBackService {
         JSONObject zbxss = JSONObject.parseObject(String.valueOf(feedBack.get("zbxss")));
         zbxss.remove(arr[0]);
         param.put("zbxss", JSONObject.toJSONString(zbxss));
-        LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJCLUSTERFEEDBACK");
+        LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, feedBack_alias);
         baseService.update(fbId, param);
       }
     }

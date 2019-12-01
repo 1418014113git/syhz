@@ -457,7 +457,7 @@ public class CaseAssistController {
     ValidationUtils.notNull(body.get("curDeptId"), "curDeptId不能为空!");
     ValidationUtils.notNull(body.get("curDeptName"), "curDeptName不能为空!");
     ValidationUtils.notNull(body.get("curDeptCode"), "curDeptCode不能为空!");
-    ValidationUtils.notNull(body.get("bsId"), "bsId不能为空!");
+    ValidationUtils.notNull(body.get("bsId"), "协查ID不能为空!");
     ValidationUtils.notNull(body.get("flowId"), "flowId不能为空!");
     ValidationUtils.notNull(body.get("wdId"), "wdId不能为空!");
     String flowId = String.valueOf(body.get("flowId"));
