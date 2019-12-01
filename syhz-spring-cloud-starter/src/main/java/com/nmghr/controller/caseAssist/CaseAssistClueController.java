@@ -61,7 +61,7 @@ public class CaseAssistClueController {
                            @RequestParam("assistId") Object assistId,Object xfType) {
     try {
       if (null != mulFile) {
-        Collection<Map> list = ExcelUtil.importExcel(Map.class, mulFile.getInputStream(), 0);
+        Collection<LinkedHashMap> list = ExcelUtil.importExcel(LinkedHashMap.class, mulFile.getInputStream(), 0);
         if (!CollectionUtils.isEmpty(list)) {
           log.info("excel uploadFile file query size {}", list.size());
           if (list.size() > 1000) {
@@ -69,10 +69,10 @@ public class CaseAssistClueController {
             throw new GlobalErrorException("99952", "最多不能超过1000条");
           }
 
-          List<Map<String, Object>> params = IteratorUtils.toList(list.iterator());
+          List<LinkedHashMap<String, Object>> params = IteratorUtils.toList(list.iterator());
 //          List<LinkedHashMap<String, Object>> params = IteratorUtils.toList(list.iterator());
           if (params.size() > 0) {
-            Map<String, Object> map = params.get(0);
+            LinkedHashMap<String, Object> map = params.get(0);
 //            LinkedHashMap<String, Object> map = params.get(0);
             List<String> keys = IteratorUtils.toList(map.keySet().iterator());
             StringBuilder err = new StringBuilder();
