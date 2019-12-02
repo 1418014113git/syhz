@@ -43,12 +43,20 @@ public class CaseSuperviseRecordUpdateHandler extends AbstractUpdateHandler {
 				saveLog(id, requestBody, "申请案件督办");
 				saveLog(id, requestBody, "案件督办-审核成功");
 				Object flowId = createApprove(requestBody, id, true);
+				updateCaseSupervise(id, 3);
 			} else {
 				saveLog(id, requestBody, "申请案件督办");
 				Object flowId = createApprove(requestBody, id, false);
 			}
 		}
 		return Result.ok("");
+	}
+
+	private void updateCaseSupervise(String id, int status) throws Exception {
+		Map<String, Object> noticeMap = new HashMap<>();
+		noticeMap.put("status", String.valueOf(status));
+		LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "CASESUPERVISERECORDSTATUS");
+		baseService.update(id, noticeMap);
 	}
 
 	// 添加审核

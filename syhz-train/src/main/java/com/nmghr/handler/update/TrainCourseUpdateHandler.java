@@ -55,8 +55,11 @@ public class TrainCourseUpdateHandler extends AbstractUpdateHandler {
 			if (status == 0 && adminFlag == 0 && depType != 4) {
 				EnclosureAuditService.subimtaduit(workId, id, belong_sys, belong_mode, requestBody, baseService);
 			}
-			if (status == 3) {
+			if (status == 3 && creationId.equals(authorId)) {// 管理员提交自己默认审核通过
 				EnclosureAuditService.subimtaduitFail(workId, id, belong_sys, belong_mode, requestBody, baseService);
+				if (adminFlag == 0 && depType != 4) {
+					EnclosureAuditService.subimtaduit(workId, id, belong_sys, belong_mode, requestBody, baseService);
+				}
 			}
 			if (status == 4) {
 				Map<String, Object> mapStatus = new HashMap<String, Object>();
@@ -64,9 +67,7 @@ public class TrainCourseUpdateHandler extends AbstractUpdateHandler {
 				LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, ALIAS_TRAINWORKORDER);
 				baseService.update(workId, mapStatus);
 			}
-			if (status != 0 && adminFlag == 0 && depType != 4) {
-				EnclosureAuditService.subimtaduit(workId, id, belong_sys, belong_mode, requestBody, baseService);
-			}
+
 		}
 		return status;
 	}
