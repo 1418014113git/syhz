@@ -11,7 +11,6 @@ import com.nmghr.basic.core.service.handler.IUpdateHandler;
 import com.nmghr.basic.core.util.SpringUtils;
 import com.nmghr.basic.core.util.ValidationUtils;
 import com.nmghr.common.WorkOrder;
-import com.nmghr.hander.update.cluster.ClusterExamineUpdateHandler;
 import com.nmghr.service.ajglqbxs.AjglQbxsService;
 import com.nmghr.service.ajglqbxs.AjglSignService;
 import com.nmghr.service.ajglqbxs.CaseAssistService;
@@ -87,8 +86,8 @@ public class CaseAssistController {
       List<Map<String, Object>> pglist = obj.getList();
       for (Map<String, Object> m : pglist) {
         m.put("cityCode", String.valueOf(m.get("applyDeptCode")).substring(0,4)+"00");
-        temp.put(String.valueOf(m.get("ajxcId")), m);
-        ids.add(m.get("ajxcId"));
+        temp.put(String.valueOf(m.get("assistId")), m);
+        ids.add(m.get("assistId"));
       }
       Map<String, Object> p = new HashMap<>();
       p.put("assistIds", ids);
@@ -97,7 +96,7 @@ public class CaseAssistController {
       List<Map<String, Object>> deptInfo = (List<Map<String, Object>>) baseService.list(p);
       if (deptInfo != null && deptInfo.size() > 0) {
         for (Map<String, Object> m : deptInfo) {
-          Map<String, Object> bean = (Map<String, Object>) temp.get(String.valueOf(m.get("ajxcId")));
+          Map<String, Object> bean = (Map<String, Object>) temp.get(String.valueOf(m.get("assistId")));
           if (bean != null) {
             if (bean.containsKey("xsCount")) {
               bean.put("xsCount", Integer.parseInt(String.valueOf(bean.get("xsCount"))) + Integer.parseInt(String.valueOf(m.get("xsNum"))));
@@ -165,6 +164,7 @@ public class CaseAssistController {
     }
     return Result.fail("999668", "请求异常");
   }
+
   private String getCity(String name){
     if(name.contains("省")){
       if(name.contains("市")){
@@ -185,7 +185,7 @@ public class CaseAssistController {
   }
 
   /**
-   * 保存集群战役
+   * 保存案件协查
    *
    * @return
    */
@@ -199,7 +199,7 @@ public class CaseAssistController {
       } else {
         body.put("readKey", "");
       }
-      ISaveHandler saveHandler = SpringUtils.getBean("caseClusterSubmitSaveHandler", ISaveHandler.class);
+      ISaveHandler saveHandler = SpringUtils.getBean("caseAssistSubmitSaveHandler", ISaveHandler.class);
       Object obj = saveHandler.save(body);
       return Result.ok(obj);
     } catch (Exception e) {
@@ -216,7 +216,7 @@ public class CaseAssistController {
 
 
   /**
-   * 集群战役详情密码验证
+   * 案件协查详情密码验证
    *
    * @return
    */
@@ -226,7 +226,7 @@ public class CaseAssistController {
     try {
       validId(body.get("assistId"));
       ValidationUtils.notNull(body.get("pwd"), "密码不能为空!");
-      LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJCLUSTERASSISTPWD");
+      LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJASSISTPWD");
       Map<String, Object> bean = (Map<String, Object>) baseService.get(String.valueOf(body.get("assistId")));
       if (bean == null) {
         return Result.fail("999882", "资源不存在");
@@ -250,7 +250,7 @@ public class CaseAssistController {
   }
 
   /**
-   * 集群战役详情
+   * 案件协查详情
    *
    * @return
    */
@@ -259,9 +259,19 @@ public class CaseAssistController {
   public Object detail(@PathVariable Object id, @RequestParam Map<String, Object> param) {
     try {
       validId(id);
-      LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJCLUSTERASSIST");
+      LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJASSIST");
       Map<String, Object> bean = (Map<String, Object>) baseService.get(String.valueOf(id));
       bean.putAll(ajglQbxsService.getClueTotal(String.valueOf(id)));
+
+      LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJJBXXSYH");
+      Map<String, Object> caseBean = (Map<String, Object>) baseService.get(String.valueOf(bean.get("ajbh")));
+      bean.putAll(caseBean);
+
+      bean.put("cityCode", String.valueOf(bean.get("applyDeptCode")).substring(0,4)+"00");
+
+      if(!StringUtils.isEmpty(bean.get("readKey"))){
+        bean.put("readKey", Sms4Util.Decrypt(String.valueOf(bean.get("readKey"))));
+      }
       return Result.ok(bean);
     } catch (Exception e) {
       if (e instanceof GlobalErrorException) {
@@ -285,7 +295,7 @@ public class CaseAssistController {
     try {
       validId(param.get("id"));
       Map<String, Object> params = new HashMap<>();
-      params.put("wdType", WorkOrder.caseCluster.getType());
+      params.put("wdType", WorkOrder.caseAssist.getType());
       params.put("associationValue", param.get("id"));
       LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "DETAILWORKORDERLIST");
       return Result.ok(baseService.list(params));
@@ -301,7 +311,7 @@ public class CaseAssistController {
   }
 
   /**
-   * 集群战役删除
+   * 案件协查删除
    *
    * @param body
    * @return
@@ -309,10 +319,10 @@ public class CaseAssistController {
   @PostMapping("/delete")
   @ResponseBody
   public Object delete(@RequestBody Map<String, Object> body) {
-    ValidationUtils.notNull(body.get("clusterId"), "clustId不能为空!");
+    ValidationUtils.notNull(body.get("assistId"), "协查ID不能为空!");
     try {
-      LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJCLUSTERASSIST");
-      baseService.remove(String.valueOf(body.get("clusterId")));
+      LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJASSIST");
+      baseService.remove(String.valueOf(body.get("assistId")));
       return true;
     } catch (Exception e) {
       if (e instanceof GlobalErrorException) {
@@ -327,7 +337,7 @@ public class CaseAssistController {
 
 
   /**
-   * 集群战役删除
+   * 案件协查删除
    *
    * @param body
    * @return
@@ -335,13 +345,13 @@ public class CaseAssistController {
   @PostMapping("/appraise")
   @ResponseBody
   public Object appraise(@RequestBody Map<String, Object> body) {
-    ValidationUtils.notNull(body.get("clusterId"), "clustId不能为空!");
+    ValidationUtils.notNull(body.get("assistId"), "assistId不能为空!");
     ValidationUtils.notNull(body.get("deptCode"), "deptCode不能为空!");
     ValidationUtils.notNull(body.get("commentText"), "commentText不能为空!");
     ValidationUtils.notNull(body.get("score"), "score不能为空!");
     try {
-      LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJCLUSTERASSISTDEPT");
-      return baseService.update(String.valueOf(body.get("clusterId")), body);
+      LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJASSISTDEPT");
+      return baseService.update(String.valueOf(body.get("assistId")), body);
     } catch (Exception e) {
       if (e instanceof GlobalErrorException) {
         GlobalErrorException ge = (GlobalErrorException) e;
@@ -371,8 +381,9 @@ public class CaseAssistController {
     try {
       Map<String, Object> p = new HashMap<>();
       p.put("assistId", assistId);
+      p.put("assistType", 1);
       if (deptCode != null) {
-        p.put("createDeptCode", deptCode);
+        p.put("deptCode", deptCode);
       }
       LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJGLQBXSSIGN");
       return Result.ok(baseService.page(p, pageNum, pageSize));
@@ -397,7 +408,7 @@ public class CaseAssistController {
   }
 
   /**
-   * 集群战役情况统计
+   * 案件协查情况统计
    *
    * @return
    */
@@ -419,6 +430,7 @@ public class CaseAssistController {
     ValidationUtils.notNull(body.get("assistId"), "status不能为空!");
     ValidationUtils.notNull(body.get("signId"), "status不能为空!");
     try {
+      body.put("assistType", 1);
       return Result.ok(ajglSignService.signing(body));
     } catch (Exception e) {
       if (e instanceof GlobalErrorException) {
@@ -445,7 +457,7 @@ public class CaseAssistController {
     ValidationUtils.notNull(body.get("curDeptId"), "curDeptId不能为空!");
     ValidationUtils.notNull(body.get("curDeptName"), "curDeptName不能为空!");
     ValidationUtils.notNull(body.get("curDeptCode"), "curDeptCode不能为空!");
-    ValidationUtils.notNull(body.get("bsId"), "bsId不能为空!");
+    ValidationUtils.notNull(body.get("bsId"), "协查ID不能为空!");
     ValidationUtils.notNull(body.get("flowId"), "flowId不能为空!");
     ValidationUtils.notNull(body.get("wdId"), "wdId不能为空!");
     String flowId = String.valueOf(body.get("flowId"));
@@ -461,10 +473,10 @@ public class CaseAssistController {
       ValidationUtils.notNull(body.get("endDate"), "截止时间不能为空!");
     }
     try {
-      LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJCLUSTERASSISTBYID");
+      LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJASSISTBYID");
       Map<String, Object> bean = (Map<String, Object>) baseService.get(bsId);
       if (bean == null) {
-        return Result.fail("999867", "集群战役信息不存在！");
+        return Result.fail("999867", "案件协查信息不存在！");
       }
       if (!"1".equals(String.valueOf(bean.get("status"))) && !"2".equals(String.valueOf(bean.get("status")))) {
         return Result.fail("999867", "非审核状态不能操作！");
@@ -477,7 +489,7 @@ public class CaseAssistController {
       body.put("applyPersonName", bean.get("creatorName"));
       body.put("title", bean.get("title"));
 
-      IUpdateHandler updateHandler = SpringUtils.getBean("clusterExamineUpdateHandler", IUpdateHandler.class);
+      IUpdateHandler updateHandler = SpringUtils.getBean("assistExamineUpdateHandler", IUpdateHandler.class);
       Object obj = updateHandler.update(flowId, body);
       return Result.ok(obj);
     } catch (Exception e) {
@@ -567,10 +579,10 @@ public class CaseAssistController {
       ValidationUtils.notNull(body.get("curDeptId"), "curDeptId不能为空!");
       ValidationUtils.notNull(body.get("curDeptName"), "curDeptName不能为空!");
       ValidationUtils.notNull(body.get("curDeptCode"), "curDeptCode不能为空!");
-      ValidationUtils.notNull(body.get("citys"), "clusterCitys不能为空!");
+//      ValidationUtils.notNull(body.get("citys"), "Citys不能为空!");
       ValidationUtils.notNull(body.get("status"), "status!");
       String status = String.valueOf(body.get("status"));
-      if (!"0".equals(status) && !"1".equals(status) && !"5".equals(status)) {
+      if (!"0".equals(status) && !"1".equals(status) && !"4".equals(status)) {
         throw new GlobalErrorException("999667", "status状态异常");
       }
       if ("1".equals(status)) {

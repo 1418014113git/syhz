@@ -112,7 +112,7 @@ public class ClueShareHandler extends AbstractSaveHandler {
         Map<String, Object> p = new HashMap<>();
         LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "QBXXCLUESHARESTATUS");
         p.put("clueId", body.get("clueId"));
-        p.put("shareStatus", 0);
+        p.put("shareStatus", 1);
         baseService.update(String.valueOf(body.get("clueId")), p);
         return true;
     }

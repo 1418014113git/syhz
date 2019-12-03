@@ -4,6 +4,7 @@ import com.nmghr.basic.common.Constant;
 import com.nmghr.basic.core.common.LocalThreadStorage;
 import com.nmghr.basic.core.service.IBaseService;
 import com.nmghr.basic.core.service.handler.impl.AbstractSaveHandler;
+import com.nmghr.hander.save.cluster.CaseAssistSubmitSaveHandler;
 import com.nmghr.hander.save.cluster.DeptMapperSaveHandler;
 import com.nmghr.hander.save.common.BatchSaveHandler;
 import com.nmghr.service.ajglqbxs.AjglQbxsService;
@@ -13,10 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @SuppressWarnings("unchecked")
 @Service("qbxsSaveHandler")
@@ -33,6 +31,8 @@ public class QbxsSaveHandler extends AbstractSaveHandler {
   @Autowired
   private DeptMapperSaveHandler deptMapperSaveHandler;
   @Autowired
+  private CaseAssistSubmitSaveHandler caseAssistSubmitSaveHandler;
+  @Autowired
   private AjglQbxsService ajglQbxsService;
 
   /**
@@ -43,7 +43,7 @@ public class QbxsSaveHandler extends AbstractSaveHandler {
   public Object save(Map<String, Object> body) throws Exception {
     //添加标题信息
     //添加明细数据
-    List<Map<String, Object>> list = (List<Map<String, Object>>) body.get("list");
+    List<LinkedHashMap<String, Object>> list = (List<LinkedHashMap<String, Object>>) body.get("list");
     if (list == null || list.size() == 0) {
       return null;
     }
@@ -54,10 +54,11 @@ public class QbxsSaveHandler extends AbstractSaveHandler {
     Object curDeptCode = body.get("curDeptCode");
     Object curDeptName = body.get("curDeptName");
     Object assistId = body.get("assistId");
-    Map<String, Object> bean = list.get(0);
+    LinkedHashMap<String, Object> bean = list.get(0);
     saveHeads(type, creator, curDeptCode, curDeptName, assistId, bean);
 
-    List<Map<String, Object>> resets = (List<Map<String, Object>>) saveBaseAndDept(type, category, assistId, list);
+    List<Map<String, Object>> resets =
+        (List<Map<String, Object>>) saveBaseAndDept(type, category, assistId, list, String.valueOf(body.get("xfType")), String.valueOf(curDeptCode));
 
     List<Map<String, Object>> paramValues = new ArrayList<>(list.size());
 
@@ -91,8 +92,9 @@ public class QbxsSaveHandler extends AbstractSaveHandler {
   }
 
 
-  private Object saveBaseAndDept(Object type, Object category, Object assistId, List<Map<String, Object>> list) throws Exception {
-    Map<String, Object> zhidui = getDeptInfos();
+  private Object saveBaseAndDept(Object type, Object category, Object assistId, List<LinkedHashMap<String, Object>> list, String xfType, String curDeptCode) throws Exception {
+    Map<String, Object> zhidui = getDeptInfos(xfType, curDeptCode);
+
     int size = list.size();
     List<Map<String, Object>> baseList = new ArrayList<>(size);
 
@@ -106,17 +108,20 @@ public class QbxsSaveHandler extends AbstractSaveHandler {
       Object deptId = null;
       if (depts != null && depts.size() == 1) {
         Map<String, Object> dept = depts.get(0);
+        Map<String, Object> p = new HashMap<>();
         //组装分发数据   线索分发 增加关联单位，增加待办
         if ("2".equals(String.valueOf(type))) {
           dept.put("clusterId", assistId);
+          p.putAll(dept);
+          // 分配部门
+          deptId = deptMapperSaveHandler.save(p);
         }
         if ("1".equals(String.valueOf(type))) {
           dept.put("assistId", assistId);
+          p.putAll(dept);
+          // 分配部门
+          deptId = caseAssistSubmitSaveHandler.saveDept(p);
         }
-        Map<String, Object> p = new HashMap<>();
-        p.putAll(dept);
-        // 分配部门
-        deptId = deptMapperSaveHandler.save(p);
         ff = true;
         deptCode = p.get("deptCode");
         deptName = p.get("deptName");
@@ -190,6 +195,7 @@ public class QbxsSaveHandler extends AbstractSaveHandler {
   }
 
   private String getCityName(String str) {
+    str = str.replaceAll("[`~!@#$%^&*()_\\-+=<>?:\"{}|,.\\/;'\\[\\]·~！@#￥%……&*（）——\\-+={}|《》？：“”【】、；‘’，。、]","");
     if (str.contains("杨凌")) {
       return "杨凌区";
     }
@@ -204,11 +210,16 @@ public class QbxsSaveHandler extends AbstractSaveHandler {
   }
 
 
-  private Map<String, Object> getDeptInfos() {
+  private Map<String, Object> getDeptInfos(String type,String deptCode) {
     Map<String, Object> zhidui = new HashMap<>();
     try {
       Map<String, Object> params = new HashMap<>();
-      params.put("deptType", 2);
+      if("zdxf".equals(type)){//支队下发
+        params.put("deptType", 3);
+        params.put("deptCode", deptCode.substring(0,4));
+      } else {
+        params.put("deptType", 2);
+      }
       LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "DEPTINFOS");
       List<Map<String, Object>> depts = (List<Map<String, Object>>) baseService.list(params);
       if (depts != null && depts.size() > 0) {

@@ -16,6 +16,7 @@ import org.apache.poi.xssf.usermodel.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -29,6 +30,7 @@ import java.math.RoundingMode;
 import java.net.URL;
 import java.util.*;
 
+@SuppressWarnings("unchecked")
 @RestController
 public class CaseAssistExportController {
 
@@ -163,7 +165,7 @@ public class CaseAssistExportController {
         c6.setCellValue(Double.parseDouble(String.valueOf(bean.get("parqCount"))));// 破案
         c6.setCellStyle(cStyle);
         XSSFCell c7 = row.createCell(7);
-        c7.setCellValue(Double.parseDouble(String.valueOf(bean.get("dhwd"))));// 捣毁窝点
+        c7.setCellValue(Double.parseDouble(String.valueOf(bean.get("zhrys"))));// 抓获
         c7.setCellStyle(cStyle);
         XSSFCell c8 = row.createCell(8);
         c8.setCellValue(Double.parseDouble(String.valueOf(bean.get("xsjl"))));// 刑事拘留
@@ -172,11 +174,17 @@ public class CaseAssistExportController {
         c9.setCellValue(Double.parseDouble(String.valueOf(bean.get("pzdb"))));// 批准逮捕
         c9.setCellStyle(cStyle);
         XSSFCell c10 = row.createCell(10);
-        c10.setCellValue(Double.parseDouble(String.valueOf(bean.get("sajz"))));// 涉案金额
+        c10.setCellValue(Double.parseDouble(String.valueOf(bean.get("yjss"))));// 移交诉讼
         c10.setCellStyle(cStyle);
+        XSSFCell c11 = row.createCell(11);
+        c11.setCellValue(Double.parseDouble(String.valueOf(bean.get("dhwd"))));// 捣毁窝点
+        c11.setCellStyle(cStyle);
+        XSSFCell c12 = row.createCell(12);
+        c12.setCellValue(Double.parseDouble(String.valueOf(bean.get("sajz"))));// 涉案金额
+        c12.setCellStyle(cStyle);
         rowIndex++;
       }
-      CellRangeAddress kong = new CellRangeAddress(rowIndex, rowIndex, 0, 10); //空行
+      CellRangeAddress kong = new CellRangeAddress(rowIndex, rowIndex, 0, 12); //空行
       sheet.addMergedRegion(kong);
       RegionUtil.setBorderBottom(BorderStyle.THIN, kong, sheet);
       RegionUtil.setBorderLeft(BorderStyle.THIN, kong, sheet);
@@ -206,7 +214,7 @@ public class CaseAssistExportController {
       RegionUtil.setBorderRight(BorderStyle.THIN, tbrAT, sheet);
       RegionUtil.setBorderTop(BorderStyle.THIN, tbrAT, sheet);
 
-      CellRangeAddress tbrA = new CellRangeAddress(rowIndex, rowIndex, 8, 10); //填报人
+      CellRangeAddress tbrA = new CellRangeAddress(rowIndex, rowIndex, 8, 12); //填报人
       sheet.addMergedRegion(tbrA);
       RegionUtil.setBorderBottom(BorderStyle.THIN, tbrA, sheet);
       RegionUtil.setBorderLeft(BorderStyle.THIN, tbrA, sheet);
@@ -218,7 +226,7 @@ public class CaseAssistExportController {
       XSSFCell remarkC = sheet.createRow(rowIndex).createCell(0);
       remarkC.setCellValue(config.getString("remark"));
 
-      CellRangeAddress cra = new CellRangeAddress(rowIndex, rowIndex + 3, 0, 10); //说明
+      CellRangeAddress cra = new CellRangeAddress(rowIndex, rowIndex + 3, 0, 12); //说明
       sheet.addMergedRegion(cra);
       RegionUtil.setBorderBottom(BorderStyle.THIN, cra, sheet);
       RegionUtil.setBorderLeft(BorderStyle.THIN, cra, sheet);
@@ -237,12 +245,24 @@ public class CaseAssistExportController {
 
   public List<Map<String, Object>> getList(Map<String, Object> params) {
     try {
-      LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJCLUSTERASSISTEXPORT");
+      //查询
+      String type = "";
+      if (params.containsKey("type") && !StringUtils.isEmpty(params.get("type"))) {
+        type = String.valueOf(params.get("type"));
+      }
+      if ("".equals(type) || "2".equals(type)) { // 集群战役
+        LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJCLUSTERASSISTEXPORT");
+      }
+      if ("1".equals(type)) { // 案件协查
+        LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJASSISTEXPORT");
+      }
       List<Map<String, Object>> list = (List<Map<String, Object>>) baseService.list(params);
       if (list == null || list.size() == 0) {
         return new ArrayList<>();
       }
-      int xsNumSum = 0, csSum = 0, cfSum = 0, whcSum = 0, laNum = 0, paNum = 0, dhwdSum = 0, pzdbSum = 0, sajzSum = 0, xsjlSum = 0, ysajList = 0;
+      int xsNumSum = 0, csSum = 0, cfSum = 0, whcSum = 0, laNum = 0, paNum = 0, dhwdSum = 0, pzdbSum = 0,
+          xsjlSum = 0, ysajList = 0,zhrysSum=0, yjssSum=0;
+      double sajzSum = 0;
       for (Map<String, Object> m : list) {
         m.put("cityCode", String.valueOf(m.get("applyDeptCode")).substring(0, 4) + "00");
         if (m.get("ysajList") != null) {
@@ -253,50 +273,51 @@ public class CaseAssistExportController {
           m.put("ysajList", 0);
         }
         if (m.get("zbajList") != null) {
-          int dhwd = 0, pzdb = 0, sajz = 0;
+          int dhwd = 0, pzdb = 0, zhrys=0,yjss=0;
+          double sajz = 0;
           String[] zbs = String.valueOf(m.get("zbajList")).split("_");
           List<String> ajbhs = new ArrayList<>();
           for (String s : zbs) {
             Map<String, Object> zbmap = JSONObject.toJavaObject(JSONObject.parseObject(s), Map.class);
             for (String key : zbmap.keySet()) {
               String[] info = String.valueOf(zbmap.get(key)).split(",");
-              if(info.length==4){
+              if(info.length==6){
                 dhwd += Integer.parseInt(info[1]);
-                sajz += Integer.parseInt(info[2]);
+                sajz += Double.parseDouble(info[2]);
                 pzdb += Integer.parseInt(info[3]);
-                ajbhs.add(key);
-              } else {
-                ajbhs.add(key);
+                zhrys += Integer.parseInt(info[4]);
+                yjss += Integer.parseInt(info[5]);
               }
+              ajbhs.add(key);
             }
           }
           m.put("dhwd", dhwd);
           m.put("sajz", sajz);
           m.put("pzdb", pzdb);
+          m.put("zhrys", zhrys);
+          m.put("yjss", yjss);
           Map res = getAjInfoData(ajbhs);
           m.putAll(res);
           dhwdSum += dhwd;
           sajzSum += sajz;
           pzdbSum += pzdb;
+          zhrysSum += zhrys;
+          yjssSum += yjss;
           if (res.containsKey("xsjl") && !org.springframework.util.StringUtils.isEmpty(res.get("xsjl"))) {
             xsjlSum += Integer.parseInt(String.valueOf(res.get("xsjl")));
-          } else {
-            xsjlSum += 0;
           }
           if (res.containsKey("larqCount") && !org.springframework.util.StringUtils.isEmpty(res.get("larqCount"))) {
             laNum += Integer.parseInt(String.valueOf(res.get("larqCount")));
-          } else {
-            laNum += 0;
           }
           if (res.containsKey("parqCount") && !org.springframework.util.StringUtils.isEmpty(res.get("parqCount"))) {
             paNum += Integer.parseInt(String.valueOf(res.get("parqCount")));
-          } else {
-            paNum += 0;
           }
         } else {
           m.put("dhwd", 0);
           m.put("sajz", 0);
           m.put("pzdb", 0);
+          m.put("zhrys", 0);
+          m.put("yjss", 0);
           m.put("xsjl", 0);
           m.put("larqCount", 0);
           m.put("parqCount", 0);
@@ -305,14 +326,15 @@ public class CaseAssistExportController {
         int cs = Integer.parseInt(String.valueOf(m.get("cs")));
         int cf = Integer.parseInt(String.valueOf(m.get("cf")));
         int whc = Integer.parseInt(String.valueOf(m.get("whc")));
-        xsNumSum += Integer.parseInt(String.valueOf(m.get("xsNum")));
+        int xsNum = Integer.parseInt(String.valueOf(m.get("xsNum")));
         csSum += cs;
         cfSum += cf;
         whcSum += whc;
+        xsNumSum += xsNum;
         int hcs = cs + cf;
         BigDecimal hc = new BigDecimal(String.valueOf(hcs));
-        if (whc > 0) {
-          hc = hc.divide(new BigDecimal(String.valueOf(m.get("whc"))), 2, RoundingMode.DOWN).multiply(new BigDecimal("100")).setScale(0, RoundingMode.DOWN);
+        if (xsNum > 0) {
+          hc = hc.divide(new BigDecimal(String.valueOf(xsNum)), 2, RoundingMode.DOWN).multiply(new BigDecimal("100")).setScale(0, RoundingMode.DOWN);
           m.put("hcl", hc.intValue());
         } else {
           m.put("hcl", 0);
@@ -329,13 +351,15 @@ public class CaseAssistExportController {
       count.put("parqCount", paNum);
       count.put("dhwd", dhwdSum);
       count.put("pzdb", pzdbSum);
-      count.put("sajz", sajzSum);
+      count.put("zhrys", zhrysSum);
+      count.put("yjss", yjssSum);
       count.put("xsjl", xsjlSum);
+      count.put("sajz", sajzSum);
       count.put("ysajList", ysajList);
 
       BigDecimal hcSum = new BigDecimal(String.valueOf(csSum + cfSum));
-      if (whcSum > 0) {
-        hcSum = hcSum.divide(new BigDecimal(String.valueOf(whcSum)), 2, RoundingMode.DOWN).multiply(new BigDecimal("100")).setScale(0, RoundingMode.DOWN);
+      if (xsNumSum > 0) {
+        hcSum = hcSum.divide(new BigDecimal(String.valueOf(xsNumSum)), 2, RoundingMode.DOWN).multiply(new BigDecimal("100")).setScale(0, RoundingMode.DOWN);
         count.put("hcl", hcSum.intValue());
       } else {
         count.put("hcl", 0);

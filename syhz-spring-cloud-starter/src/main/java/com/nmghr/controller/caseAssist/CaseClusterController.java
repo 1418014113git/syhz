@@ -65,16 +65,19 @@ public class CaseClusterController {
     if (params.get("pageSize") != null && !StringUtils.isEmpty(params.get("pageSize"))) {
       pageSize = Integer.parseInt(String.valueOf(params.get("pageSize")));
     }
-    if(params.get("reginCode")!=null){
-      params.put("queryDeptCode",params.get("reginCode"));
+    if(!StringUtils.isEmpty(params.get("reginCode"))){
+      params.put("cityCode",params.get("reginCode"));
     } else {
-      if(params.get("cityCode")!=null){
-        params.put("queryDeptCode",params.get("cityCode"));
-      } else {
-        if(params.get("provinceCode")!=null){
-          params.put("queryDeptCode",params.get("provinceCode"));
+      if(StringUtils.isEmpty(params.get("cityCode"))){
+        if(!StringUtils.isEmpty(params.get("provinceCode"))){
+          params.put("cityCode",params.get("provinceCode"));
         }
       }
+    }
+    if(!StringUtils.isEmpty(params.get("isCheck"))&&Boolean.valueOf(String.valueOf(params.get("isCheck")))){
+      params.put("isCheck",0);
+    } else {
+      params.put("isCheck",3);
     }
     try {
       LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJCLUSTERASSIST");
@@ -87,6 +90,7 @@ public class CaseClusterController {
       List<Map<String, Object>> pglist = obj.getList();
       for (Map<String, Object> m : pglist) {
         m.put("cityCode", String.valueOf(m.get("applyDeptCode")).substring(0,4)+"00");
+        m.put("deptType", getDeptType(String.valueOf(m.get("applyDeptCode"))));
         temp.put(String.valueOf(m.get("clusterId")), m);
         ids.add(m.get("clusterId"));
       }
@@ -128,6 +132,7 @@ public class CaseClusterController {
             m.put("deptName", getCity(String.valueOf(m.get("deptName"))));
             m.put("applyDeptCode",String.valueOf(bean.get("applyDeptCode")));
             m.put("cityCode", String.valueOf(m.get("deptCode")).substring(0,4)+"00");
+            m.put("deptType", getDeptType(String.valueOf(m.get("deptCode"))));
             if (bean.containsKey("deptList")) {
               List<Map<String, Object>> array = (List<Map<String, Object>>) bean.get("deptList");
               BigDecimal xsNum = new BigDecimal(String.valueOf(m.get("xsNum")));
@@ -185,6 +190,21 @@ public class CaseClusterController {
       }
     }
     return "";
+  }
+  private int getDeptType(String deptCode){
+    if("610000".equals(deptCode.substring(0,6))){
+      return 1;
+    } else {
+      if(!"00".equals(deptCode.substring(deptCode.length()-2,deptCode.length()))){
+        return 4;
+      } else {
+        if("00".equals(deptCode.substring(4,6)) && "0000".equals(deptCode.substring(deptCode.length()-4,deptCode.length()))){
+          return 2;
+        } else {
+          return 3;
+        }
+      }
+    }
   }
 
   /**
@@ -266,6 +286,9 @@ public class CaseClusterController {
       Map<String, Object> bean = (Map<String, Object>) baseService.get(String.valueOf(id));
       bean.putAll(ajglQbxsService.getClueTotal(String.valueOf(id)));
       bean.put("cityCode", String.valueOf(bean.get("applyDeptCode")).substring(0,4)+"00");
+      if(!StringUtils.isEmpty(bean.get("readKey"))){
+        bean.put("passKey", Sms4Util.Decrypt(String.valueOf(bean.get("readKey"))));
+      }
       return Result.ok(bean);
     } catch (Exception e) {
       if (e instanceof GlobalErrorException) {
@@ -341,7 +364,6 @@ public class CaseClusterController {
   public Object appraise(@RequestBody Map<String, Object> body) {
     ValidationUtils.notNull(body.get("clusterId"), "clustId不能为空!");
     ValidationUtils.notNull(body.get("deptCode"), "deptCode不能为空!");
-    ValidationUtils.notNull(body.get("commentText"), "commentText不能为空!");
     ValidationUtils.notNull(body.get("score"), "score不能为空!");
     try {
       LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJCLUSTERASSISTDEPT");
@@ -424,6 +446,7 @@ public class CaseClusterController {
     ValidationUtils.notNull(body.get("assistId"), "status不能为空!");
     ValidationUtils.notNull(body.get("signId"), "status不能为空!");
     try {
+      body.put("assistType", 2);
       return Result.ok(ajglSignService.signing(body));
     } catch (Exception e) {
       if (e instanceof GlobalErrorException) {

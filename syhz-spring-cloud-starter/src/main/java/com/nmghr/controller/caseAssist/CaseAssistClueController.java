@@ -58,10 +58,10 @@ public class CaseAssistClueController {
                            @RequestParam("category") Object category,
                            @RequestParam("curDeptCode") Object curDeptCode,
                            @RequestParam("curDeptName") Object curDeptName,
-                           @RequestParam("assistId") Object assistId) {
+                           @RequestParam("assistId") Object assistId,Object xfType) {
     try {
       if (null != mulFile) {
-        Collection<Map> list = ExcelUtil.importExcel(Map.class, mulFile.getInputStream(), 0);
+        Collection<LinkedHashMap> list = ExcelUtil.importExcel(LinkedHashMap.class, mulFile.getInputStream(), 0);
         if (!CollectionUtils.isEmpty(list)) {
           log.info("excel uploadFile file query size {}", list.size());
           if (list.size() > 1000) {
@@ -69,10 +69,10 @@ public class CaseAssistClueController {
             throw new GlobalErrorException("99952", "最多不能超过1000条");
           }
 
-          List<Map<String, Object>> params = IteratorUtils.toList(list.iterator());
+          List<LinkedHashMap<String, Object>> params = IteratorUtils.toList(list.iterator());
 //          List<LinkedHashMap<String, Object>> params = IteratorUtils.toList(list.iterator());
           if (params.size() > 0) {
-            Map<String, Object> map = params.get(0);
+            LinkedHashMap<String, Object> map = params.get(0);
 //            LinkedHashMap<String, Object> map = params.get(0);
             List<String> keys = IteratorUtils.toList(map.keySet().iterator());
             StringBuilder err = new StringBuilder();
@@ -94,6 +94,7 @@ public class CaseAssistClueController {
           data.put("curDeptCode", curDeptCode);
           data.put("curDeptName", curDeptName);
           data.put("assistId", assistId);
+          data.put("xfType", xfType);
           data.put("list", params);
           ISaveHandler saveHandler = SpringUtils.getBean("qbxsSaveHandler", ISaveHandler.class);
           Object obj = saveHandler.save(data);
@@ -139,7 +140,16 @@ public class CaseAssistClueController {
       validId(param.get("assistId"));
       Map<String, Object> params = new HashMap<>();
       params.put("assistId", param.get("assistId"));
-      LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJGLQBXSBASECLUECOUNT");
+      String type = "";
+      if (param.containsKey("type") && !StringUtils.isEmpty(param.get("type"))) {
+        type = String.valueOf(param.get("type"));
+      }
+      if ("".equals(type) || "2".equals(type)) { // 集群战役
+        LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJGLQBXSBASECLUECOUNT");
+      }
+      if ("1".equals(type)) { // 案件协查
+        LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJASSISTGLQBXSBASECLUECOUNT");
+      }
       return Result.ok(baseService.list(params));
     } catch (Exception e) {
       if (e instanceof GlobalErrorException) {
@@ -196,7 +206,6 @@ public class CaseAssistClueController {
   public Object cancelDistribute(@RequestBody Map<String, Object> body) {
     ValidationUtils.notNull(body.get("assistId"), "assistId不能为空!");
     ValidationUtils.notNull(body.get("qbxsId"), "qbxsId不能为空!");
-    ValidationUtils.notNull(body.get("qbxsDeptId"), "qbxsDeptId不能为空!");
 
     try {
       Object obj = ajglQbxsService.cancelDistribute(body.get("assistId"), body.get("qbxsId"),body.get("qbxsDeptId"));
@@ -222,7 +231,6 @@ public class CaseAssistClueController {
   public Object delClue(@RequestBody Map<String, Object> body) {
     ValidationUtils.notNull(body.get("assistId"), "assistId不能为空!");
     ValidationUtils.notNull(body.get("qbxsId"), "qbxsId不能为空!");
-    ValidationUtils.notNull(body.get("qbxsDeptId"), "qbxsDeptId不能为空!");
 
     try {
       Object obj = ajglQbxsService.removeClue(body.get("assistId"), body.get("qbxsId"), body.get("qbxsDeptId"));
@@ -407,6 +415,46 @@ public class CaseAssistClueController {
     }
     return Result.fail("999887", "请求异常");
   }
+
+
+  /**
+   * 案件协查集群战役待反馈
+   *
+   * @return
+   */
+  @GetMapping("/assistNeedFeedBack")
+  @ResponseBody
+  public Object assistNeedFeedBack(@RequestParam Map<String, Object> param) {
+    ValidationUtils.notNull(param.get("deptCode"), "deptCode不能为空!");
+    try {
+      List<Map<String, Object>> result = new ArrayList();
+      Map<String, Object> map = new HashMap<>();
+      map.put("assistType", 2);
+      map.put("num", 0);
+      LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJCLUSTERNEEDFEEDBACK");
+      Map<String, Object> obj= (Map<String, Object>) baseService.get(String.valueOf(param.get("deptCode")));
+      if(obj!=null && obj.containsKey("num")){
+        map.putAll(obj);
+      }
+      result.add(map);
+//      LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJCLUSTERNEEDFEEDBACK");
+//      baseService.get(dept);
+      map = new HashMap<>();
+      map.put("assistType", 1);
+      map.put("num", 0);
+      result.add(map);
+      return result;
+    } catch (Exception e) {
+      if (e instanceof GlobalErrorException) {
+        GlobalErrorException ge = (GlobalErrorException) e;
+        if (String.valueOf(ge.getCode()).contains("999")) {
+          return Result.fail("999667", ge.getMessage());
+        }
+      }
+    }
+    return Result.fail("999887", "请求异常");
+  }
+
 
   private List getAjbhs(Map<String, Object> params) throws Exception {
     if ("1".equals(params.get("type"))) {
