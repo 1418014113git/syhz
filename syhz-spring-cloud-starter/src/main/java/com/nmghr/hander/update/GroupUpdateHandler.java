@@ -25,7 +25,7 @@ public class GroupUpdateHandler extends AbstractUpdateHandler {
     @Override
     public Object update(String id, Map<String, Object> requestBody) throws Exception {
         validate(requestBody);
-        //组名去重
+        //组名查重
         LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "BASEGROUPNAMECHECK");
         Map<String,Object> nameMap = new HashMap<>();
         nameMap.put("groupId",id);
@@ -64,6 +64,5 @@ public class GroupUpdateHandler extends AbstractUpdateHandler {
         ValidationUtils.notNull(String.valueOf(requestBody.get("groupName")), "组名不能为空");
         ValidationUtils.notNull(String.valueOf(requestBody.get("deptIds")), "组成员不能为空");
     }
-
 
 }

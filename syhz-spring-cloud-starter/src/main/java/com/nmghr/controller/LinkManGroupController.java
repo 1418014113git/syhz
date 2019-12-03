@@ -57,16 +57,21 @@ public class LinkManGroupController {
         LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "BASEGROUPDETAIL");
         List<Map<String, Object>> items = (List<Map<String, Object>>) baseService.list(idMap);
         //group.put("items", items);
-        List<Integer> deptIds = new ArrayList<>();
+        List<Integer> ids = new ArrayList<>();
+        List<String>  names = new ArrayList<>();
         if(items!=null && items.size() > 0){
           for (Map<String, Object> item : items) {
-            deptIds.add(Integer.valueOf(String.valueOf(item.get("itemId"))));
+              ids.add(Integer.valueOf(String.valueOf(item.get("itemId"))));
+              //人员组有name,部门没有
+              if(item.get("itemName") != null) {
+                names.add(String.valueOf(item.get("itemName")));
+              }
+
           }
         }
-        group.put("detail",deptIds);
-
+        group.put("detail",ids);
+        group.put("names",names);
       }
-      
     }
     return groupList;
   }
@@ -130,8 +135,6 @@ public class LinkManGroupController {
    if(jsons!=null && jsons.size() > 0){
       throw new GlobalErrorException("998001", "该常用组正在使用，无法删除！");
    }
-
-
     LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "BASEGROUP");
     baseService.update(String.valueOf(requestParam.get("groupId")),requestParam);
     //物理删除明细表
