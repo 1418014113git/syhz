@@ -27,10 +27,13 @@ public class Page {
   public static Page dataToVo(Map<String, Object> requestBody) {
     Map<String, Object> pageMap = (Map<String, Object>) requestBody.get("page");
     Page page = new Page();
-    int pageSize = SyhzUtil.setDateInt(pageMap.get("pageSize"));
-    int pageNo = SyhzUtil.setDateInt(pageMap.get("pageNo"));
-    page.setPageSize(pageSize);
-    page.setPageNo(pageNo);
+		if (pageMap != null) {
+			int pageSize = SyhzUtil.setDateInt(pageMap.get("pageSize"));
+			int pageNo = SyhzUtil.setDateInt(pageMap.get("pageNo"));
+			page.setPageSize(pageSize);
+			page.setPageNo(pageNo);
+		}
+
     return page;
   }
 
