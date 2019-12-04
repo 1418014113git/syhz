@@ -18,7 +18,6 @@ import com.nmghr.basic.core.page.Paging;
 import com.nmghr.basic.core.service.IBaseService;
 import com.nmghr.basic.core.util.ValidationUtils;
 import com.nmghr.entity.operation.OperationResult;
-import com.nmghr.entity.operation.OperationResultData;
 import com.nmghr.entity.query.Page;
 import com.nmghr.entity.query.QueryResult;
 import com.nmghr.handler.message.QueueConfig;
@@ -29,6 +28,13 @@ import com.nmghr.util.app.Result;
 import com.nmghr.vo.OperationRequestVo;
 import com.nmghr.vo.QueryRequestVo;
 
+/**
+ * APP站内消息
+ * 
+ * @author heijiantao
+ * @date 2019年12月4日
+ * @version 1.0
+ */
 @Service
 public class AppMessageService {
 	private static final String ALIAS_SYS_MESSAGES_PAGE = "sysMessagesPage";// 获取站内消息
@@ -41,10 +47,10 @@ public class AppMessageService {
 	@Autowired
 	private SendMessageService sendMessageService;
 
+	// 获取站内消息
 	public Object getMessageList(QueryRequestVo queryRequestVo, Map<String, Object> requestBody,
 			Map<String, Object> conditionMap, IBaseService baseService) throws Exception {
-		String sign = "";
-		String sourceId = AppVerifyUtils.getQuerySourceId(queryRequestVo);
+
 		// 获取分页信息
 		Page page = AppVerifyUtils.getQueryPage(queryRequestVo);
 		int pageSize = page.getPageSize();
@@ -54,15 +60,14 @@ public class AppMessageService {
 		Paging pageMap = (Paging) baseService.page(conditionMap, pageNo, pageSize);
 		List<Map<String, Object>> messageList = (List<Map<String, Object>>) pageMap.getList();
 		int total = (int) pageMap.getTotalCount();
-		QueryResult result = AppVerifyUtils.setQueryPageResult(sign, pageNo, pageSize, total, sourceId, messageList);
+		QueryResult result = AppVerifyUtils.setQueryPageResult(queryRequestVo, pageNo, pageSize, total, messageList);
 		return Result.ok(queryRequestVo.getJsonrpc(), queryRequestVo.getId(), result);
 	}
 
+	// 获取站内消息数量
 	public Object getMessagesList(QueryRequestVo queryRequestVo, Map<String, Object> requestBody,
 			Map<String, Object> conditionMap, IBaseService baseService) throws Exception {
 
-		String sign = "";
-		String sourceId = AppVerifyUtils.getQuerySourceId(queryRequestVo);
 		// 获取分页信息
 		Page page = AppVerifyUtils.getQueryPage(queryRequestVo);
 		int pageSize = page.getPageSize();
@@ -113,47 +118,38 @@ public class AppMessageService {
 		List<Map<String, Object>> messageList = new ArrayList<Map<String, Object>>();
 		messageList.add(map);
 
-		QueryResult result = AppVerifyUtils.setQueryResult(sign, sourceId, messageList);
+		QueryResult result = AppVerifyUtils.setQueryResult(queryRequestVo, messageList);
 		return Result.ok(queryRequestVo.getJsonrpc(), queryRequestVo.getId(), result);
 
 	}
 
+	// 获取字典
 	public Object getpersonMessage(QueryRequestVo queryRequestVo, Map<String, Object> requestBody,
 			Map<String, Object> conditionMap, IBaseService baseService) throws Exception {
-
-		String sign = "";
-		String sourceId = AppVerifyUtils.getQuerySourceId(queryRequestVo);
-		// 获取分页信息
 
 		// 查询
 		LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, ALIAS_PERSONMESSAGE);
 		List<Map<String, Object>> messageList = (List<Map<String, Object>>) baseService.list(conditionMap);
 
-		QueryResult result = AppVerifyUtils.setQueryResult(sign, sourceId, messageList);
+		QueryResult result = AppVerifyUtils.setQueryResult(queryRequestVo, messageList);
 		return Result.ok(queryRequestVo.getJsonrpc(), queryRequestVo.getId(), result);
 
 	}
 
+	// 消息删除
 	public Object updateMessageInfo(OperationRequestVo operationRequestVo, Map<String, Object> requestBody,
 			Map<String, Object> operationMap, IBaseService baseService) throws Exception {
 
 		LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, ALIAS_SYS_MESSAGES_DEL);
 		baseService.update(String.valueOf(operationMap.get("id")), operationMap);
 
-		OperationResult result = new OperationResult();
-		List<OperationResultData> operations = new ArrayList<OperationResultData>();
-		OperationResultData operationResultData = new OperationResultData();
-		operationResultData
-				.setOperationId(operationRequestVo.getParams().getData().getOperations().get(0).getOperationId());
-		operationResultData.setOperationCode("1");
-		operations.add(operationResultData);
-		result.setCode("1");
-		result.setMsg("OK");
-		result.setOperations(operations);
+		OperationResult result = AppVerifyUtils.setOperatorReult(operationRequestVo);
+
 		return Result.ok(operationRequestVo.getJsonrpc(), operationRequestVo.getId(), result);
 
 	}
 
+	// 已读
 	public Object updateMessageStaus(OperationRequestVo operationRequestVo, Map<String, Object> requestBody,
 			Map<String, Object> operationMap, IBaseService baseService) throws Exception {
 		String mesageId = SyhzUtil.setDate(operationMap.get("messagesId"));
@@ -162,24 +158,15 @@ public class AppMessageService {
 		LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, ALIAS_SYS_MESSAGES_STAUS);
 		baseService.update(String.valueOf(operationMap.get("id")), operationMap);
 
-		OperationResult result = new OperationResult();
-		List<OperationResultData> operations = new ArrayList<OperationResultData>();
-		OperationResultData operationResultData = new OperationResultData();
-		operationResultData
-				.setOperationId(operationRequestVo.getParams().getData().getOperations().get(0).getOperationId());
-		operationResultData.setOperationCode("1");
-		operations.add(operationResultData);
-		result.setCode("1");
-		result.setMsg("OK");
-		result.setOperations(operations);
+		OperationResult result = AppVerifyUtils.setOperatorReult(operationRequestVo);
+
 		return Result.ok(operationRequestVo.getJsonrpc(), operationRequestVo.getId(), result);
 
 	}
 
+	// 获取站内消息详情
 	public Object getMessageDetail(QueryRequestVo queryRequestVo, Map<String, Object> requestBody,
 			Map<String, Object> conditionMap, IBaseService baseService) throws Exception {
-		String sign = "";
-		String sourceId = AppVerifyUtils.getQuerySourceId(queryRequestVo);
 
 		// 查询
 		LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, ALIAS_SYS_MESSAGES_DETAIL);
@@ -188,15 +175,15 @@ public class AppMessageService {
 		if (pageMap != null) {
 			messageList.add(pageMap);
 		}
-		QueryResult result = AppVerifyUtils.setQueryResult(sign, sourceId, messageList);
+		QueryResult result = AppVerifyUtils.setQueryResult(queryRequestVo, messageList);
 		return Result.ok(queryRequestVo.getJsonrpc(), queryRequestVo.getId(), result);
 
 	}
 
+	// 获取站内消息详情
 	public Object query(QueryRequestVo queryRequestVo, Map<String, Object> requestBody,
 			Map<String, Object> conditionMap, IBaseService baseService) throws Exception {
-		String sign = "";
-		String sourceId = AppVerifyUtils.getQuerySourceId(queryRequestVo);
+
 		// 获取分页信息
 		// 查询
 
@@ -208,10 +195,11 @@ public class AppMessageService {
 		Paging pageMap = (Paging) baseService.page(conditionMap, pageNo, pageSize);
 		List<Map<String, Object>> messageList = (List<Map<String, Object>>) pageMap.getList();
 		int total = (int) pageMap.getTotalCount();
-		QueryResult result = AppVerifyUtils.setQueryPageResult(sign, pageNo, pageSize, total, sourceId, messageList);
+		QueryResult result = AppVerifyUtils.setQueryPageResult(queryRequestVo, pageNo, pageSize, total, messageList);
 		return Result.ok(queryRequestVo.getJsonrpc(), queryRequestVo.getId(), result);
 	}
 
+	// 站内通知删除
 	public Object delete(OperationRequestVo operationRequestVo, Map<String, Object> requestBody,
 			Map<String, Object> operationMap, IBaseService baseService) throws Exception {
 		String mesageId = SyhzUtil.setDate(operationMap.get("messagesId"));
@@ -219,20 +207,13 @@ public class AppMessageService {
 		operationMap.put("messagesId", messagesId);
 		LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "SYSMESSAGESDEL");
 		baseService.update("", operationMap);
-		OperationResult result = new OperationResult();
-		List<OperationResultData> operations = new ArrayList<OperationResultData>();
-		OperationResultData operationResultData = new OperationResultData();
-		operationResultData
-				.setOperationId(operationRequestVo.getParams().getData().getOperations().get(0).getOperationId());
-		operationResultData.setOperationCode("1");
-		operations.add(operationResultData);
-		result.setCode("1");
-		result.setMsg("OK");
-		result.setOperations(operations);
+
+		OperationResult result = AppVerifyUtils.setOperatorReult(operationRequestVo);
 		return Result.ok(operationRequestVo.getJsonrpc(), operationRequestVo.getId(), result);
 
 	}
 
+	// 站内通知发送
 	public Object send(OperationRequestVo operationRequestVo, Map<String, Object> requestBody, Map<String, Object> body,
 			IBaseService baseService) {
 		ValidationUtils.notNull(body.get("userId"), "userId 不能为空!");
@@ -263,16 +244,8 @@ public class AppMessageService {
 				body.get("userId"), body.get("userName"), body.get("curDeptCode"), body.get("curDeptName"),
 				StringUtils.join(names.toArray(), ","));
 		sendMessageService.sendMessage(params, QueueConfig.SAVEMESSAGE);
-		OperationResult result = new OperationResult();
-		List<OperationResultData> operations = new ArrayList<OperationResultData>();
-		OperationResultData operationResultData = new OperationResultData();
-		operationResultData
-				.setOperationId(operationRequestVo.getParams().getData().getOperations().get(0).getOperationId());
-		operationResultData.setOperationCode("1");
-		operations.add(operationResultData);
-		result.setCode("1");
-		result.setMsg("OK");
-		result.setOperations(operations);
+		OperationResult result = AppVerifyUtils.setOperatorReult(operationRequestVo);
+
 		return Result.ok(operationRequestVo.getJsonrpc(), operationRequestVo.getId(), result);
 	}
 
@@ -297,6 +270,5 @@ public class AppMessageService {
 		}
 		return params;
 	}
-
 
 }

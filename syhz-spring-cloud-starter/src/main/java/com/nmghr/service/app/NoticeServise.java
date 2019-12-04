@@ -22,7 +22,6 @@ import com.nmghr.basic.core.service.handler.ISaveHandler;
 import com.nmghr.basic.core.util.SpringUtils;
 import com.nmghr.basic.core.util.ValidationUtils;
 import com.nmghr.entity.operation.OperationResult;
-import com.nmghr.entity.operation.OperationResultData;
 import com.nmghr.entity.query.Page;
 import com.nmghr.entity.query.QueryResult;
 import com.nmghr.handler.service.SendMessageService;
@@ -34,6 +33,13 @@ import com.nmghr.util.app.Result;
 import com.nmghr.vo.OperationRequestVo;
 import com.nmghr.vo.QueryRequestVo;
 
+/**
+ * APP站内通知
+ * 
+ * @author heijiantao
+ * @date 2019年12月4日
+ * @version 1.0
+ */
 @Service
 public class NoticeServise {
 
@@ -44,6 +50,7 @@ public class NoticeServise {
 	@Qualifier("deptNameService")
 	private DeptNameService deptNameService;
 
+	// 获取站内通知
 	public Object home(QueryRequestVo queryRequestVo, Map<String, Object> requestBody, Map<String, Object> conditionMap,
 			IBaseService baseService) throws Exception {
 		ValidationUtils.notNull(conditionMap.get("checkFlag"), "checkFlag不能为空!");
@@ -71,21 +78,17 @@ public class NoticeServise {
 				result.put("unSignData", unList.getList());
 			}
 		}
-
-		String sign = "";
-		String sourceId = AppVerifyUtils.getQuerySourceId(queryRequestVo);
 		List<Map<String, Object>> messageList = new ArrayList<Map<String, Object>>();
 		messageList.add(result);
 		int total = (int) pages.getTotalCount();
 
-		QueryResult results = AppVerifyUtils.setQueryPageResult(sign, pageNo, pageSize, total, sourceId, messageList);
+		QueryResult results = AppVerifyUtils.setQueryPageResult(queryRequestVo, pageNo, pageSize, total, messageList);
 		return Result.ok(queryRequestVo.getJsonrpc(), queryRequestVo.getId(), results);
 	}
 
+	// 获取站内列表
 	public Object list(QueryRequestVo queryRequestVo, Map<String, Object> requestBody, Map<String, Object> conditionMap,
 			IBaseService baseService) throws Exception {
-		String sign = "";
-		String sourceId = AppVerifyUtils.getQuerySourceId(queryRequestVo);
 		// 获取分页信息
 		Page page = AppVerifyUtils.getQueryPage(queryRequestVo);
 		int pageSize = page.getPageSize();
@@ -96,10 +99,11 @@ public class NoticeServise {
 		List<Map<String, Object>> messageList = (List<Map<String, Object>>) pageMap.getList();
 
 		int total = (int) pageMap.getTotalCount();
-		QueryResult result = AppVerifyUtils.setQueryPageResult(sign, pageNo, pageSize, total, sourceId, messageList);
+		QueryResult result = AppVerifyUtils.setQueryPageResult(queryRequestVo, pageNo, pageSize, total, messageList);
 		return Result.ok(queryRequestVo.getJsonrpc(), queryRequestVo.getId(), result);
 	}
 
+	// 站内通知详情
 	public Object detail(QueryRequestVo queryRequestVo, Map<String, Object> requestBody,
 			Map<String, Object> conditionMap, IBaseService baseService) throws Exception {
 		String id = SyhzUtil.setDate(conditionMap.get("id"));
@@ -127,13 +131,12 @@ public class NoticeServise {
 		}
 		List<Map<String, Object>> messageList = new ArrayList<Map<String, Object>>();
 		messageList.add(result);
-		String sign = "";
-		String sourceId = AppVerifyUtils.getQuerySourceId(queryRequestVo);
-		QueryResult results = AppVerifyUtils.setQueryResult(sign, sourceId, messageList);
+		QueryResult results = AppVerifyUtils.setQueryResult(queryRequestVo, messageList);
 		return Result.ok(queryRequestVo.getJsonrpc(), queryRequestVo.getId(), results);
 
 	}
 
+	// 名字校验重复
 	public Object validName(QueryRequestVo queryRequestVo, Map<String, Object> requestBody, Map<String, Object> body,
 			IBaseService baseService) throws Exception {
 		ValidationUtils.notNull(body.get("userId"), "userId 不能为空!");
@@ -143,44 +146,37 @@ public class NoticeServise {
 		params.put("title", body.get("title"));
 		LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "BASEMESSAGENAMECHECK");
 		List<Map<String, Object>> messageList = (List<Map<String, Object>>) baseService.list(params);
-		String sign = "";
-		String sourceId = AppVerifyUtils.getQuerySourceId(queryRequestVo);
-		QueryResult result = AppVerifyUtils.setQueryResult(sign, sourceId, messageList);
+		QueryResult result = AppVerifyUtils.setQueryResult(queryRequestVo, messageList);
 		return Result.ok(queryRequestVo.getJsonrpc(), queryRequestVo.getId(), result);
 	}
 
+	// 站内通知审核记录
 	public Object basemessageflowlsit(QueryRequestVo queryRequestVo, Map<String, Object> requestBody,
 			Map<String, Object> conditionMap, IBaseService baseService) throws Exception {
 
 		AppVerifyUtils.getQueryCondition(conditionMap, queryRequestVo);
-
-		String sign = "";
-		String sourceId = AppVerifyUtils.getQuerySourceId(queryRequestVo);
-
 		// 查询
 		LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "basemessageflowlsit");
 		List<Map<String, Object>> messageList = (List<Map<String, Object>>) baseService.list(conditionMap);
-		QueryResult result = AppVerifyUtils.setQueryResult(sign, sourceId, messageList);
+		QueryResult result = AppVerifyUtils.setQueryResult(queryRequestVo, messageList);
 		return Result.ok(queryRequestVo.getJsonrpc(), queryRequestVo.getId(), result);
 
 	}
 
+	// 站内通知签收记录
 	public Object basemessagesign(QueryRequestVo queryRequestVo, Map<String, Object> requestBody,
 			Map<String, Object> conditionMap, IBaseService baseService) throws Exception {
 
 		AppVerifyUtils.getQueryCondition(conditionMap, queryRequestVo);
-
-		String sign = "";
-		String sourceId = AppVerifyUtils.getQuerySourceId(queryRequestVo);
-
 		// 查询
 		LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "basemessagesign");
 		List<Map<String, Object>> messageList = (List<Map<String, Object>>) baseService.list(conditionMap);
-		QueryResult result = AppVerifyUtils.setQueryResult(sign, sourceId, messageList);
+		QueryResult result = AppVerifyUtils.setQueryResult(queryRequestVo, messageList);
 		return Result.ok(queryRequestVo.getJsonrpc(), queryRequestVo.getId(), result);
 
 	}
 
+	// 站内通知签收
 	public Object sign(OperationRequestVo operationRequestVo, Map<String, Object> requestBody, Map<String, Object> body,
 			IBaseService baseService) throws Exception {
 		ValidationUtils.notNull(body.get("id"), "id不能为空!");
@@ -194,20 +190,12 @@ public class NoticeServise {
 		LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "BASEMESSAGESIGN");
 		baseService.update(String.valueOf(body.get("id")), params);
 
-		OperationResult result = new OperationResult();
-		List<OperationResultData> operations = new ArrayList<OperationResultData>();
-		OperationResultData operationResultData = new OperationResultData();
-		operationResultData
-				.setOperationId(operationRequestVo.getParams().getData().getOperations().get(0).getOperationId());
-		operationResultData.setOperationCode("1");
-		operations.add(operationResultData);
-		result.setCode("1");
-		result.setMsg("OK");
-		result.setOperations(operations);
+		OperationResult result = AppVerifyUtils.setOperatorReult(operationRequestVo);
 		return Result.ok(operationRequestVo.getJsonrpc(), operationRequestVo.getId(), result);
 
 	}
 
+	// 站内通知添加
 	public Object save(OperationRequestVo operationRequestVo, Map<String, Object> requestBody, Map<String, Object> body)
 			throws Exception {
 
@@ -219,16 +207,7 @@ public class NoticeServise {
 		}
 		ISaveHandler saveHandler = SpringUtils.getBean("noticeSubmitSaveHandler", ISaveHandler.class);
 		Object obj = saveHandler.save(body);
-		OperationResult result = new OperationResult();
-		List<OperationResultData> operations = new ArrayList<OperationResultData>();
-		OperationResultData operationResultData = new OperationResultData();
-		operationResultData
-				.setOperationId(operationRequestVo.getParams().getData().getOperations().get(0).getOperationId());
-		operationResultData.setOperationCode("1");
-		operations.add(operationResultData);
-		result.setCode("1");
-		result.setMsg("OK");
-		result.setOperations(operations);
+		OperationResult result = AppVerifyUtils.setOperatorReult(operationRequestVo);
 		return Result.ok(operationRequestVo.getJsonrpc(), operationRequestVo.getId(), result);
 
 	}
