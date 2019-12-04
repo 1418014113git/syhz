@@ -44,7 +44,7 @@ public interface UserExtMapper {
 	@Select("<script> SELECT id,dict_code as `dictCode`  FROM u_dict WHERE app_id=1  and dict_type=#{dictType}  and enabled=1 </script>")
 	List<Map<String, Object>> getDictCode(@Param("dictType") Object dictType);
 
-	@Select("<script> select area_code as areaCode, area_name AS areaName,depart_code as departCode ,city_code as cityCode,area_code as areaCode from u_depart t  where t.parent_depart_id in\n"
+	@Select("<script> select area_code as areaCode, area_name AS areaName,depart_code as departCode ,city_code as cityCode,area_code as areaCode,parent_depart_code as parentDepartCode from u_depart t  where t.parent_depart_id in\n"
 			+ "(select id from u_depart where depart_code in ('610000000000','610000530000'))  order by area_code</script>")
 	List<Map<String, Object>> getCity();
 
@@ -53,7 +53,7 @@ public interface UserExtMapper {
 			+ "ORDER BY t.depart_code </script>")
 	List<Map<String, Object>> getDepart(@Param("departCode") Object departCode);
 
-	@Select("<script> SELECT t.depart_code as 'deptCode',t.depart_code as 'departCode',t.depart_name as 'areaName',t.depart_type as 'departType',area_code as areaCode FROM u_depart t \n"
+	@Select("<script> SELECT t.depart_code as 'deptCode',t.depart_code as 'departCode',t.depart_name as 'areaName',t.depart_type as 'departType',area_code as areaCode,parent_depart_code as parentDepartCode FROM u_depart t \n"
 			+ "WHERE t.depart_type !=4 and  t.city_code=#{cityCode}\n" + "ORDER BY t.depart_code </script>")
 	List<Map<String, Object>> getCityDepart(@Param("cityCode") Object cityCode);
 
