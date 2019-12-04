@@ -14,7 +14,6 @@ import com.nmghr.basic.core.common.LocalThreadStorage;
 import com.nmghr.basic.core.service.IBaseService;
 import com.nmghr.basic.core.util.ValidationUtils;
 import com.nmghr.entity.operation.OperationResult;
-import com.nmghr.entity.operation.OperationResultData;
 import com.nmghr.entity.query.QueryResult;
 import com.nmghr.util.SyhzUtil;
 import com.nmghr.util.app.AppVerifyUtils;
@@ -22,19 +21,18 @@ import com.nmghr.util.app.Result;
 import com.nmghr.vo.OperationRequestVo;
 import com.nmghr.vo.QueryRequestVo;
 
+/**
+ * APP常用组
+ * 
+ * @author heijiantao
+ * @date 2019年12月4日
+ * @version 1.0
+ */
 @Service
 public class AppGroupService {
-
+	// 删除常用组
 	public Object delGroup(OperationRequestVo operationRequestVo, Map<String, Object> requestBody,
 			Map<String, Object> requestParam, IBaseService baseService) throws Exception {
-
-		OperationResult result = new OperationResult();
-		List<OperationResultData> operations = new ArrayList<OperationResultData>();
-		OperationResultData operationResultData = new OperationResultData();
-		operationResultData
-				.setOperationId(operationRequestVo.getParams().getData().getOperations().get(0).getOperationId());
-		operationResultData.setOperationCode("1");
-		operations.add(operationResultData);
 
 		validateParam(requestParam, 2);
 		// 判断是否被使用
@@ -55,23 +53,15 @@ public class AppGroupService {
 		param.put("groupId", String.valueOf(requestParam.get("groupId")));
 		baseService.remove(param);
 
-		result.setCode("1");
-		result.setMsg("OK");
-		result.setOperations(operations);
+		OperationResult result = AppVerifyUtils.setOperatorReult(operationRequestVo);
+
 		return Result.ok(operationRequestVo.getJsonrpc(), operationRequestVo.getId(), result);
 
 	}
 
+	// 添加常用组
 	public Object saveGroup(OperationRequestVo operationRequestVo, Map<String, Object> requestBody,
 			Map<String, Object> requestParam, IBaseService baseService) throws Exception {
-
-		OperationResult result = new OperationResult();
-		List<OperationResultData> operations = new ArrayList<OperationResultData>();
-		OperationResultData operationResultData = new OperationResultData();
-		operationResultData
-				.setOperationId(operationRequestVo.getParams().getData().getOperations().get(0).getOperationId());
-		operationResultData.setOperationCode("1");
-		operations.add(operationResultData);
 
 		validate(requestParam);
 
@@ -99,19 +89,15 @@ public class AppGroupService {
 				baseService.save(param);
 			}
 		}
-		result.setCode("1");
-		result.setMsg("OK");
-		result.setOperations(operations);
+		OperationResult result = AppVerifyUtils.setOperatorReult(operationRequestVo);
+
 		return Result.ok(operationRequestVo.getJsonrpc(), operationRequestVo.getId(), result);
 
 	}
 
+	// 修改常用组
 	public Object updateGroup(OperationRequestVo operationRequestVo, Map<String, Object> requestBody,
 			Map<String, Object> requestParam, IBaseService baseService) throws Exception {
-
-		OperationResult result = new OperationResult();
-		result.setCode("1");
-		result.setMsg("OK");
 
 		validate(requestParam);
 		String id = SyhzUtil.setDate(requestParam.get("id"));
@@ -121,12 +107,6 @@ public class AppGroupService {
 		nameMap.put("groupId", id);
 		nameMap.put("groupName", String.valueOf(requestParam.get("groupName")));
 		Map<String, Object> num = (Map<String, Object>) baseService.get(nameMap);
-		if (num != null) {
-			if (Integer.valueOf(String.valueOf(num.get("num"))) > 0) {
-				result.setCode("0");
-				result.setMsg("组名重复，请确认后重新输入！");
-			}
-		}
 
 		LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "BASEGROUP");
 		baseService.update(id, requestParam);
@@ -152,21 +132,14 @@ public class AppGroupService {
 			}
 		}
 
-		List<OperationResultData> operations = new ArrayList<OperationResultData>();
-		OperationResultData operationResultData = new OperationResultData();
-		operationResultData
-				.setOperationId(operationRequestVo.getParams().getData().getOperations().get(0).getOperationId());
-		operationResultData.setOperationCode("1");
-		operations.add(operationResultData);
-		result.setOperations(operations);
+		OperationResult result = AppVerifyUtils.setOperatorReult(operationRequestVo);
 		return Result.ok(operationRequestVo.getJsonrpc(), operationRequestVo.getId(), result);
 
 	}
 
+	// 查询常用组
 	public Object getGroup(QueryRequestVo queryRequestVo, Map<String, Object> requestBody,
 			Map<String, Object> requestParam, IBaseService baseService) throws Exception {
-		String sign = "";
-		String sourceId = AppVerifyUtils.getQuerySourceId(queryRequestVo);
 
 		// 查询
 		validateParam(requestParam, 1);
@@ -190,27 +163,24 @@ public class AppGroupService {
 			}
 
 		}
-		QueryResult result = AppVerifyUtils.setQueryResult(sign, sourceId, groupList);
+		QueryResult result = AppVerifyUtils.setQueryResult(queryRequestVo, groupList);
 		return Result.ok(queryRequestVo.getJsonrpc(), queryRequestVo.getId(), result);
 
 	}
 
+	// 常用组详情
 	public Object getGroupDetail(QueryRequestVo queryRequestVo, Map<String, Object> requestBody,
 			Map<String, Object> requestParam, IBaseService baseService) throws Exception {
-		String sign = "";
-		String sourceId = AppVerifyUtils.getQuerySourceId(queryRequestVo);
 		validateParam(requestParam, 2);
 		LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "BASEGROUPDETAIL");
 		List<Map<String, Object>> items = (List<Map<String, Object>>) baseService.list(requestParam);
-		QueryResult result = AppVerifyUtils.setQueryResult(sign, sourceId, items);
+		QueryResult result = AppVerifyUtils.setQueryResult(queryRequestVo, items);
 		return Result.ok(queryRequestVo.getJsonrpc(), queryRequestVo.getId(), result);
 	}
 
+	// 名字校验重复
 	public Object checkRepeat(QueryRequestVo queryRequestVo, Map<String, Object> requestBody,
 			Map<String, Object> requestParam, IBaseService baseService) throws Exception {
-		String sign = "";
-		String sourceId = AppVerifyUtils.getQuerySourceId(queryRequestVo);
-
 		validateParam(requestParam, 3);
 
 		// 组名查重
@@ -221,7 +191,7 @@ public class AppGroupService {
 		if (num != null && !"0".equals(String.valueOf(num.get("num")))) {
 			messageList.add(num);
 		}
-		QueryResult result = AppVerifyUtils.setQueryResult(sign, sourceId, messageList);
+		QueryResult result = AppVerifyUtils.setQueryResult(queryRequestVo, messageList);
 		return Result.ok(queryRequestVo.getJsonrpc(), queryRequestVo.getId(), result);
 
 	}

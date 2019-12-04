@@ -16,34 +16,37 @@ import com.nmghr.basic.core.service.IBaseService;
 import com.nmghr.basic.core.util.ValidationUtils;
 import com.nmghr.entity.query.Page;
 import com.nmghr.entity.query.QueryResult;
-import com.nmghr.service.template.CaseManageService;
 import com.nmghr.service.template.ReportTemplateService;
 import com.nmghr.util.SyhzUtil;
 import com.nmghr.util.app.AppVerifyUtils;
 import com.nmghr.util.app.Result;
 import com.nmghr.vo.QueryRequestVo;
 
+/**
+ * APP案件管理
+ * 
+ * @author heijiantao
+ * @date 2019年12月4日
+ * @version 1.0
+ */
 @Service
-
 public class AppCaseServise {
-
-	@Autowired
-	private CaseManageService caseManageService;
 
 	@Autowired
 	private ReportTemplateService reportTemplateService;
 
+	// 首页待审核
 	public Object workGroup(QueryRequestVo queryRequestVo, Map<String, Object> requestBody, Map<String, Object> param,
 			IBaseService baseService) throws Exception {
-		LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "APPWORKGROUPONE");
+		LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "APPWORKGROUPONE");// 审核代办
 		Map<String, Object> map1 = (Map<String, Object>) baseService.get(param);
-		LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "APPWORKGROUPTWO");
+		LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "APPWORKGROUPTWO");// 审核代办
 		Map<String, Object> map2 = (Map<String, Object>) baseService.get(param);
-		LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "APPWORKGROUPTHREE");
+		LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "APPWORKGROUPTHREE");// 签收代办
 		Map<String, Object> map3 = (Map<String, Object>) baseService.get(param);
-		LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "APPWORKGROUPFOUR");
+		LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "APPWORKGROUPFOUR");// 催办代办
 		Map<String, Object> map4 = (Map<String, Object>) baseService.get(param);
-		LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "APPWORKGROUPFIVE");
+		LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "APPWORKGROUPFIVE");// 其他代办
 		Map<String, Object> map5 = (Map<String, Object>) baseService.get(param);
 		int num = SyhzUtil.setDateInt(map1.get("num")) + SyhzUtil.setDateInt(map2.get("num"));
 		map1.put("num", num);
@@ -52,17 +55,15 @@ public class AppCaseServise {
 		list.add(map3);
 		list.add(map4);
 		list.add(map5);
-		String sign = "";
-		String sourceId = AppVerifyUtils.getQuerySourceId(queryRequestVo);
-		QueryResult result = AppVerifyUtils.setQueryResult(sign, sourceId, list);
+
+		QueryResult result = AppVerifyUtils.setQueryResult(queryRequestVo, list);
 		return Result.ok(queryRequestVo.getJsonrpc(), queryRequestVo.getId(), result);
 	}
 
+	// 案件列表
 	public Object caseList(QueryRequestVo queryRequestVo, Map<String, Object> requestBody, Map<String, Object> param,
 			IBaseService baseService) throws Exception {
 
-		String sign = "";
-		String sourceId = AppVerifyUtils.getQuerySourceId(queryRequestVo);
 		// 获取分页信息
 		Page page = AppVerifyUtils.getQueryPage(queryRequestVo);
 		int pageSize = page.getPageSize();
@@ -93,10 +94,11 @@ public class AppCaseServise {
 		param.put("pageSize", pageSize);
 		LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "APPAJJBXXSYH");
 
+		// 返回分页信息
 		Paging pageMap = (Paging) baseService.page(param, pageNo, pageSize);
 		List<Map<String, Object>> messageList = (List<Map<String, Object>>) pageMap.getList();
 		int total = (int) pageMap.getTotalCount();
-		QueryResult result = AppVerifyUtils.setQueryPageResult(sign, pageNo, pageSize, total, sourceId, messageList);
+		QueryResult result = AppVerifyUtils.setQueryPageResult(queryRequestVo, pageNo, pageSize, total, messageList);
 		return Result.ok(queryRequestVo.getJsonrpc(), queryRequestVo.getId(), result);
 	}
 
@@ -139,69 +141,63 @@ public class AppCaseServise {
 		return orderBuffer.toString();
 	}
 
+	// 案件详情
 	public Object caseDetail(QueryRequestVo queryRequestVo, Map<String, Object> requestBody,
 			Map<String, Object> conditionMap, IBaseService baseService) throws Exception {
-		String sign = "";
-		String sourceId = AppVerifyUtils.getQuerySourceId(queryRequestVo);
 
 		// 查询
 		LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "APPAJJXXSYHID");
 		Map<String, Object> pageMap = (Map<String, Object>) baseService.get(conditionMap);
 		List<Map<String, Object>> messageList = new ArrayList<Map<String, Object>>();
 		messageList.add(pageMap);
-		QueryResult result = AppVerifyUtils.setQueryResult(sign, sourceId, messageList);
+		QueryResult result = AppVerifyUtils.setQueryResult(queryRequestVo, messageList);
 		return Result.ok(queryRequestVo.getJsonrpc(), queryRequestVo.getId(), result);
 	}
 
+	// 案件罪名
 	public Object caseAjzm(QueryRequestVo queryRequestVo, Map<String, Object> requestBody,
 			Map<String, Object> conditionMap, IBaseService baseService) throws Exception {
 
-		String sign = "";
-		String sourceId = AppVerifyUtils.getQuerySourceId(queryRequestVo);
 		// 查询
 		LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJZM");
 		List<Map<String, Object>> messageList = (List<Map<String, Object>>) baseService.list(conditionMap);
 
-		QueryResult result = AppVerifyUtils.setQueryResult(sign, sourceId, messageList);
+		QueryResult result = AppVerifyUtils.setQueryResult(queryRequestVo, messageList);
 		return Result.ok(queryRequestVo.getJsonrpc(), queryRequestVo.getId(), result);
 	}
 
 	public Object caseAjzmCode(QueryRequestVo queryRequestVo, Map<String, Object> requestBody,
 			Map<String, Object> conditionMap, IBaseService baseService) throws Exception {
 
-		String sign = "";
-		String sourceId = AppVerifyUtils.getQuerySourceId(queryRequestVo);
 		// 查询
 		LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJZMCODE");
 		List<Map<String, Object>> messageList = (List<Map<String, Object>>) baseService.list(conditionMap);
 
-		QueryResult result = AppVerifyUtils.setQueryResult(sign, sourceId, messageList);
+		QueryResult result = AppVerifyUtils.setQueryResult(queryRequestVo, messageList);
 		return Result.ok(queryRequestVo.getJsonrpc(), queryRequestVo.getId(), result);
 	}
 
+	// 案件类别
 	public Object caseAjlb(QueryRequestVo queryRequestVo, Map<String, Object> requestBody,
 			Map<String, Object> conditionMap, IBaseService baseService) throws Exception {
 
-		String sign = "";
-		String sourceId = AppVerifyUtils.getQuerySourceId(queryRequestVo);
 		// 查询
 		LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "GETAJLB");
 		List<Map<String, Object>> messageList = (List<Map<String, Object>>) baseService.list(conditionMap);
 
-		QueryResult result = AppVerifyUtils.setQueryResult(sign, sourceId, messageList);
+		QueryResult result = AppVerifyUtils.setQueryResult(queryRequestVo, messageList);
 		return Result.ok(queryRequestVo.getJsonrpc(), queryRequestVo.getId(), result);
 	}
 
+	// 案例code
 	public Object caseTcpcode(QueryRequestVo queryRequestVo, Map<String, Object> requestBody,
 			Map<String, Object> conditionMap, IBaseService baseService) throws Exception {
 
-		String sign = "";
-		String sourceId = AppVerifyUtils.getQuerySourceId(queryRequestVo);
 		// 查询
 		LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "TCPCODE");
 		List<Map<String, Object>> messageList = (List<Map<String, Object>>) baseService.list(conditionMap);
 
-		QueryResult result = AppVerifyUtils.setQueryResult(sign, sourceId, messageList);
+		QueryResult result = AppVerifyUtils.setQueryResult(queryRequestVo, messageList);
 		return Result.ok(queryRequestVo.getJsonrpc(), queryRequestVo.getId(), result);
 	}
 
