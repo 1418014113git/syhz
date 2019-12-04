@@ -41,8 +41,8 @@ public class MessageController {
     ValidationUtils.notNull(body.get("title"), "title 不能为空!");
     ValidationUtils.notNull(body.get("content"), "content 不能为空!");
     String content = String.valueOf(body.get("content"));
-    if(content.length()>200){
-      return Result.fail("999667","内容长度不能超过200字符");
+    if(content.length()>500){
+      return Result.fail("999667","内容长度不能超过500字符");
     }
     ValidationUtils.notNull(body.get("recipient"), "recipient 不能为空!");
 
