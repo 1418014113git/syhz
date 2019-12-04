@@ -19,6 +19,8 @@ import com.nmghr.entity.operation.OperationFieldValue;
 import com.nmghr.entity.operation.OperationParams;
 import com.nmghr.entity.operation.OperationRequest;
 import com.nmghr.entity.operation.OperationRequestData;
+import com.nmghr.entity.operation.OperationResult;
+import com.nmghr.entity.operation.OperationResultData;
 import com.nmghr.entity.query.FieldValue;
 import com.nmghr.entity.query.Page;
 import com.nmghr.entity.query.QueryParams;
@@ -144,8 +146,11 @@ public class AppVerifyUtils {
 		}
 	}
 
-	public static QueryResult setQueryPageResult(String sign, int pageNo, int pageSize, int total, String sourceId,
+	public static QueryResult setQueryPageResult(QueryRequestVo queryRequestVo, int pageNo, int pageSize, int total,
 			List<Map<String, Object>> listData) {
+		String sign = "";
+		String sourceId = AppVerifyUtils.getQuerySourceId(queryRequestVo);
+
 		Page page = new Page();
 		page.setPageNo(pageNo);
 		page.setPageSize(pageSize);
@@ -174,7 +179,9 @@ public class AppVerifyUtils {
 		return new QueryResult(data, page, sign);
 	}
 
-	public static QueryResult setQueryResult(String sign, String sourceId, List<Map<String, Object>> listData) {
+	public static QueryResult setQueryResult(QueryRequestVo queryRequestVo, List<Map<String, Object>> listData) {
+		String sign = "";
+		String sourceId = AppVerifyUtils.getQuerySourceId(queryRequestVo);
 
 		List<QueryResultData> data = new ArrayList<QueryResultData>();
 
@@ -199,6 +206,21 @@ public class AppVerifyUtils {
 			}
 		}
 		return new QueryResult(data, null, sign);
+	}
+
+	public static OperationResult setOperatorReult(OperationRequestVo operationRequestVo) {
+
+		OperationResult result = new OperationResult();
+		List<OperationResultData> operations = new ArrayList<OperationResultData>();
+		OperationResultData operationResultData = new OperationResultData();
+		operationResultData
+				.setOperationId(operationRequestVo.getParams().getData().getOperations().get(0).getOperationId());
+		operationResultData.setOperationCode("1");
+		operations.add(operationResultData);
+		result.setCode("1");
+		result.setMsg("OK");
+		result.setOperations(operations);
+		return result;
 	}
 
 	/**
