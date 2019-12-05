@@ -16,7 +16,6 @@ import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -47,7 +46,6 @@ import com.nmghr.vo.QueryRequestVo;
  * @version 1.0
  */
 @RestController
-@RequestMapping("/hsyzapp")
 public class AppMainController {
 
 	@Autowired
@@ -72,7 +70,7 @@ public class AppMainController {
 
 	private static AppObjectIdUtil AppObjectIdUtil;
 
-	@PostMapping(value = "/main")
+	@PostMapping(value = "/hsyzapp/main")
 	@ResponseBody
 	public Object appMain(@RequestBody Map<String, Object> requestBody) {
 		String method = SyhzUtil.setDate(requestBody.get("method"));
