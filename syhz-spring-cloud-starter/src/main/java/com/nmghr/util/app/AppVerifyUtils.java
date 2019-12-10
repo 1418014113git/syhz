@@ -183,6 +183,11 @@ public class AppVerifyUtils {
 		String sign = "";
 		String sourceId = AppVerifyUtils.getQuerySourceId(queryRequestVo);
 
+		Page page = new Page();
+		page.setPageNo(1);
+		page.setPageSize(10);
+		page.setTotal(-1);
+
 		List<QueryResultData> data = new ArrayList<QueryResultData>();
 
 		List<FieldValue> fieldValues = null;
@@ -205,7 +210,7 @@ public class AppVerifyUtils {
 				data.add(aueryResultData);
 			}
 		}
-		return new QueryResult(data, null, sign);
+		return new QueryResult(data, page, sign);
 	}
 
 	public static OperationResult setOperatorReult(OperationRequestVo operationRequestVo) {
