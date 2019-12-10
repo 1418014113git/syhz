@@ -48,7 +48,9 @@ public class AssistExamineUpdateHandler extends AbstractUpdateHandler {
       //处理审核信息
       examineUpdateHandler.update(flowId, body);
       // 增加待办信息
-      createSignInfo(body.get("userId"), body.get("userName"), body.get("curDeptCode"), body.get("curDeptName"), body.get("bsId"));
+      if("6100".equals(String.valueOf(body.get("curDeptCode")).substring(0,4))){
+        createSignInfo(body.get("userId"), body.get("userName"), body.get("curDeptCode"), body.get("curDeptName"), body.get("bsId"));
+      }
       return bsId;
     }
     if ("4".equals(flowStatus)) {
