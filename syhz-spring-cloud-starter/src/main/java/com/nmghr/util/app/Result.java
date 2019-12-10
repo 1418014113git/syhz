@@ -60,14 +60,21 @@ public class Result extends com.nmghr.basic.common.Result {
 		this.error = error;
 	}
 
-	protected Result(Object code, String message, Object data) {
-	}
+	public Result(Object code, String message, Object data) {
+    super(code, message, data);
+    // TODO Auto-generated constructor stub
+  }
 
-	public Result(String jsonrpc, String id, Object result) {
-		this.jsonrpc = jsonrpc;
-		this.id = id;
-		this.result = result;
-	}
+	public Result(Object code, String message, String jsonrpc, String id, Object result,
+      ErrorEntity error) {
+    super(code, message);
+    this.jsonrpc = jsonrpc;
+    this.id = id;
+    this.result = result;
+    this.error = error;
+  }
+
+
 
 	/**
 	 * 创建返回结果.
