@@ -60,7 +60,7 @@ public class Result extends com.nmghr.basic.common.Result {
 		this.error = error;
 	}
 
-	protected Result(Object code, String message) {
+	protected Result(Object code, String message, Object data) {
 	}
 
 	public Result(String jsonrpc, String id, Object result) {
