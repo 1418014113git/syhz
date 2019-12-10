@@ -10,9 +10,6 @@ package com.nmghr.entity.query;
 
 import java.util.Map;
 
-import com.nmghr.entity.query.Page;
-import com.nmghr.entity.query.Source;
-import com.nmghr.entity.query.UserInfo;
 import com.nmghr.util.SyhzUtil;
 
 /**
@@ -44,6 +41,7 @@ public class QueryRequest {
     String fields = SyhzUtil.setDate(paramsMapData.get("fields"));
     UserInfo userInfo = UserInfo.dataToVo(paramsMapData);
     Source source = Source.dataToVo(paramsMapData);
+
     Page page = Page.dataToVo(paramsMapData);
     
     queryRequest.setVersion(version);
