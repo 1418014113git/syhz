@@ -12,10 +12,12 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -37,6 +39,7 @@ import com.nmghr.util.app.Result;
 import com.nmghr.util.app.SyhzAppErrorEnmu;
 import com.nmghr.vo.OperationRequestVo;
 import com.nmghr.vo.QueryRequestVo;
+
 
 /**
  * 陕西环食药APP入门
@@ -67,12 +70,13 @@ public class AppMainController {
 
 	private static final String METHOD_QUERY = "query";
 	private static final String METHOD_OPERATE = "operate";
+	private static final String METHOD_CONNECT = "connect";
 
 	private static AppObjectIdUtil AppObjectIdUtil;
 
-	@PostMapping(value = "/hsyzapp/main")
+	@RequestMapping(value = "/hsyzapp/main", method = { RequestMethod.GET, RequestMethod.POST })
 	@ResponseBody
-	public Object appMain(@RequestBody Map<String, Object> requestBody) {
+	public String appMain(@RequestBody Map<String, Object> requestBody) {
 		String method = SyhzUtil.setDate(requestBody.get("method"));
 		if (METHOD_QUERY.equals(method)) { // 查询
 			// 将请求参照转化为Vo
@@ -87,7 +91,7 @@ public class AppMainController {
 				// userId = '1' and deptCode='610000530000'
 				// 获取查询条件组织为map
 				AppVerifyUtils.getQueryCondition(conditionMap, queryRequestVo);
-				return getQueryMethod(getDataObjId, queryRequestVo, requestBody, conditionMap);
+				return (String) getQueryMethod(getDataObjId, queryRequestVo, requestBody, conditionMap);
 			} catch (AppeErrorException e) {
 				e.printStackTrace();
 				return Result.fail(queryRequestVo.getJsonrpc(), queryRequestVo.getId(), e.getCode(), e.getMessage());
@@ -107,7 +111,7 @@ public class AppMainController {
 				AppVerifyUtils.getOperationCondition(conditionMap, operationRequestVo);
 				String getDataObjId = AppVerifyUtils.getOperateDataObjId(operationRequestVo);
 
-				return getOperateMethod(getDataObjId, operationRequestVo, requestBody, conditionMap);
+				return (String) getOperateMethod(getDataObjId, operationRequestVo, requestBody, conditionMap);
 
 			} catch (AppeErrorException e) {
 				e.printStackTrace();
@@ -118,6 +122,18 @@ public class AppMainController {
 				return Result.fail(operationRequestVo.getJsonrpc(), operationRequestVo.getId(),
 						SyhzAppErrorEnmu.ERROR_500.getCode(), SyhzAppErrorEnmu.ERROR_500.getMessage());
 			}
+		} else if (METHOD_CONNECT.equals(method)) {
+			Map<String, Object> resultMap = (Map<String, Object>) requestBody.get("params");
+			Map<String, Object> responseMap = new HashMap<String, Object>();
+
+			resultMap.put("code", 1);
+			resultMap.put("msg", "OK");
+			Map<String, Object> data = (Map<String, Object>) resultMap.get("data");
+			data.remove("version");
+			data.put("sessionId", String.valueOf(UUID.randomUUID()).replace("-", ""));
+			resultMap.put("data", data);
+			return Result.ok(String.valueOf(requestBody.get("jsonrpc")), String.valueOf(requestBody.get("id")),
+					resultMap);
 		}
 		return Result.fail(SyhzUtil.setDate(requestBody.get("jsonrpc")), SyhzUtil.setDate(requestBody.get("id")),
 				SyhzAppErrorEnmu.ERROR_500.getCode(), SyhzAppErrorEnmu.ERROR_500.getMessage());
