@@ -46,7 +46,7 @@ public class AjglQbxsFeedBackService {
       feedBack_alias = "AJASSISTFEEDBACK";
     }
     if ("".equals(assistType) || "2".equals(assistType)) { // 集群战役
-      feedBack_alias = "AJCLUSTERFEEDBACK";
+        feedBack_alias = "AJCLUSTERFEEDBACK";
     }
     LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, feedBack_alias);
     Map<String, Object> feedBack = (Map<String, Object>) baseService.get(backP);
