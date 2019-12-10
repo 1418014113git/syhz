@@ -2,6 +2,8 @@ package com.nmghr.service.ajglqbxs;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.github.pagehelper.Page;
+import com.github.pagehelper.PageHelper;
 import com.nmghr.basic.common.Constant;
 import com.nmghr.basic.common.exception.GlobalErrorException;
 import com.nmghr.basic.core.common.LocalThreadStorage;
@@ -41,7 +43,7 @@ public class AjglQbxsService {
   private BatchSaveHandler batchSaveHandler;
 
   /**
-   * 线索分配
+   * 线索分发 创建部门分发线索
    *
    * @param body
    * @return
@@ -58,55 +60,102 @@ public class AjglQbxsService {
     if (body.containsKey("type") && !StringUtils.isEmpty(body.get("type"))) {
       type = String.valueOf(body.get("type"));
     }
+    //增加协查分配的部门信息
     Object id = "";
     if ("".equals(type) || "2".equals(type)) { // 集群战役
+      body.put("assistType", 2);
       Map<String, Object> deptP = new HashMap<>();
       deptP.put("clusterId", body.get("assistId"));
       deptP.put("deptCode", body.get("acceptDeptCode"));
       deptP.put("deptName", body.get("acceptDeptName"));
-//    deptP.put("parentCode", body.get("curDeptCode"));
       id = deptMapperSaveHandler.save(deptP);
     }
     if ("1".equals(type)) { // 案件协查
+      body.put("assistType", 1);
       Map<String, Object> deptP = new HashMap<>();
       deptP.put("assistId", body.get("assistId"));
       deptP.put("deptCode", body.get("acceptDeptCode"));
       deptP.put("deptName", body.get("acceptDeptName"));
       id = caseAssistSubmitSaveHandler.saveDept(deptP);
     }
+    //修改base表为已分发
     Map<String, Object> baseP = new HashMap<>();
     baseP.put("ids", ids);
     baseP.put("qbxsDistribute", 2);
-//    baseP.put("deptRelationId", id);
-//    baseP.put("receiveCode", body.get("acceptDeptCode"));
-//    baseP.put("receiveName", body.get("acceptDeptName"));
+    baseP.put("qbxsResult", 1);
     LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJGLQBXSBASEBATCHUPDATE");
     baseService.update("", baseP);
 
+    //删除线索部门关系信息
     Map<String, Object> param = new HashMap<>();
     param.put("qbxsIds", ids);
-    param.put("deptCode", body.get("curDeptCode"));
+    param.put("assistId", body.get("assistId"));
+    param.put("type", "1".equals(type) ? 1 : 2);
+    LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJGLQBXSDEPTDEL");
+    baseService.remove(param);
+    //增加新的关联信息
+    saveMapper(ids, id, body.get("assistType"));
+
+    return getClueTotal(String.valueOf(body.get("assistId")));
+  }
+
+  /**
+   * 线索分发 支队下发线索
+   *
+   * @param body
+   * @return
+   * @throws Exception
+   */
+  @Transactional
+  public Object issue(Map<String, Object> body) throws Exception {
+    // 查询未分配的线索 ids
+    //增加部门表数据  assistId deptcode name cluecount
+    //修改线索状态  qbxs_base
+    String ids = String.valueOf(body.get("ids"));
+    // 分配部门
+    String type = "";
+    if (body.containsKey("type") && !StringUtils.isEmpty(body.get("type"))) {
+      type = String.valueOf(body.get("type"));
+    }
+    //增加协查分配的部门信息
+    Map<String, Object> deptP = new HashMap<>();
+    deptP.put("deptCode", body.get("acceptDeptCode"));
+    deptP.put("deptName", body.get("acceptDeptName"));
+    Object id = "";
     if ("".equals(type) || "2".equals(type)) { // 集群战役
-      param.put("clusterId", body.get("assistId"));
-      LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJGLQBXSDEPTIDS");
+      body.put("assistType", 2);
+      deptP.put("clusterId", body.get("assistId"));
+      id = deptMapperSaveHandler.save(deptP);
     }
     if ("1".equals(type)) { // 案件协查
-      param.put("assistId", body.get("assistId"));
-      LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJASSISTGLQBXSDEPTIDS");
+      body.put("assistType", 1);
+      deptP.put("assistId", body.get("assistId"));
+      id = caseAssistSubmitSaveHandler.saveDept(deptP);
     }
-    List<Map<String, Object>> mappIds = (List<Map<String, Object>>) baseService.list(param);
-    if (mappIds != null && mappIds.size() > 0) {
-      List<Object> deptIds = new ArrayList<>();
-      for (Map<String, Object> m : mappIds) {
-        deptIds.add(m.get("id"));
-      }
-      Map<String, Object> p = new HashMap<>();
-      p.put("ids", deptIds);
-      p.put("transferred", 2);
-      LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJGLQBXSDEPT");
-      baseService.update("", p);
-    }
-    saveMapper(body.get("acceptDeptCode"), ids, id, body.get("assistType"));
+    //修改base表为已分发
+    Map<String, Object> baseP = new HashMap<>();
+    baseP.put("ids", ids);
+    baseP.put("qbxsDistribute", 2);
+    baseP.put("qbxsResult", 1);
+    LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJGLQBXSBASEBATCHUPDATE");
+    baseService.update("", baseP);
+
+    //修改关联表为已下发
+    Map<String, Object> p = new HashMap<>();
+    p.put("qbxsIds", ids);
+    p.put("deptCode", body.get("curDeptCode"));
+    p.put("assistId", body.get("assistId"));
+    p.put("type", "1".equals(type) ? 1 : 2);
+    p.put("transferred", 2);
+    LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJGLQBXSDEPTISSUE");
+    baseService.update("", p);//修改关联表为已下发
+
+    //删除当前单位以外要修改的线索部门关系信息
+    reIssue(body, ids, type);
+
+    //增加新的关联信息
+    saveMapper(ids, id, body.get("assistType"));
+
     // 如果是支队需要增加签收信息
     if (body.get("curDeptType") != null && "2".equals(String.valueOf(body.get("curDeptType")))) {
       String[] arrs = ids.split(",");
@@ -115,13 +164,47 @@ public class AjglQbxsService {
     return getClueTotal(String.valueOf(body.get("assistId")));
   }
 
-  private void saveMapper(Object deptCode, String ids, Object id, Object assistType) {
+  /**
+   * 删除处理已分配的数据
+   *
+   * @param body
+   * @param ids
+   * @param type
+   * @throws Exception
+   */
+  private void reIssue(Map<String, Object> body, String ids, String type) throws Exception {
+    Map<String, Object> param = new HashMap<>();
+    param.put("qbxsIds", ids);
+    param.put("noDeptCode", body.get("curDeptCode"));
+    param.put("assistId", body.get("assistId"));
+    param.put("type", "1".equals(type) ? 1 : 2);
+    //查询需要删除的关联id, 部门code
+    LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJGLQBXSDEPTGETIDCODE");
+    List<Map<String, Object>> deptInfos = (List<Map<String, Object>>) baseService.list(param);
+    if (deptInfos != null && deptInfos.size() > 0) {
+      List<Object> qdIds = new ArrayList<>();
+      List<Object> codes = new ArrayList<>();
+      for (Map<String, Object> m : deptInfos) {
+        qdIds.add(m.get("id"));
+        codes.add(m.get("deptCode"));
+      }
+      param = new HashMap<>();
+      param.put("qbxsIds", ids);
+      param.put("ids", qdIds);
+      param.put("assistId", body.get("assistId"));
+      param.put("codes", codes);
+      param.put("assistType", "1".equals(type) ? 1 : 2);
+      LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJGLQBXSDEPTREISSUE");
+      baseService.remove(param);
+    }
+  }
+
+  private void saveMapper(String ids, Object id, Object assistType) {
     List<Map<String, Object>> qbxsDeptList = new ArrayList<>();
     String[] arr = ids.split(",");
     for (String qbxsId : arr) {
       Map<String, Object> deptMap = new HashMap<>();
       deptMap.put("assistDeptId", id);
-      deptMap.put("deptCode", deptCode);
       deptMap.put("qbxsId", qbxsId);
       deptMap.put("transferred", 1);
       deptMap.put("assistType", assistType);
@@ -180,14 +263,15 @@ public class AjglQbxsService {
   /**
    * 根据业务id 获取线索的总数和已分配的数量
    *
-   * @param assistId
    * @return
    * @throws Exception
    */
-  public Map<String, Object> removeClue(Object assistId, Object qbxsId, Object qbxsDeptId) throws Exception {
+  public Map<String, Object> removeClue(Map<String, Object> body) throws Exception {
+    Object assistId = body.get("assistId");
     Map<String, Object> delMap = new HashMap<>();
     delMap.put("assistId", assistId);
-    delMap.put("qbxsId", qbxsId);
+    delMap.put("qbxsId", body.get("qbxsId"));
+    delMap.put("assistType", "1".equals(String.valueOf(body.get("assistType"))) ? 1 : 2);
     LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJGLQBXSBASE");
     Map<String, Object> clue = (Map<String, Object>) baseService.get(delMap);
     if (clue == null) {
@@ -198,15 +282,27 @@ public class AjglQbxsService {
     }
     LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJGLQBXSBASEDEL");
     baseService.remove(delMap);
-    if (qbxsDeptId != null) {
-      //处理关联
-      Map<String, Object> baseP = new HashMap<>();
-      baseP.put("qbxsId", qbxsId);
-      baseP.put("qbxsDeptId", qbxsDeptId);
-      LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJGLQBXSDEPTDEL");
-      baseService.update("", baseP);
+    if (body.get("qbxsDeptId") != null) {
+      delAndCancel(body);
+
     }
     return getClueTotal(String.valueOf(assistId));
+  }
+
+  private void delAndCancel(Map<String, Object> body) throws Exception {
+    //删线索部门关系信息及签收反馈信息
+    Map<String, Object> baseP = new HashMap<>();
+    baseP.put("qbxsIds", body.get("qbxsId"));
+    baseP.put("qbxsDeptIds", body.get("qbxsDeptId"));
+    baseP.put("assistId", body.get("assistId"));
+    if(!StringUtils.isEmpty(body.get("receiveCode"))){
+      List codes = new ArrayList<>();
+      codes.add(body.get("receiveCode"));
+      baseP.put("codes", codes);
+    }
+    baseP.put("assistType", "1".equals(String.valueOf(body.get("assistType"))) ? 1 : 2);
+    LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJGLQBXSDEPTDEL");
+    baseService.update("", baseP);
   }
 
   /**
@@ -215,10 +311,13 @@ public class AjglQbxsService {
    * @return
    * @throws Exception
    */
-  public Map<String, Object> cancelDistribute(Object assistId, Object qbxsId, Object qbxsDeptId) throws Exception {
+  public Map<String, Object> cancelDistribute(Map<String, Object> body) throws Exception {
+    Object assistId = body.get("assistId");
+    Object qbxsId = body.get("qbxsId");
     Map<String, Object> delMap = new HashMap<>();
     delMap.put("assistId", assistId);
     delMap.put("qbxsId", qbxsId);
+    delMap.put("assistType", "1".equals(String.valueOf(body.get("assistType"))) ? 1 : 2);
     LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJGLQBXSBASE");
     Map<String, Object> clue = (Map<String, Object>) baseService.get(delMap);
     if (clue == null) {
@@ -230,20 +329,15 @@ public class AjglQbxsService {
     if ("1".equals(String.valueOf(clue.get("qbxsDistribute")))) {
       throw new GlobalErrorException("999681", "线索已取消不能重复取消");
     }
-
     Map<String, Object> baseP = new HashMap<>();
     baseP.put("ids", qbxsId);
     baseP.put("qbxsDistribute", 1);
+    baseP.put("qbxsResult", 1);
     LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJGLQBXSBASEBATCHUPDATE");
     baseService.update("", baseP);
-
     //处理关联
-    if (qbxsDeptId != null) {
-      baseP = new HashMap<>();
-      baseP.put("qbxsId", qbxsId);
-      baseP.put("qbxsDeptId", qbxsDeptId);
-      LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJGLQBXSDEPTDEL");
-      baseService.update("", baseP);
+    if (body.get("qbxsDeptId") != null) {
+      delAndCancel(body);
     }
     return getClueTotal(String.valueOf(assistId));
   }
@@ -371,7 +465,6 @@ public class AjglQbxsService {
     if (requestMap.containsKey("type") && !StringUtils.isEmpty(requestMap.get("type"))) {
       type = String.valueOf(requestMap.get("type"));
     }
-
     //查询标题
     Map<String, Object> params = new HashMap<>();
     params.put("assistId", requestMap.get("assistId"));
@@ -428,6 +521,15 @@ public class AjglQbxsService {
     result.put("totalCount", pages.getTotalCount());
     result.put("pageSize", pages.getPageSize());
     result.put("pageNum", pages.getPageNum());
+
+//    LocalThreadStorage.getBoolean(Constant.CONTROLLER_PAGE);
+//    Page page = PageHelper.startPage(pageNum, pageSize);
+//    List newList = Arrays.asList(valMap.values());
+//    LocalThreadStorage.put(Constant.CONTROLLER_PAGE_TOTALCOUNT, page.getTotal());
+//    Paging paging = new Paging(pageSize, pageNum, page.getTotal(), newList);
+//    result.put("totalCount", paging.getTotalCount());
+//    result.put("pageSize", paging.getPageSize());
+//    result.put("pageNum", paging.getPageNum());
     return result;
   }
 
@@ -460,7 +562,7 @@ public class AjglQbxsService {
 
   public Object feedBackDetail(Map<String, Object> requestMap) throws Exception {
     //查询
-    LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJCLUSTERFEEDBACK");
+    LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "1".equals(String.valueOf(requestMap.get("assistType"))) ? "AJASSISTFEEDBACK" : "AJCLUSTERFEEDBACK");
     Map<String, Object> fb = (Map<String, Object>) baseService.get(requestMap);
     if (fb == null) {
       return new HashMap<>();
@@ -669,12 +771,8 @@ public class AjglQbxsService {
     if (requestMap.containsKey("type") && !StringUtils.isEmpty(requestMap.get("type"))) {
       type = String.valueOf(requestMap.get("type"));
     }
-    if ("".equals(type) || "2".equals(type)) { // 集群战役
-      LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJCLUSTERTJFKXX");
-    }
-    if ("1".equals(type)) { // 案件协查
-      LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJASSISTTJFKXX");
-    }
+    // 1.案件协查  2.集群战役
+    LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "1".equals(type) ? "AJASSISTTJFKXX" : "AJCLUSTERTJFKXX");
     List<Map<String, Object>> list = (List<Map<String, Object>>) baseService.list(requestMap);
     if (list == null || list.size() == 0) {
       return new ArrayList();
@@ -785,26 +883,24 @@ public class AjglQbxsService {
     }
 
     if ("1".equals(requestMap.get("curDeptType")) || "2".equals(requestMap.get("curDeptType"))) {
-      if ("".equals(type) || "2".equals(type)) { // 集群战役
-        LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJCLUSTERTJZDFKXX");
-      }
-      if ("1".equals(type)) { // 案件协查
-        LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJASSISTTJZDFKXX");
-      }
+      //厅或者支队查看所有支队，这里查询所有的支队在和数据封装
+      LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "1".equals(type) ? "AJASSISTTJZDFKXX" : "AJCLUSTERTJZDFKXX");
       List<Map<String, Object>> deptRes = (List<Map<String, Object>>) baseService.list(requestMap);
       if (deptRes == null || deptRes.size() == 0) {
         return new ArrayList();
       }
+      List<Map<String, Object>> result = new ArrayList<>();
       for (Map<String, Object> map : deptRes) {
         Map<String, Object> data = (Map<String, Object>) resList.get(String.valueOf(map.get("cityCode")));
         if (data != null) {
           data.remove("deptCode");
           data.remove("deptName");
           map.putAll(data);
+          result.add(map);
         }
       }
-      deptRes.add(count);
-      return deptRes;
+      result.add(count);
+      return result;
     }
     list.add(count);
     return list;
