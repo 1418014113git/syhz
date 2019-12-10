@@ -167,7 +167,7 @@ public class QbxsSaveHandler extends AbstractSaveHandler {
     params.put("seqName", "AJGLQBXSDEPT");
     params.put("subSize", 20);
     batchSaveHandler.save(params);
-    return baseList;
+    return baseRes;
   }
 
 
@@ -202,6 +202,7 @@ public class QbxsSaveHandler extends AbstractSaveHandler {
     if (str.contains("西咸新区")) {
       return "西咸新区";
     }
+    str = str.replaceAll("陕西","");
     str = str.substring(0, str.indexOf("市") + 1);
     if (str.contains("省")) {
       return str.substring(str.indexOf("省") + 1, str.length());
