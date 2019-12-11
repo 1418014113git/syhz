@@ -297,13 +297,6 @@ public class CaseAssistClueController {
   public Object feedBackClues(@RequestParam Map<String, Object> body) {
     ValidationUtils.notNull(body.get("assistId"), "集群战役Id不能为空!");
     try {
-//      if (!StringUtils.isEmpty(body.get("reginCode"))) {
-//        body.put("cityCode", body.get("reginCode"));
-//      } else {
-//        if (!StringUtils.isEmpty(body.get("cityCode"))) {
-//          body.put("cityCode", body.get("cityCode"));
-//        }
-//      }
       Object obj = ajglQbxsService.feedBackList(body);
       return Result.ok(obj);
     } catch (Exception e) {
