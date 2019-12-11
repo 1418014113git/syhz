@@ -104,7 +104,7 @@ public class QbxsSaveHandler extends AbstractSaveHandler {
       Map<String, Object> values = list.get(i);
       String addr = String.valueOf(values.get("地址"));
       List<Map<String, Object>> depts = getDepts(zhidui, addr, xfType);
-      log.info(addr+"  ----  " + JSON.toJSONString(depts));
+      log.info(addr + "  ----  " + JSON.toJSONString(depts));
       Boolean ff = false;
       Object deptCode = null;
       Object deptName = null;
@@ -138,7 +138,7 @@ public class QbxsSaveHandler extends AbstractSaveHandler {
       base.put("qbxsSign", 1);//未签收
       base.put("qbxsResult", 1);//未反馈
       base.put("assistType", type);
-      if (ff && deptId!=null) {
+      if (ff && deptId != null) {
         base.put("receiveCode", deptCode);
         base.put("receiveName", deptName);
         base.put("deptId", deptId);
@@ -152,14 +152,14 @@ public class QbxsSaveHandler extends AbstractSaveHandler {
     params.put("seqName", "AJGLQBXSBASE");
     params.put("subSize", 20);
     List<Map<String, Object>> baseRes = (List<Map<String, Object>>) batchSaveHandler.save(params);
-    for(Map<String, Object> map: baseRes){
-      if(map.get("receiveCode")!=null){
+    for (Map<String, Object> map : baseRes) {
+      if (map.get("receiveCode") != null) {
         Map<String, Object> deptMap = new HashMap<>();
-        deptMap.put("assistDeptId",map.get("deptId"));
-        deptMap.put("deptCode",map.get("receiveCode"));
-        deptMap.put("qbxsId",map.get("id"));
+        deptMap.put("assistDeptId", map.get("deptId"));
+        deptMap.put("deptCode", map.get("receiveCode"));
+        deptMap.put("qbxsId", map.get("id"));
         deptMap.put("assistType", type);
-        deptMap.put("transferred",1);
+        deptMap.put("transferred", 1);
         qbxsDeptList.add(deptMap);
       }
     }
@@ -197,13 +197,14 @@ public class QbxsSaveHandler extends AbstractSaveHandler {
   }
 
   Pattern pattern = Pattern.compile("市(.*)[区|县]");
-  private List<Map<String, Object>> getDepts(Map<String, Object> zhidui, String addr, String xfType){
-    if("zdxf".equals(xfType)){
+
+  private List<Map<String, Object>> getDepts(Map<String, Object> zhidui, String addr, String xfType) {
+    if ("zdxf".equals(xfType)) {
       Matcher matcher = pattern.matcher(addr);
-      if(matcher.find()) {
+      if (matcher.find()) {
         String k = matcher.group(1);
         for (String key : zhidui.keySet()) {
-          if(key.contains(k)){
+          if (key.contains(k)) {
             return (List<Map<String, Object>>) zhidui.get(key);
           }
         }
@@ -216,17 +217,16 @@ public class QbxsSaveHandler extends AbstractSaveHandler {
 
 
   private String getCityName(String addr, String xfType) {
-    addr = addr.replaceAll("[`~!@#$%^&*()_\\-+=<>?:\"{}|,.\\/;'\\[\\]·~！@#￥%……&*（）——\\-+={}|《》？：“”【】、；‘’，。、]","");
-    if("zdxf".equals(xfType)){
-
+    addr = addr.replaceAll("[`~!@#$%^&*()_\\-+=<>?:\"{}|,.\\/;'\\[\\]·~！@#￥%……&*（）——\\-+={}|《》？：“”【】、；‘’，。、]", "");
+    if ("zdxf".equals(xfType)) {
     }
-    if (addr.contains("杨凌")) {
+    if (addr.contains("杨凌区") || addr.contains("杨凌示范区")) {
       return "杨凌区";
     }
     if (addr.contains("西咸新区")) {
       return "西咸新区";
     }
-    addr = addr.replaceAll("陕西","");
+    addr = addr.replaceAll("陕西", "");
     addr = addr.substring(0, addr.indexOf("市") + 1);
     if (addr.contains("省")) {
       return addr.substring(addr.indexOf("省") + 1, addr.length());
@@ -239,9 +239,9 @@ public class QbxsSaveHandler extends AbstractSaveHandler {
     Map<String, Object> result = new HashMap<>();
     try {
       Map<String, Object> params = new HashMap<>();
-      if("zdxf".equals(xfType)){ //支队下发
+      if ("zdxf".equals(xfType)) { //支队下发
         params.put("deptType", 3);
-        params.put("deptCode", deptCode.substring(0,4));
+        params.put("deptCode", deptCode.substring(0, 4));
       } else {
         params.put("deptType", 2);
       }
@@ -250,7 +250,7 @@ public class QbxsSaveHandler extends AbstractSaveHandler {
       if (depts != null && depts.size() > 0) {
         for (Map<String, Object> map : depts) {
           String key = String.valueOf(map.get("cityName"));
-          if("zdxf".equals(xfType)){
+          if ("zdxf".equals(xfType)) {
             key = String.valueOf(map.get("name"));
           }
           if (result.containsKey(key)) {
