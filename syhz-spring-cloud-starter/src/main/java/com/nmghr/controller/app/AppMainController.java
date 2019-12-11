@@ -15,9 +15,9 @@ import java.util.Map;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -39,7 +39,6 @@ import com.nmghr.util.app.Result;
 import com.nmghr.util.app.SyhzAppErrorEnmu;
 import com.nmghr.vo.OperationRequestVo;
 import com.nmghr.vo.QueryRequestVo;
-
 
 /**
  * 陕西环食药APP入门
@@ -74,7 +73,7 @@ public class AppMainController {
 
 	private static AppObjectIdUtil AppObjectIdUtil;
 
-	@RequestMapping(value = "/hsyzapp/main", method = { RequestMethod.GET, RequestMethod.POST })
+	@PostMapping(value = "/hsyzapp/main")
 	@ResponseBody
 	public String appMain(@RequestBody Map<String, Object> requestBody) {
 		String method = SyhzUtil.setDate(requestBody.get("method"));
@@ -137,6 +136,12 @@ public class AppMainController {
 		}
 		return Result.fail(SyhzUtil.setDate(requestBody.get("jsonrpc")), SyhzUtil.setDate(requestBody.get("id")),
 				SyhzAppErrorEnmu.ERROR_500.getCode(), SyhzAppErrorEnmu.ERROR_500.getMessage());
+	}
+
+	@GetMapping(value = "/hsyzapp/main")
+	@ResponseBody
+	public Object ping() {
+		return null;
 	}
 
 	private Object getQueryMethod(String getDataObjId, QueryRequestVo queryRequestVo, Map<String, Object> requestBody,
