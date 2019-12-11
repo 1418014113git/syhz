@@ -68,12 +68,11 @@ public class CaseAssistExportController {
 
     params = new HashMap<>();
     params.put("clusterIds",clusterIds);
-    List<Map<String, Object>> list = getList(params);
+    List<Map<String, Object>> list = getList(params, 2);
     XSSFWorkbook wb = null;
     try {
       // excel模板路径
       wb = setSheets(curDeptName,realName, curUserPhone, list, json);
-
       String fileName = "涉案线索协查参与地战果反馈表";
       ByteArrayOutputStream os = new ByteArrayOutputStream();
       wb.write(os);
@@ -86,13 +85,11 @@ public class CaseAssistExportController {
       ServletOutputStream sout = response.getOutputStream();
       BufferedInputStream bis = null;
       BufferedOutputStream bos = null;
-
       try {
         bis = new BufferedInputStream(is);
         bos = new BufferedOutputStream(sout);
         byte[] buff = new byte[2048];
         int bytesRead;
-        // Simple read/write loop.
         while (-1 != (bytesRead = bis.read(buff, 0, buff.length))) {
           bos.write(buff, 0, bytesRead);
         }
@@ -104,11 +101,73 @@ public class CaseAssistExportController {
         if (bos != null)
           bos.close();
       }
-
     } catch (Exception e) {
       log.error("导出excel出现异常:", e);
     }
+  }
+  @RequestMapping(value = "/caseAssist/export")
+  public void caseAssistExport(String assistIds, String curDeptName,String realName,String curUserPhone,HttpServletResponse response) throws Exception {
+    ValidationUtils.notNull(assistIds, "assistIds不能为空!");
+    ValidationUtils.notNull(curDeptName, "curDeptName不能为空!");
+    ValidationUtils.notNull(realName, "realName不能为空!");
+    ValidationUtils.notNull(curUserPhone, "curUserPhone不能为空!");
 
+    Map<String, Object> params = new HashMap<>();
+    params.put("configKey", "assistExport");
+    LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "SYSCONFIG");
+    List<Map<String, Object>> configs = (List<Map<String, Object>>) baseService.list(params);
+    if (configs == null || configs.size() == 0) {
+      throw new GlobalErrorException("999889", "导出配置信息不存在");
+    }
+    Map<String, Object> config = configs.get(0);
+    if (config == null || config.get("configValue") == null) {
+      throw new GlobalErrorException("999889", "导出配置信息不存在");
+    }
+    JSONObject json = null;
+    try {
+      json = JSONObject.parseObject(String.valueOf(config.get("configValue")));
+    } catch (Exception e) {
+      throw new GlobalErrorException("999889", "导出配置信息错误");
+    }
+
+    params = new HashMap<>();
+    params.put("assistIds",assistIds);
+    List<Map<String, Object>> list = getList(params, 1);
+    XSSFWorkbook wb = null;
+    try {
+      // excel模板路径
+      wb = setSheets(curDeptName,realName, curUserPhone, list, json);
+      String fileName = "涉案线索协查参与地战果反馈表";
+      ByteArrayOutputStream os = new ByteArrayOutputStream();
+      wb.write(os);
+      byte[] content = os.toByteArray();
+      InputStream is = new ByteArrayInputStream(content);
+      // 设置response参数，可以打开下载页面
+      response.reset();
+      response.setContentType("application/vnd.ms-excel;charset=utf-8");
+      response.setHeader("Content-Disposition", "attachment;filename=" + new String((fileName + ".xlsx").getBytes(), "iso-8859-1"));
+      ServletOutputStream sout = response.getOutputStream();
+      BufferedInputStream bis = null;
+      BufferedOutputStream bos = null;
+      try {
+        bis = new BufferedInputStream(is);
+        bos = new BufferedOutputStream(sout);
+        byte[] buff = new byte[2048];
+        int bytesRead;
+        while (-1 != (bytesRead = bis.read(buff, 0, buff.length))) {
+          bos.write(buff, 0, bytesRead);
+        }
+      } catch (Exception e) {
+        log.error("导出excel出现异常:", e);
+      } finally {
+        if (bis != null)
+          bis.close();
+        if (bos != null)
+          bos.close();
+      }
+    } catch (Exception e) {
+      log.error("导出excel出现异常:", e);
+    }
   }
 
   private XSSFWorkbook setSheets(String curDeptName,String realName,String curUserPhone, List<Map<String, Object>> list, JSONObject config) throws IOException {
@@ -142,7 +201,7 @@ public class CaseAssistExportController {
         if (i == size) {
           c0.setCellValue("总数");
         } else {
-          c0.setCellValue(String.valueOf(bean.get("clusterNumber")));// 编号
+          c0.setCellValue(String.valueOf(bean.get("assistNumber")));// 编号
         }
         i++;
         c0.setCellStyle(cStyle);
@@ -239,21 +298,16 @@ public class CaseAssistExportController {
       cellTextStyle.setWrapText(true);
       remarkC.setCellStyle(cellTextStyle);
     }
-
     return wb;
   }
 
-  public List<Map<String, Object>> getList(Map<String, Object> params) {
+  public List<Map<String, Object>> getList(Map<String, Object> params, int type) {
     try {
       //查询
-      String type = "";
-      if (params.containsKey("type") && !StringUtils.isEmpty(params.get("type"))) {
-        type = String.valueOf(params.get("type"));
-      }
-      if ("".equals(type) || "2".equals(type)) { // 集群战役
+      if (type == 2) { // 集群战役
         LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJCLUSTERASSISTEXPORT");
       }
-      if ("1".equals(type)) { // 案件协查
+      if (type == 1) { // 案件协查
         LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJASSISTEXPORT");
       }
       List<Map<String, Object>> list = (List<Map<String, Object>>) baseService.list(params);

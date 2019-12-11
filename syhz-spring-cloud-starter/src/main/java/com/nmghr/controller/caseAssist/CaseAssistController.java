@@ -23,10 +23,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * 案件协查
@@ -64,16 +61,19 @@ public class CaseAssistController {
     if (params.get("pageSize") != null && !StringUtils.isEmpty(params.get("pageSize"))) {
       pageSize = Integer.parseInt(String.valueOf(params.get("pageSize")));
     }
-    if(params.get("reginCode")!=null){
-      params.put("queryDeptCode",params.get("reginCode"));
+    if(!StringUtils.isEmpty(params.get("reginCode"))){
+      params.put("cityCode",params.get("reginCode"));
     } else {
-      if(params.get("cityCode")!=null){
-        params.put("queryDeptCode",params.get("cityCode"));
-      } else {
-        if(params.get("provinceCode")!=null){
-          params.put("queryDeptCode",params.get("provinceCode"));
+      if(StringUtils.isEmpty(params.get("cityCode"))){
+        if(!StringUtils.isEmpty(params.get("provinceCode"))){
+          params.put("cityCode",params.get("provinceCode"));
         }
       }
+    }
+    if(!StringUtils.isEmpty(params.get("isCheck"))&&Boolean.valueOf(String.valueOf(params.get("isCheck")))){
+      params.put("isCheck",0);
+    } else {
+      params.put("isCheck",3);
     }
     try {
       LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJASSIST");
@@ -81,7 +81,7 @@ public class CaseAssistController {
       if(obj==null || obj.getList().size()==0){
         return obj;
       }
-      Map<String, Object> temp = new HashMap<>();
+      Map<String, Object> temp = new LinkedHashMap<>();
       List<Object> ids = new ArrayList();
       List<Map<String, Object>> pglist = obj.getList();
       for (Map<String, Object> m : pglist) {
@@ -92,6 +92,7 @@ public class CaseAssistController {
       Map<String, Object> p = new HashMap<>();
       p.put("assistIds", ids);
       p.put("curDeptCode", params.get("curDeptCode"));
+      LocalThreadStorage.put(Constant.CONTROLLER_PAGE, false);
       LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJASSISTDEPTCLUE");
       List<Map<String, Object>> deptInfo = (List<Map<String, Object>>) baseService.list(p);
       if (deptInfo != null && deptInfo.size() > 0) {
@@ -266,12 +267,11 @@ public class CaseAssistController {
       LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJJBXXSYH");
       Map<String, Object> caseBean = (Map<String, Object>) baseService.get(String.valueOf(bean.get("ajbh")));
       bean.putAll(caseBean);
-
       bean.put("cityCode", String.valueOf(bean.get("applyDeptCode")).substring(0,4)+"00");
-
       if(!StringUtils.isEmpty(bean.get("readKey"))){
         bean.put("readKey", Sms4Util.Decrypt(String.valueOf(bean.get("readKey"))));
       }
+      setCityNum(id, bean);
       return Result.ok(bean);
     } catch (Exception e) {
       if (e instanceof GlobalErrorException) {
@@ -282,6 +282,14 @@ public class CaseAssistController {
       }
     }
     return Result.fail("999668", "查询异常");
+  }
+
+  private void setCityNum(Object id, Map<String, Object> bean) throws Exception {
+    Map<String, Object> params = new HashMap<>();
+    params.put("assistId", id);
+    LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJASSISTDEPTNUMS");
+    List<Object> list = (List<Object>) baseService.list(params);
+    bean.put("cityNum", list!=null?list.size():0);
   }
 
   /**
