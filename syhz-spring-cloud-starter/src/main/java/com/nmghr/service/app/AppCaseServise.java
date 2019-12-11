@@ -147,6 +147,7 @@ public class AppCaseServise {
 
 		// 查询
 		LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "APPAJJXXSYHID");
+		conditionMap.put("id", conditionMap.get("ajlb"));
 		Map<String, Object> pageMap = (Map<String, Object>) baseService.get(conditionMap);
 		List<Map<String, Object>> messageList = new ArrayList<Map<String, Object>>();
 		messageList.add(pageMap);
