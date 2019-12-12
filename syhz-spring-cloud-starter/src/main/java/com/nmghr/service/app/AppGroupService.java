@@ -101,7 +101,8 @@ public class AppGroupService {
 
 		validate(requestParam);
 		requestParam.put("receiveDept", requestParam.get("deptIds"));
-		String id = SyhzUtil.setDate(requestParam.get("id"));
+		requestParam.put("id", requestParam.get("groupId"));
+		String id = SyhzUtil.setDate(requestParam.get("groupId"));
 		// 组名去重
 		LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "BASEGROUPNAMECHECK");
 		Map<String, Object> nameMap = new HashMap<>();
