@@ -36,7 +36,7 @@ public interface UserMapper {
 	List<Map<String, Object>> getDeptUser(Map<String, Object> map);
 
 	@Update("UPDATE `g_user` SET \r\n"
-			+ "`user_state`=#{userState}, `user_name`=#{userName}, `real_name`=#{realName}, `user_id_number`=#{userIdNumber}, `user_sex`=#{userSex}, `remark`=#{remark}, `phone`=#{phone}, `nation`=#{nation}, \r\n"
+			+ "`user_state`=#{userState},  `real_name`=#{realName}, `user_id_number`=#{userIdNumber}, `user_sex`=#{userSex}, `remark`=#{remark}, `phone`=#{phone}, `nation`=#{nation}, \r\n"
 			+ "`politics_status`=#{politicsStatus}, `culture_degree`=#{cultureDegree}, `degree`=#{degree}, `worker_grade`=#{workerGrade}, `worker_duty`=#{workerDuty}, `worker_time`=#{workerTime}, \r\n"
 			+ "`worker_post`=#{workerPost}, `join_police_time`=#{joinPoliceTime}, `join_hsy_time`=#{joinHsyTime}, `worker_phone`=#{workerPhone}, `pc_ip`=#{ip}, `birth_time`=#{birthTime}, `age`=#{age}, `complete`=1, `last_id`=#{lastId}, `last_name`=#{lastName}, `last_time`=NOW() \r\n"
 			+ "WHERE id=#{id}")
