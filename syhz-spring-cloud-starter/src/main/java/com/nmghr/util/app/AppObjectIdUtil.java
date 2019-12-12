@@ -23,9 +23,9 @@ public class AppObjectIdUtil {
 	public static final String DEPT_USER = "departuser";// 机构下人员
 	public static final String DEPARTTREE = "departtree";// 部门
 
-	public static final String MESSAGE_QUERY = "messagequery";// 站内消息列表
+	public static final String MESSAGE_QUERY = "mesaagequery";// 站内消息列表
 	public static final String MESSAGE_DELETE = "messagedelete";// 删除站内消息
-	public static final String MESSAGE_SEND = "messagesend";// 发送通知
+	public static final String MESSAGE_SEND = "mesaagesend";// 发送通知
 
 	public static final String GROUP_INFO = "groupinfo";// 查询常用组
 	public static final String GROUP_VAILD_NAME = "groupvaildname";// 检测标题的唯一性
