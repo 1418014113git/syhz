@@ -295,7 +295,7 @@ public class AjglQbxsService {
     baseP.put("qbxsIds", body.get("qbxsId"));
     baseP.put("qbxsDeptIds", body.get("qbxsDeptId"));
     baseP.put("assistId", body.get("assistId"));
-    if(!StringUtils.isEmpty(body.get("receiveCode"))){
+    if (!StringUtils.isEmpty(body.get("receiveCode"))) {
       List codes = new ArrayList<>();
       codes.add(body.get("receiveCode"));
       baseP.put("codes", codes);
@@ -430,7 +430,11 @@ public class AjglQbxsService {
         base.put("parqCount", 0);
       }
       base.remove("zbajList");
-      base.put("cityName", getCity(String.valueOf(base.get("receiveName"))));
+      if ("2".equals(String.valueOf(requestMap.get("showType")))) {
+        base.put("cityName", getRegin(String.valueOf(base.get("receiveCode")).substring(0, 6)));
+      } else {
+        base.put("cityName", getCity(String.valueOf(base.get("receiveName"))));
+      }
       base.put("cityCode", String.valueOf(base.get("receiveCode")).substring(0, 4) + "00");
     }
     params = new HashMap<>();
@@ -782,6 +786,7 @@ public class AjglQbxsService {
     double sajzSum = 0;
     Map<String, Object> resList = new LinkedHashMap<>();
     for (Map<String, Object> m : list) {
+      m.put("deptType", getDeptType(String.valueOf(m.get("deptCode"))));
       if (m.get("ysajList") != null) {
         String[] str = String.valueOf(m.get("ysajList")).replaceAll("\\]", "").replaceAll("\\[", "").split(",");
         m.put("ysajList", str.length);
@@ -896,6 +901,7 @@ public class AjglQbxsService {
           data.remove("deptCode");
           data.remove("deptName");
           map.putAll(data);
+          map.put("deptType", getDeptType(String.valueOf(map.get("deptCode"))));
           result.add(map);
         }
       }
@@ -906,6 +912,24 @@ public class AjglQbxsService {
     return list;
   }
 
+  private int getDeptType(String deptCode) {
+    if (StringUtils.isEmpty(deptCode)) {
+      return 0;
+    }
+    if ("610000".equals(deptCode.substring(0, 6))) {
+      return 1;
+    } else {
+      if (!"00".equals(deptCode.substring(deptCode.length() - 2, deptCode.length()))) {
+        return 4;
+      } else {
+        if ("00".equals(deptCode.substring(4, 6)) && "0000".equals(deptCode.substring(deptCode.length() - 4, deptCode.length()))) {
+          return 2;
+        } else {
+          return 3;
+        }
+      }
+    }
+  }
 
   private Map<String, Integer> getAjInfoData(List<String> ajbhs) throws Exception {
     Map<String, Integer> res = new HashMap<>();
@@ -955,5 +979,20 @@ public class AjglQbxsService {
     }
     return "";
   }
+
+  private String getRegin(String code) throws Exception {
+    Map<String, Object> params = new HashMap<>();
+    params.put("lx", "xzqh");
+    params.put("code", code.substring(0, 4));
+    LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "TCPCODELEFTLIKE");
+    List<Map<String, Object>> maps = (List<Map<String, Object>>) baseService.list(params);
+    Map<String, Object> result = new HashMap<>();
+    for (Map<String, Object> map : maps) {
+      result.put(String.valueOf(map.get("code")), map.get("codeName"));
+    }
+    String str = String.valueOf(result.get(code));
+    return str.replace("陕西省","");
+  }
+
 
 }
