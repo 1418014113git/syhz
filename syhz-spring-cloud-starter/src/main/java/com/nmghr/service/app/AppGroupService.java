@@ -100,6 +100,7 @@ public class AppGroupService {
 			Map<String, Object> requestParam, IBaseService baseService) throws Exception {
 
 		validate(requestParam);
+		requestParam.put("receiveDept", requestParam.get("deptIds"));
 		String id = SyhzUtil.setDate(requestParam.get("id"));
 		// 组名去重
 		LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "BASEGROUPNAMECHECK");
@@ -182,7 +183,7 @@ public class AppGroupService {
 	public Object checkRepeat(QueryRequestVo queryRequestVo, Map<String, Object> requestBody,
 			Map<String, Object> requestParam, IBaseService baseService) throws Exception {
 		validateParam(requestParam, 3);
-
+		requestParam.put("creatorId", requestParam.get("groupId"));
 		// 组名查重
 		LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "BASEGROUPNAMECHECK");
 		Map<String, Object> num = (Map<String, Object>) baseService.get(requestParam);
