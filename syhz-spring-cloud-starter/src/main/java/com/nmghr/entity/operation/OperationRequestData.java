@@ -8,7 +8,9 @@
 
 package com.nmghr.entity.operation;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * <功能描述/>
@@ -19,7 +21,22 @@ import java.util.List;
  */
 public class OperationRequestData {
   private List<OperationFieldValue> fieldValues;
-
+  
+  public static List<OperationRequestData> dataToListVo(Object object) {
+    List<Map<String,Object>> dataListReq = (List<Map<String,Object>>) object;
+    List<OperationRequestData> operationFieldValueList = new ArrayList<OperationRequestData>();
+    if(dataListReq.size() >= 1) {
+      OperationRequestData operationRequestData = null;
+      for(Object obj:dataListReq) {
+        Map<String,Object> objMap = (Map<String, Object>) obj;
+        operationRequestData = new OperationRequestData();
+        operationRequestData.setFieldValues(OperationFieldValue.dataToListVo(objMap.get("fieldValues")));
+        operationFieldValueList.add(operationRequestData);
+      }
+    }
+    return operationFieldValueList;
+  }
+  
   public List<OperationFieldValue> getFieldValues() {
     return fieldValues;
   }

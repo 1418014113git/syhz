@@ -20,47 +20,47 @@ import com.nmghr.util.SyhzUtil;
  * @version 1.0
  */
 public class QueryParams {
-  private QueryRequest data;
-  private String sign;
+	private QueryRequest data;
+	private String sign;
 
-  public static QueryParams dataToVo(Map<String, Object> requestBody) {
-    Map<String, Object> paramsMap = (Map<String, Object>) requestBody.get("params");
-    QueryParams aueryParams = new QueryParams();
+	public static QueryParams dataToVo(Map<String, Object> requestBody) {
+		Map<String, Object> paramsMap = (Map<String, Object>) requestBody.get("params");
+		QueryParams aueryParams = new QueryParams();
 
-    QueryRequest queryRequest = QueryRequest.dataToVo(paramsMap);
-    aueryParams.setData(queryRequest);
+		QueryRequest queryRequest = QueryRequest.dataToVo(paramsMap);
+		aueryParams.setData(queryRequest);
 
-    String sign = SyhzUtil.setDate(paramsMap.get("sign"));
-    aueryParams.setSign(sign);
-    
-    return aueryParams;
-  }
+		String sign = SyhzUtil.setDate(paramsMap.get("sign"));
+		aueryParams.setSign(sign);
 
-  public QueryRequest getData() {
-    return data;
-  }
+		return aueryParams;
+	}
 
-  public void setData(QueryRequest data) {
-    this.data = data;
-  }
+	public QueryRequest getData() {
+		return data;
+	}
 
-  public String getSign() {
-    return sign;
-  }
+	public void setData(QueryRequest data) {
+		this.data = data;
+	}
 
-  public void setSign(String sign) {
-    this.sign = sign;
-  }
+	public String getSign() {
+		return sign;
+	}
 
-  @Override
-  public String toString() {
-    StringBuilder builder = new StringBuilder();
-    builder.append("BaseParams [data=");
-    builder.append(data);
-    builder.append(", sign=");
-    builder.append(sign);
-    builder.append(']');
-    return builder.toString();
-  }
+	public void setSign(String sign) {
+		this.sign = sign;
+	}
+
+	@Override
+	public String toString() {
+		StringBuilder builder = new StringBuilder();
+		builder.append("BaseParams [data=");
+		builder.append(data);
+		builder.append(", sign=");
+		builder.append(sign);
+		builder.append(']');
+		return builder.toString();
+	}
 
 }

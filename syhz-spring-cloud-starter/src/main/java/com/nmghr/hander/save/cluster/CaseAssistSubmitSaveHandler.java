@@ -46,7 +46,7 @@ public class CaseAssistSubmitSaveHandler extends AbstractSaveHandler {
     if (!validName(String.valueOf(body.get("curDeptCode")), String.valueOf(body.get("title")), body.get("id"))) {
       throw new GlobalErrorException("999667", "案件协查标题已存在，请确认后重新输入！");
     }
-    if(body.get("assistNumber")!=null){
+    if(!StringUtils.isEmpty(body.get("assistNumber")) && !"1".equals(String.valueOf(body.get("category")))){
       String assistId = "";
       if (body.containsKey("id") && !StringUtils.isEmpty(body.get("id"))) {
         assistId = String.valueOf(body.get("id"));
@@ -64,6 +64,9 @@ public class CaseAssistSubmitSaveHandler extends AbstractSaveHandler {
       // 判断线索是否已导入
       if(!validNum(id)){
         throw new GlobalErrorException("999667", "未导入线索，请导入线索后再提交！");
+      }
+      if(StringUtils.isEmpty(body.get("acceptDeptName"))||StringUtils.isEmpty(body.get("acceptDeptId"))){
+        throw new GlobalErrorException("999667", "审核单位信息异常！");
       }
       createApprove(body, id, false); //创建审核
       return id;

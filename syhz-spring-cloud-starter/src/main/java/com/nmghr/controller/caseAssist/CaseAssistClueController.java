@@ -46,6 +46,8 @@ public class CaseAssistClueController {
 
   /**
    * 案件协查列表
+   * type 1协查，2集群
+   * category 食药环分类
    *
    * @return
    */
@@ -58,7 +60,7 @@ public class CaseAssistClueController {
                            @RequestParam("category") Object category,
                            @RequestParam("curDeptCode") Object curDeptCode,
                            @RequestParam("curDeptName") Object curDeptName,
-                           @RequestParam("assistId") Object assistId,Object xfType) {
+                           @RequestParam("assistId") Object assistId, String xfType) {
     try {
       if (null != mulFile) {
         Collection<LinkedHashMap> list = ExcelUtil.importExcel(LinkedHashMap.class, mulFile.getInputStream(), 0);
@@ -68,23 +70,25 @@ public class CaseAssistClueController {
             log.error("excel uploadFile error, Maximum length exceeds 1000 ");
             throw new GlobalErrorException("99952", "最多不能超过1000条");
           }
-
+          List<String> keys = new ArrayList<>();
           List<LinkedHashMap<String, Object>> params = IteratorUtils.toList(list.iterator());
-//          List<LinkedHashMap<String, Object>> params = IteratorUtils.toList(list.iterator());
           if (params.size() > 0) {
             LinkedHashMap<String, Object> map = params.get(0);
-//            LinkedHashMap<String, Object> map = params.get(0);
-            List<String> keys = IteratorUtils.toList(map.keySet().iterator());
+            keys = IteratorUtils.toList(map.keySet().iterator());
             StringBuilder err = new StringBuilder();
             if (!keys.contains("序号")) {
-              err.append("标题必须包含《序号》;");
+              err.append(mulFile.getOriginalFilename()).append("没有序号列，请修改后重新上传。");
             }
             if (!keys.contains("地址")) {
-              err.append("标题必须包含《地址》;");
+              err.append(mulFile.getOriginalFilename()).append("没有地址列，请修改后重新上传。");
             }
             if (err.length() > 0) {
               return Result.fail("999668", err.toString());
             }
+          }
+          // 获取模板标题对比
+          if (checkTitle(type, assistId, keys)) {
+            return Result.fail("999669", "导入线索列标题必须相同，请修改后重新上传。");
           }
           Map<String, Object> data = new HashMap<>();
           data.put("type", type);
@@ -119,13 +123,22 @@ public class CaseAssistClueController {
     return Result.fail("999669", "保存失败");
   }
 
-  /**
-   * 协查线索列表
-   *
-   * @return
-   */
-  public Object clueList() {
-    return null;
+  private Boolean checkTitle(Object type, Object assistId, List<String> keys) throws Exception {
+    Map<String, Object> titleP = new HashMap<>();
+    titleP.put("assistType", type);
+    titleP.put("assistId", assistId);
+    LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJGLQBXSBYASSIST");
+    List<Map<String, Object>> titles = (List<Map<String, Object>>) baseService.list(titleP);
+    if (titles != null && titles.size() > 0) {
+      int flag = 0;
+      for (Map<String, Object> map : titles) {
+        if (keys.contains(map.get("title"))) {
+          flag++;
+        }
+      }
+      return keys.size() != flag;
+    }
+    return false;
   }
 
   /**
@@ -182,9 +195,10 @@ public class CaseAssistClueController {
     }
 
     try {
-      body.put("assistType",2);
-      Object obj = ajglQbxsService.distributeClue(body);
-      return Result.ok(obj);
+      if (!StringUtils.isEmpty(body.get("curDeptType"))) {
+        return ajglQbxsService.issue(body);
+      }
+      return ajglQbxsService.distributeClue(body);
     } catch (Exception e) {
       if (e instanceof GlobalErrorException) {
         GlobalErrorException ge = (GlobalErrorException) e;
@@ -208,7 +222,7 @@ public class CaseAssistClueController {
     ValidationUtils.notNull(body.get("qbxsId"), "qbxsId不能为空!");
 
     try {
-      Object obj = ajglQbxsService.cancelDistribute(body.get("assistId"), body.get("qbxsId"),body.get("qbxsDeptId"));
+      Object obj = ajglQbxsService.cancelDistribute(body);
       return Result.ok(obj);
     } catch (Exception e) {
       if (e instanceof GlobalErrorException) {
@@ -231,9 +245,13 @@ public class CaseAssistClueController {
   public Object delClue(@RequestBody Map<String, Object> body) {
     ValidationUtils.notNull(body.get("assistId"), "assistId不能为空!");
     ValidationUtils.notNull(body.get("qbxsId"), "qbxsId不能为空!");
-
+//    baseP.put("qbxsIds", body.get("qbxsId"));
+//    baseP.put("ids", body.get("qbxsDeptId"));
+//    baseP.put("assistId", body.get("assistId"));
+//    baseP.put("codes", new ArrayList<>().add(body.get("receiveCode")));
+//    baseP.put("assistType", "1".equals(String.valueOf(body.get("assistType"))) ? 1 : 2);
     try {
-      Object obj = ajglQbxsService.removeClue(body.get("assistId"), body.get("qbxsId"), body.get("qbxsDeptId"));
+      Object obj = ajglQbxsService.removeClue(body);
       return Result.ok(obj);
     } catch (Exception e) {
       if (e instanceof GlobalErrorException) {
@@ -279,13 +297,6 @@ public class CaseAssistClueController {
   public Object feedBackClues(@RequestParam Map<String, Object> body) {
     ValidationUtils.notNull(body.get("assistId"), "集群战役Id不能为空!");
     try {
-      if(body.get("reginCode")!=null){
-        body.put("cityCode",body.get("reginCode"));
-      } else {
-        if(body.get("cityCode")!=null){
-          body.put("cityCode",body.get("cityCode"));
-        }
-      }
       Object obj = ajglQbxsService.feedBackList(body);
       return Result.ok(obj);
     } catch (Exception e) {
@@ -385,19 +396,18 @@ public class CaseAssistClueController {
 
   /**
    * 案件协查情况统计
-   *
+   * type // 1移送，2侦办
    * @return
    */
   @GetMapping("/ajSearch")
   @ResponseBody
   public Object ajSearch(@RequestParam Map<String, Object> requestMap) {
+    ValidationUtils.notNull(requestMap.get("type"), "type不能为空!");
+    ValidationUtils.notNull(requestMap.get("fbId"), "fbId不能为空!");
+    ValidationUtils.notNull(requestMap.get("assistId"), "assistId不能为空!");
     try {
+      List ajbhs = getAjbhs(requestMap);
       Map<String, Object> params = new HashMap<>();
-      params.put("fbId", requestMap.get("fbId"));
-      params.put("assistId", requestMap.get("assistId"));
-      params.put("type", requestMap.get("type"));
-      List ajbhs = getAjbhs(params);
-      params = new HashMap<>();
       params.put("departCode", requestMap.get("deptCode"));
       params.put("ajmc", requestMap.get("ajmc"));
       if (ajbhs != null) {
@@ -432,8 +442,8 @@ public class CaseAssistClueController {
       map.put("assistType", 2);
       map.put("num", 0);
       LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJCLUSTERNEEDFEEDBACK");
-      Map<String, Object> obj= (Map<String, Object>) baseService.get(String.valueOf(param.get("deptCode")));
-      if(obj!=null && obj.containsKey("num")){
+      Map<String, Object> obj = (Map<String, Object>) baseService.get(String.valueOf(param.get("deptCode")));
+      if (obj != null && obj.containsKey("num")) {
         map.putAll(obj);
       }
       result.add(map);
@@ -457,12 +467,12 @@ public class CaseAssistClueController {
 
 
   private List getAjbhs(Map<String, Object> params) throws Exception {
+    LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "1".equals(String.valueOf(params.get("assistType"))) ? "AJASSISTFEEDBACK" : "AJCLUSTERFEEDBACK");
+    Map<String, Object> fb = (Map<String, Object>) baseService.get(params);
+    if (fb == null) {
+      return null;
+    }
     if ("1".equals(params.get("type"))) {
-      LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJCLUSTERFEEDBACK");
-      Map<String, Object> fb = (Map<String, Object>) baseService.get(params);
-      if (fb == null) {
-        return null;
-      }
       Object ys = fb.get("syajs");
       if (ys == null || StringUtils.isEmpty(ys)) {
         return null;
@@ -470,12 +480,6 @@ public class CaseAssistClueController {
       return JSONArray.parseArray(String.valueOf(ys)).toJavaList(String.class);
     }
     if ("2".equals(params.get("type"))) {
-      //查询
-      LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJCLUSTERFEEDBACK");
-      Map<String, Object> fb = (Map<String, Object>) baseService.get(params);
-      if (fb == null) {
-        return null;
-      }
       Object zb = fb.get("zbxss");
       if (zb == null || StringUtils.isEmpty(zb)) {
         return null;

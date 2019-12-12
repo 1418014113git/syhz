@@ -551,7 +551,7 @@ public class CaseClusterController {
    */
   @GetMapping("/numberValid")
   @ResponseBody
-  public Object numberValid(String dept, String numStr) {
+  public Object numberValid(String dept, String numStr, String id) {
     try {
       ValidationUtils.notNull(dept, "dept不能为空!");
       if (dept.length() < 6) {
@@ -560,6 +560,7 @@ public class CaseClusterController {
       Map<String, Object> params = new HashMap<>();
       params.put("deptCode", dept);
       params.put("number", numStr);
+      params.put("id", id);
       LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJCLUSTERNUMBERCHECK");
       List<Map<String, Object>> list = (List<Map<String, Object>>) baseService.list(params);
       return Result.ok((list == null || list.size() == 0));

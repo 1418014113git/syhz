@@ -32,8 +32,13 @@ public class ExamineSaveHandler extends AbstractSaveHandler {
    * @throws Exception e
    */
   @Transactional
-	public Object createApprove(ApproveParam params, Boolean checkFlag) {
-    try{
+  public Object createApprove(ApproveParam params, Boolean checkFlag) {
+    try {
+      Map<String, Object> delP = new HashMap<>();
+      delP.put("wdType",params.getWdType());
+      delP.put("bsId",params.getWdValue());
+      LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "WORDORDERSAVEBEFORE");//删除已存在待审核记录
+      baseService.remove(delP);
       Map<String, Object> approve = new HashMap<>();
       approve.put("type", params.getWdType());
       approve.put("status", params.getWdStatus());
@@ -62,9 +67,9 @@ public class ExamineSaveHandler extends AbstractSaveHandler {
         flow.put("content", "审核通过");
       }
       LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "WORKORDERFLOW");
-			return baseService.save(flow);
-    } catch (Exception e){
-      throw new GlobalErrorException("999667","审核信息保存异常");
+      return baseService.save(flow);
+    } catch (Exception e) {
+      throw new GlobalErrorException("999667", "审核信息保存异常");
     }
   }
 }

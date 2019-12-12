@@ -49,7 +49,7 @@ public class CaseClusterSubmitSaveHandler extends AbstractSaveHandler {
       throw new GlobalErrorException("999667", "集群战役标题已存在，请确认后重新输入！");
     }
     if(!StringUtils.isEmpty(body.get("clusterNumber"))){
-      caseAssistService.checkNumber(String.valueOf(body.get("curDeptCode")),String.valueOf(body.get("clusterNumber")),body.get("id"));
+      caseAssistService.checkNumber(String.valueOf(body.get("curDeptCode")),String.valueOf(body.get("clusterNumber")), body.get("id"), String.valueOf(body.get("category")));
     }
     if (body.containsKey("status") && null != body.get("status") && "1".equals(String.valueOf(body.get("status")))) {
       Object id = null;
