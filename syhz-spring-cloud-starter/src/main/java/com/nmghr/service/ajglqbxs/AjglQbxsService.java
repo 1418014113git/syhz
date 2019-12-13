@@ -683,13 +683,13 @@ public class AjglQbxsService {
           o.put("larq", aj.get("LARQ"));
           larqCount++;
         } else {
-          o.put("larq", 0);
+          o.put("larq", "");
         }
         if (!StringUtils.isEmpty(aj.get("PARQ"))) {
           o.put("parq", aj.get("PARQ"));
           parqCount++;
         } else {
-          o.put("parq", 0);
+          o.put("parq", "");
         }
         if (infos.length > 1 && !StringUtils.isEmpty(infos[1])) {
           o.put("dhwd", infos[1]);
