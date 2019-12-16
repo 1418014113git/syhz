@@ -174,7 +174,7 @@ public class CaseMergeController {
 	@PostMapping("/noMerge")
 	@ResponseBody
 	@Transaction
-	// 合并
+	// 移除重复合并案件
 	public Object noMergeCase(@RequestBody Map<String, Object> requestBody) throws Exception {
 		LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "CASEMERGEDETAIL");
 		baseService.remove(requestBody);
@@ -194,7 +194,7 @@ public class CaseMergeController {
 		caseMap.put("caseId", requestBody.get("caseId"));
 		caseList.add(caseMap);
 		requestBody.put("caseList", caseList);
-		requestBody.put("status", 3);
+		requestBody.put("status", 2);
 		saveLog(SyhzUtil.setDate(requestBody.get("mergeId")), requestBody, 5);// 添加操作记录
 		sendMessage(requestBody, 3);// 发送消息
 	}
