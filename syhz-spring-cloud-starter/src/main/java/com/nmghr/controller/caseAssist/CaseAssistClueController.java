@@ -410,7 +410,7 @@ public class CaseAssistClueController {
       Map<String, Object> params = new HashMap<>();
       params.put("departCode", requestMap.get("deptCode"));
       params.put("ajmc", requestMap.get("ajmc"));
-      if (ajbhs != null) {
+      if (ajbhs != null && ajbhs.size()>0) {
         params.put("ajbhs", ajbhs);
       }
       LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJASSISTSEARCH");
