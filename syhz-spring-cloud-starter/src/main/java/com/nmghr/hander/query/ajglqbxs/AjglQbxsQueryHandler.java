@@ -32,5 +32,4 @@ public class AjglQbxsQueryHandler extends AbstractQueryHandler {
     }
     return ajglQbxsService.ajglQbxsList(requestMap);
   }
-
 }

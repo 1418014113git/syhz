@@ -296,6 +296,7 @@ public class CaseAssistClueController {
   @ResponseBody
   public Object feedBackClues(@RequestParam Map<String, Object> body) {
     ValidationUtils.notNull(body.get("assistId"), "集群战役Id不能为空!");
+    ValidationUtils.notNull(body.get("assistType"), "assistType不能为空!");
     try {
       Object obj = ajglQbxsService.feedBackList(body);
       return Result.ok(obj);
@@ -318,17 +319,12 @@ public class CaseAssistClueController {
   @PostMapping("/feedBack")
   @ResponseBody
   public Object feedBack(@RequestBody Map<String, Object> body) {
-    ValidationUtils.notNull(body.get("type"), "处理类型不能为空!");
+    ValidationUtils.notNull(body.get("assistType"), "assistType不能为空!");
     ValidationUtils.notNull(body.get("fbId"), "反馈id不能为空!");
-    if ("result".equals(body.get("type"))) {
-      ValidationUtils.notNull(body.get("qbxsResult"), "反馈结果不能为空!");
-    } else if ("saveSyajs".equals(body.get("type")) || "deleteSyajs".equals(body.get("type"))) {
-      ValidationUtils.notNull(body.get("syajs"), "syajs不能为空!");
-    } else if ("saveZbxss".equals(body.get("type")) || "deleteZbxss".equals(body.get("type"))) {
-      ValidationUtils.notNull(body.get("zbxss"), "zbxss不能为空!");
-    } else {
-      return Result.fail("999887", "参数异常");
-    }
+    ValidationUtils.notNull(body.get("assistId"), "assistId不能为空!");
+    ValidationUtils.notNull(body.get("qbxsResult"), "协查情况不能为空!");
+    ValidationUtils.notNull(body.get("handleResult"), "处理方式不能为空!");
+    ValidationUtils.notNull(body.get("backResult"), "反馈内容不能为空!");
     try {
       return Result.ok(ajglQbxsFeedBackService.feedBack(body));
     } catch (Exception e) {
@@ -351,17 +347,9 @@ public class CaseAssistClueController {
   @ResponseBody
   public Object feedBackAJList(@RequestParam Map<String, Object> param) {
     ValidationUtils.notNull(param.get("fbId"), "fbId不能为空!");
+    ValidationUtils.notNull(param.get("assistType"), "assistType不能为空!");
     try {
-      if ("detail".equals(param.get("type"))) {
-        return ajglQbxsService.feedBackDetail(param);
-      }
-      if ("ys".equals(param.get("type"))) {
-        return ajglQbxsService.feedBackSyAJList(param);
-      }
-      if ("zb".equals(param.get("type"))) {
-        return ajglQbxsService.feedBackZbAJList(param);
-      }
-      return new ArrayList<>();
+      return ajglQbxsService.feedBackDetail(param);
     } catch (Exception e) {
       if (e instanceof GlobalErrorException) {
         GlobalErrorException ge = (GlobalErrorException) e;
@@ -381,6 +369,7 @@ public class CaseAssistClueController {
   @GetMapping("/detailCount")
   @ResponseBody
   public Object detailCount(@RequestParam Map<String, Object> requestMap) {
+    ValidationUtils.notNull(requestMap.get("type"), "type集群或协查类型不能为空!");
     try {
       return ajglQbxsService.feedBackResultList(requestMap);
     } catch (Exception e) {
@@ -402,7 +391,6 @@ public class CaseAssistClueController {
   @GetMapping("/ajSearch")
   @ResponseBody
   public Object ajSearch(@RequestParam Map<String, Object> requestMap) {
-    ValidationUtils.notNull(requestMap.get("type"), "type不能为空!");
     ValidationUtils.notNull(requestMap.get("fbId"), "fbId不能为空!");
     ValidationUtils.notNull(requestMap.get("assistId"), "assistId不能为空!");
     try {
@@ -472,30 +460,12 @@ public class CaseAssistClueController {
     if (fb == null) {
       return null;
     }
-    if ("1".equals(params.get("type"))) {
-      Object ys = fb.get("syajs");
-      if (ys == null || StringUtils.isEmpty(ys)) {
-        return null;
-      }
-      return JSONArray.parseArray(String.valueOf(ys)).toJavaList(String.class);
+    String zb = String.valueOf(fb.get("zbxss"));
+    if (zb == null || StringUtils.isEmpty(zb)) {
+      return null;
     }
-    if ("2".equals(params.get("type"))) {
-      Object zb = fb.get("zbxss");
-      if (zb == null || StringUtils.isEmpty(zb)) {
-        return null;
-      }
-      Map<String, Object> zbJson = JSONObject.toJavaObject(JSONObject.parseObject(String.valueOf(zb)), Map.class);
-      if (zbJson == null) {
-        return null;
-      }
-      List<String> ajbhs = IteratorUtils.toList(zbJson.keySet().iterator());
-      if (ajbhs == null || ajbhs.size() == 0) {
-        return null;
-      } else {
-        return ajbhs;
-      }
-    }
-    return null;
+    String[] ajbhs = zb.split(",");
+    return Arrays.asList(ajbhs);
   }
 
 
