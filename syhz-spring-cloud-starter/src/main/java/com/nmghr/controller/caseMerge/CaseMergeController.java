@@ -243,12 +243,13 @@ public class CaseMergeController {
 		StringBuilder title = new StringBuilder();
 		StringBuilder content = new StringBuilder();
 		if (type == 1) {// 发送合并消息
-			title.append(applyDeptName).append("已完成重复案件的合并");
 			if (status == 2) {
+				title.append(applyDeptName).append("已完成重复案件的合并！");
 				content.append(applyDeptName).append("已完成了案件");
 			}
 			if (status == 3) {
-				content.append(applyDeptName).append("对");
+				title.append(applyDeptName).append("不认可重复案件的合并！");
+				content.append(applyDeptName).append("对案件");
 			}
 		}
 		if (type == 2) {// 发送督促合并消息
