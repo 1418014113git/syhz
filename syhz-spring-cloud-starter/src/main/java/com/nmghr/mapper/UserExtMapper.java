@@ -44,20 +44,20 @@ public interface UserExtMapper {
 	@Select("<script> SELECT id,dict_code as `dictCode`  FROM u_dict WHERE app_id=1  and dict_type=#{dictType}  and enabled=1 </script>")
 	List<Map<String, Object>> getDictCode(@Param("dictType") Object dictType);
 
-	@Select("<script> select area_code as areaCode, area_name AS areaName,depart_code as departCode ,city_code as cityCode,area_code as areaCode,parent_depart_code as parentDepartCode from u_depart t  where t.parent_depart_id in\n"
+	@Select("<script> select area_code as areaCode,area_name as areaName,   area_code as cityCode, area_name AS cityName,depart_code as departCode ,city_code as cityCode,area_code as areaCode,parent_depart_code as parentDepartCode,1 as dtype from u_depart t  where t.parent_depart_id in\n"
 			+ "(select id from u_depart where depart_code in ('610000000000','610000530000'))  order by area_code</script>")
 	List<Map<String, Object>> getCity();
 
-	@Select("<script> SELECT t.depart_code as 'deptCode',t.depart_code as 'departCode',t.depart_name as 'areaName',t.depart_type as 'departType',area_code as areaCode FROM u_depart t \n"
-			+ "WHERE t.depart_code=#{departCode} or (t.parent_depart_code=#{departCode} AND t.parent_depart_code!=610000530000 and t.depart_type != 4)\n"
+	@Select("<script> SELECT t.depart_code as 'cityCode',t.depart_code as  deptCode,t.depart_code as 'departCode',t.depart_name as 'cityName',t.depart_type as 'departType',area_code as areaCode,depart_name as areaName ,4 as dtype FROM u_depart t \n"
+			+ "WHERE t.depart_code=#{departCode} \n"
 			+ "ORDER BY t.depart_code </script>")
 	List<Map<String, Object>> getDepart(@Param("departCode") Object departCode);
 
-	@Select("<script> SELECT t.depart_code as 'deptCode',t.depart_code as 'departCode',t.depart_name as 'areaName',t.depart_type as 'departType',area_code as areaCode,parent_depart_code as parentDepartCode FROM u_depart t \n"
+	@Select("<script> SELECT t.depart_code as areaCode,t.depart_code as deptCode,t.depart_name as areaName,  t.depart_code as 'cityCode',t.depart_code as 'departCode',t.depart_name as 'cityName',t.depart_type as 'departType',area_code as areaCode,parent_depart_code as parentDepartCode, 2 as dtype FROM u_depart t \n"
 			+ "WHERE t.depart_type !=4 and  t.city_code=#{cityCode}\n" + "ORDER BY t.depart_code </script>")
 	List<Map<String, Object>> getCityDepart(@Param("cityCode") Object cityCode);
 
-	@Select("<script> SELECT t.depart_code as 'deptCode',t.depart_code as 'departCode',t.depart_name as 'areaName',t.depart_type as 'departType',area_code as areaCode FROM u_depart t \n"
+	@Select("<script> SELECT t.depart_code as 'cityCode',t.depart_code as  deptCode,t.depart_code as 'departCode',t.depart_name as 'cityName',t.depart_type as 'departType',area_code as areaCode ,3 as dtype FROM u_depart t \n"
 			+ "WHERE t.depart_type !=4 and  t.regin_code=#{reginCode}\n" + "ORDER BY t.depart_code </script>")
 	List<Map<String, Object>> getReginDepart(@Param("reginCode") Object reginCode);
 
@@ -67,11 +67,21 @@ public interface UserExtMapper {
 			+ "WHERE (d.parent_depart_code=#{departCode} and parent_depart_code!='610000530000') or d.depart_code=#{departCode}  </script>")
 	Map<String, Object> getDepartType(@Param("departCode") Object departCode);
 
-	@Select("<script> SELECT \n" + "ifnull(count((case when d.depart_type=1 then 1 else null end ) ),0) as p1,\n"
-			+ "ifnull(count((case when d.depart_type=2 then 1 else null end ) ),0) as p2,\n"
-			+ "ifnull(count((case when d.depart_type=3 then 1 else null end ) ),0) as p3\n" + "FROM u_depart d\n"
-			+ "WHERE d.depart_code=#{departCode} </script>")
-	Map<String, Object> getMyDepartType(@Param("departCode") Object departCode);
+	@Select("<script>SELECT \n" + "ifnull(count((case when ud.depart_type=1  then 1 else null end ) ),0) as r1,\n"
+			+ "ifnull(count((case when ud.depart_type=2  then 1 else null end ) ),0) as r2,\n"
+			+ "ifnull(count((case when ud.depart_type=3  then 1 else null end ) ),0) as r3\n" + "FROM u_depart   ud\n"
+			+ " LEFT JOIN u_user_depart_rel udr on ud.id=udr.depart_id \n"
+			+ "LEFT JOIN g_user g on udr.user_id=g.id and g.user_state=1\n"
+			+ "WHERE \n" + " <if test=\"type==1 or type =='1' \"> \n"
+			+ "(ud.parent_depart_code=#{departCode} and ud.parent_depart_code!='610000530000') or \n" + "</if>\n"
+			+ "ud.depart_code=#{departCode} " + "union ALL\n"
+			+ "SELECT ifnull(count((case when d.depart_type=1 then 1 else null end ) ),0) as p1,\n"
+			+ "			ifnull(count((case when d.depart_type=2 then 1 else null end ) ),0) as p2,\n"
+			+ "		ifnull(count((case when d.depart_type=3 then 1 else null end ) ),0) as p3 \n" + "FROM u_depart d\n"
+			+ "WHERE \n" + " <if test=\"type==1 or type =='1' \"> \n"
+			+ "(d.parent_depart_code=#{departCode} and parent_depart_code!='610000530000') or \n" + "</if>\n"
+			+ "d.depart_code=#{departCode}  </script>")
+	List<Map<String, Object>> getMyDepartType(@Param("departCode") Object departCode, @Param("type") int type);
 
 	@Select("SELECT uur.user_id as creationId,gu.real_name as creationName FROM u_role ur \n"
 			+ "LEFT JOIN u_user_role_rel uur on ur.id=uur.role_id\n" + " LEFT JOIN g_user gu on uur.user_id=gu.id\n"

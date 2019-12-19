@@ -31,7 +31,7 @@ public interface UserMapper {
 
 	@Select("<script> select DISTINCT gu.id,gu.real_name as realName, gu.user_name as userName from u_user_depart_rel uudr INNER JOIN g_user gu on uudr.user_id = gu.id INNER JOIN u_depart ud on uudr.depart_id = ud.id\r\n"
 			+ "<where> <if test=\"departCode!=null and departCode!=''\">(ud.parent_depart_code = #{departCode} or ud.depart_code = #{departCode})</if>\r\n"
-			+ "<if test=\"name!=null and name!=''\"> and gu.real_name like '%${name}%'</if>\r\n"
+			+ "<if test=\"name!=null and name!=''\"> and (gu.real_name like '%${name}%' or  gu.user_name like '%${name}%') </if>\r\n"
 			+ "<if test=\"type!=null and type!=''\"> and gu.user_type = #{type}</if></where> </script>")
 	List<Map<String, Object>> getDeptUser(Map<String, Object> map);
 
