@@ -1,8 +1,6 @@
 package com.nmghr.hander.query.ajglqbxs;
 
-import com.nmghr.basic.common.Constant;
-import com.nmghr.basic.core.common.LocalThreadStorage;
-import com.nmghr.basic.core.page.Paging;
+import com.nmghr.basic.common.exception.GlobalErrorException;
 import com.nmghr.basic.core.service.IBaseService;
 import com.nmghr.basic.core.service.handler.impl.AbstractQueryHandler;
 import com.nmghr.service.ajglqbxs.AjglQbxsService;
@@ -10,7 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-import java.util.*;
+import java.util.Map;
 
 @SuppressWarnings("unchecked")
 @Service("ajglQbxsQueryHandler")
@@ -29,6 +27,9 @@ public class AjglQbxsQueryHandler extends AbstractQueryHandler {
     }
     if (requestMap.get("pageSize") == null || StringUtils.isEmpty(requestMap.get("pageSize"))) {
       requestMap.put("pageNum", 15);
+    }
+    if(StringUtils.isEmpty(requestMap.get("queryType"))){
+      throw new GlobalErrorException("999967","queryType不能为空");
     }
     return ajglQbxsService.ajglQbxsList(requestMap);
   }

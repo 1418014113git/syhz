@@ -58,8 +58,11 @@ public class AjglQbxsFeedBackService {
 
     Map<String, Object> param = new HashMap<>();
     param.put("handleResult", body.get("handleResult"));
+    //立案村案件
     if(!StringUtils.isEmpty(body.get("handleResult")) && "1".equals(String.valueOf(body.get("handleResult")))){
       param.put("zbxss", body.get("zbxss"));
+    }
+    if(!StringUtils.isEmpty(body.get("backResult"))){
       param.put("backResult", body.get("backResult"));
     }
     if(!StringUtils.isEmpty(body.get("backFiles"))){

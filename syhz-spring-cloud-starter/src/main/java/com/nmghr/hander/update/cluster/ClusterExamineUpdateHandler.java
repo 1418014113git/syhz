@@ -48,16 +48,19 @@ public class ClusterExamineUpdateHandler extends AbstractUpdateHandler {
       //处理审核信息
       examineUpdateHandler.update(flowId, body);
       // 增加待办信息
+//      if("6100".equals(String.valueOf(body.get("curDeptCode")).substring(0,4))){
+//        createSignInfo(body.get("userId"), body.get("userName"), body.get("curDeptCode"), body.get("curDeptName"), body.get("bsId"));
+//      }
       createSignInfo(body.get("userId"), body.get("userName"), body.get("curDeptCode"), body.get("curDeptName"), body.get("bsId"));
       return bsId;
     }
     if ("4".equals(flowStatus)) {
-      updateCluster(bsId, 3,null); //审核不通过
+      updateCluster(bsId, 3, null); //审核不通过
       //处理审核信息
       return examineUpdateHandler.update(flowId, body);
     }
     if ("6".equals(flowStatus)) {
-      updateCluster(bsId, 2,null); //待上级审核
+      updateCluster(bsId, 2, null); //待上级审核
       examineUpdateHandler.update(flowId, body);
       return bsId;
     }
@@ -75,7 +78,7 @@ public class ClusterExamineUpdateHandler extends AbstractUpdateHandler {
   private void updateCluster(String noticeId, int status, Map<String, Object> body) throws Exception {
     Map<String, Object> paramMap = new HashMap<>();
     paramMap.put("status", status);
-    if(body!=null){
+    if (body != null) {
       paramMap.putAll(body);
     }
     LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJCLUSTERASSIST");

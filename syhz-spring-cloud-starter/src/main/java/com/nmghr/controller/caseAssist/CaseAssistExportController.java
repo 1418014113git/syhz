@@ -6,6 +6,7 @@ import com.nmghr.basic.common.exception.GlobalErrorException;
 import com.nmghr.basic.core.common.LocalThreadStorage;
 import com.nmghr.basic.core.service.IBaseService;
 import com.nmghr.basic.core.util.ValidationUtils;
+import com.nmghr.service.ajglqbxs.AjglQbxsService;
 import com.nmghr.util.DateUtil;
 import org.apache.poi.ss.usermodel.BorderStyle;
 import org.apache.poi.ss.usermodel.HorizontalAlignment;
@@ -38,6 +39,8 @@ public class CaseAssistExportController {
 
   @Autowired
   private IBaseService baseService;
+  @Autowired
+  private AjglQbxsService ajglQbxsService;
 
   @RequestMapping(value = "/cluster/export")
   public void clusterExport(String clusterIds, String curDeptName, String realName, String curUserPhone, HttpServletResponse response) throws Exception {
@@ -319,7 +322,7 @@ public class CaseAssistExportController {
         if (m.get("zbajList") != null) {
           String[] zbs = String.valueOf(m.get("zbajList")).split(",");
           List<String> ajbhs = Arrays.asList(zbs);
-          Map res = getAjInfoData(ajbhs);
+          Map res = ajglQbxsService.getAjInfoData(ajbhs);
           m.putAll(res);
           if (res.containsKey("dhwd") && !StringUtils.isEmpty(res.get("dhwd"))) {
             dhwdSum += Integer.parseInt(String.valueOf(res.get("dhwd")));
@@ -352,7 +355,6 @@ public class CaseAssistExportController {
           m.put("zhrys", 0);//抓获
           m.put("yjss", 0);//移诉
           m.put("xsjl", 0);//刑拘
-          m.put("ysxz", 0);//移送行政处理
           m.put("larqCount", 0);//立案起
           m.put("parqCount", 0);//破案起
         }
@@ -369,7 +371,7 @@ public class CaseAssistExportController {
         int total = whc + hcs;
         BigDecimal hc = new BigDecimal(String.valueOf(hcs));
         if (total > 0) {
-          hc = hc.divide(new BigDecimal(String.valueOf(total)), 2, RoundingMode.DOWN).multiply(new BigDecimal("100")).setScale(0, RoundingMode.DOWN);
+          hc = hc.divide(new BigDecimal(String.valueOf(total)), 4, RoundingMode.DOWN).multiply(new BigDecimal("100")).setScale(2, RoundingMode.HALF_UP);
           m.put("hcl", hc.intValue());
         } else {
           m.put("hcl", whc == 0 ? 100 : 0);
@@ -394,7 +396,7 @@ public class CaseAssistExportController {
 
       BigDecimal hcSum = new BigDecimal(String.valueOf(csSum + cfSum));
       if (xsNumSum > 0) {
-        hcSum = hcSum.divide(new BigDecimal(String.valueOf(xsNumSum)), 2, RoundingMode.DOWN).multiply(new BigDecimal("100")).setScale(0, RoundingMode.DOWN);
+        hcSum = hcSum.divide(new BigDecimal(String.valueOf(xsNumSum)), 4, RoundingMode.DOWN).multiply(new BigDecimal("100")).setScale(2, RoundingMode.HALF_UP);
         count.put("hcl", hcSum.intValue());
       } else {
         count.put("hcl", 0);
@@ -405,62 +407,4 @@ public class CaseAssistExportController {
     }
     return new ArrayList<>();
   }
-
-  private Map<String, Object> getAjInfoData(List<String> ajbhs) throws Exception {
-    Map<String, Object> res = new HashMap<>();
-    res.put("larqCount", 0);//立案起
-    res.put("parqCount", 0);//破案起
-    res.put("zhrys", 0);//抓获
-    res.put("xsjl", 0);//刑拘
-    res.put("pzdb", 0);//逮捕
-    res.put("yjss", 0);//移诉
-    res.put("dhwd", 0);//捣毁窝点
-    res.put("sajz", 0);//涉案价值
-    Map<String, Object> params = new HashMap<>();
-    params.put("ajbhs", ajbhs);
-    LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJASSISTFEEDBACKAJINFO");
-    List<Map<String, Object>> ajList = (List<Map<String, Object>>) baseService.list(params);
-    if (ajList == null || ajList.size() == 0) {
-      return res;
-    }
-    int larqCount = 0, parqCount = 0, dh = 0, xsjl = 0, pzdb = 0, zhrys = 0, yjss = 0;
-    double sajz = 0;
-    for (Map<String, Object> aj : ajList) {
-      if (!StringUtils.isEmpty(aj.get("larq"))) {
-        larqCount++;
-      }
-      if (!StringUtils.isEmpty(aj.get("parq"))) {
-        parqCount++;
-      }
-      if (!StringUtils.isEmpty(aj.get("dhwds"))) {
-        dh += Integer.parseInt(String.valueOf(aj.get("dhwds")));
-      }
-      if (!StringUtils.isEmpty(aj.get("sajz"))) {
-        sajz += Double.parseDouble(String.valueOf(aj.get("sajz")));
-      }
-      if (!StringUtils.isEmpty(aj.get("dbrys"))) {
-        pzdb += Integer.parseInt(String.valueOf(aj.get("dbrys")));
-      }
-      if (!StringUtils.isEmpty(aj.get("zhrys"))) {
-        zhrys += Integer.parseInt(String.valueOf(aj.get("zhrys")));
-      }
-      if (!StringUtils.isEmpty(aj.get("ysrys"))) {
-        yjss += Integer.parseInt(String.valueOf(aj.get("ysrys")));
-      }
-      if (!StringUtils.isEmpty(aj.get("ryclcs"))) {
-        xsjl += Integer.parseInt(String.valueOf(aj.get("ryclcs")));
-      }
-    }
-    res.put("dh", dh);
-    res.put("xsjl", xsjl);
-    res.put("pzdb", pzdb);
-    res.put("zhrys", zhrys);
-    res.put("yjss", yjss);
-    res.put("sajz", sajz);
-    res.put("larqCount", larqCount);
-    res.put("parqCount", parqCount);
-    return res;
-  }
-
-
 }

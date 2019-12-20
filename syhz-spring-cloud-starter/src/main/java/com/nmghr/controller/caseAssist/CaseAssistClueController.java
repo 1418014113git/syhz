@@ -272,7 +272,7 @@ public class CaseAssistClueController {
   @GetMapping("/getCluesNum")
   @ResponseBody
   public Object getCluesNum(@RequestParam Map<String, Object> body) {
-    ValidationUtils.notNull(body.get("assistId"), "集群战役Id不能为空!");
+    ValidationUtils.notNull(body.get("assistId"), "assistId不能为空!");
     try {
       Object obj = ajglQbxsService.getClueTotal(String.valueOf(body.get("assistId")));
       return Result.ok(obj);
@@ -295,7 +295,7 @@ public class CaseAssistClueController {
   @GetMapping("/feedBackClues")
   @ResponseBody
   public Object feedBackClues(@RequestParam Map<String, Object> body) {
-    ValidationUtils.notNull(body.get("assistId"), "集群战役Id不能为空!");
+    ValidationUtils.notNull(body.get("assistId"), "assistId不能为空!");
     ValidationUtils.notNull(body.get("assistType"), "assistType不能为空!");
     try {
       Object obj = ajglQbxsService.feedBackList(body);
@@ -323,7 +323,7 @@ public class CaseAssistClueController {
     ValidationUtils.notNull(body.get("fbId"), "反馈id不能为空!");
     ValidationUtils.notNull(body.get("assistId"), "assistId不能为空!");
     ValidationUtils.notNull(body.get("qbxsResult"), "协查情况不能为空!");
-    ValidationUtils.notNull(body.get("handleResult"), "处理方式不能为空!");
+//    ValidationUtils.notNull(body.get("handleResult"), "处理方式不能为空!");
     ValidationUtils.notNull(body.get("backResult"), "反馈内容不能为空!");
     try {
       return Result.ok(ajglQbxsFeedBackService.feedBack(body));
@@ -386,6 +386,7 @@ public class CaseAssistClueController {
   /**
    * 案件协查情况统计
    * type // 1移送，2侦办
+   *
    * @return
    */
   @GetMapping("/ajSearch")
@@ -394,15 +395,21 @@ public class CaseAssistClueController {
     ValidationUtils.notNull(requestMap.get("fbId"), "fbId不能为空!");
     ValidationUtils.notNull(requestMap.get("assistId"), "assistId不能为空!");
     try {
-      List ajbhs = getAjbhs(requestMap);
+//      List ajbhs = getAjbhs(requestMap);
       Map<String, Object> params = new HashMap<>();
       params.put("departCode", requestMap.get("deptCode"));
       params.put("ajmc", requestMap.get("ajmc"));
-      if (ajbhs != null && ajbhs.size()>0) {
-        params.put("ajbhs", ajbhs);
-      }
+//      if (ajbhs != null && ajbhs.size() > 0) {
+//        params.put("ajbhs", ajbhs);
+//      }
       LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJASSISTSEARCH");
-      return baseService.list(params);
+      List<Map<String, Object>> list = (List<Map<String, Object>>) baseService.list(params);
+      for (Map<String, Object> aj : list) {
+        aj.put("dhwd", aj.get("dhwds"));
+        aj.put("pzdb", aj.get("dbrys"));
+        aj.put("yjss", aj.get("ysrys"));
+      }
+      return list;
     } catch (Exception e) {
       if (e instanceof GlobalErrorException) {
         GlobalErrorException ge = (GlobalErrorException) e;
