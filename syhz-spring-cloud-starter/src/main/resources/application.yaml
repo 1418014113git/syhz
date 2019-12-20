@@ -24,6 +24,10 @@ spring:
     name: syhz-api
   profiles:
     active: test
+  data:
+    mongodb:
+      uri: ${mongo.uri}
+      auth: true
   datasource:
     separator: ;;
     url: ${db.url}
