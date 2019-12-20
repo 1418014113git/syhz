@@ -130,7 +130,7 @@ public class CaseAssistController {
               BigDecimal xsNum = new BigDecimal(String.valueOf(m.get("xsNum")));
               BigDecimal hc = new BigDecimal(String.valueOf(m.get("hc")));
               if (xsNum.compareTo(BigDecimal.ZERO) > 0) {
-                hc = hc.divide(xsNum, 2, RoundingMode.DOWN).multiply(new BigDecimal("100")).setScale(0, RoundingMode.DOWN);
+                hc = hc.divide(xsNum, 4, RoundingMode.DOWN).multiply(new BigDecimal("100")).setScale(2, RoundingMode.HALF_UP);
                 m.put("hcl", hc.intValue());
               } else {
                 m.put("hcl", 0);
@@ -142,7 +142,7 @@ public class CaseAssistController {
               BigDecimal xsNum = new BigDecimal(String.valueOf(m.get("xsNum")));
               BigDecimal hc = new BigDecimal(String.valueOf(m.get("hc")));
               if (xsNum.compareTo(BigDecimal.ZERO) > 0) {
-                hc = hc.divide(xsNum, 2, RoundingMode.DOWN).multiply(new BigDecimal("100")).setScale(0, RoundingMode.DOWN);
+                hc = hc.divide(xsNum, 4, RoundingMode.DOWN).multiply(new BigDecimal("100")).setScale(2, RoundingMode.HALF_UP);
                 m.put("hcl", hc.intValue());
               } else {
                 m.put("hcl", 0);
@@ -590,7 +590,7 @@ public class CaseAssistController {
 //      ValidationUtils.notNull(body.get("citys"), "Citys不能为空!");
       ValidationUtils.notNull(body.get("status"), "status!");
       String status = String.valueOf(body.get("status"));
-      if (!"0".equals(status) && !"1".equals(status) && !"4".equals(status)) {
+      if (!"0".equals(status) && !"1".equals(status) && !"5".equals(status)) {
         throw new GlobalErrorException("999667", "status状态异常");
       }
       if ("1".equals(status)) {

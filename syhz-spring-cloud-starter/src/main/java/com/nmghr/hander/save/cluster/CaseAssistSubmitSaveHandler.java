@@ -78,7 +78,7 @@ public class CaseAssistSubmitSaveHandler extends AbstractSaveHandler {
         id = body.get("id");
         modify(String.valueOf(id), body);
       }
-      if ("4".equals(String.valueOf(body.get("status")))) {
+      if ("5".equals(String.valueOf(body.get("status")))) {
         // 判断线索是否已导入
         if(!validNum(id)){
           throw new GlobalErrorException("999667", "未导入线索，请导入线索后再提交！");
