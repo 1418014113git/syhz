@@ -27,3 +27,5 @@ log:
   level: error
 elasticsearch:
   hostNames: 192.168.42.187:9200
+mongo:
+  uri: mongodb://attachment:12345678@192.168.42.203:27017/attachment
