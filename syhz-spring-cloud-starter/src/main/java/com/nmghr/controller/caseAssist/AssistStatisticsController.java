@@ -49,6 +49,12 @@ public class AssistStatisticsController {
       if(!StringUtils.isEmpty(params.get("end"))){
         p.put("end", params.get("end"));
       }
+      if(!StringUtils.isEmpty(params.get("deptType"))){
+        p.put("deptType", params.get("deptType"));
+      }
+      if(!StringUtils.isEmpty(params.get("deptCode"))){
+        p.put("deptCode", params.get("deptCode"));
+      }
       LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "ASSISTINFOTJ");
       List<Map<String, Object>> list = (List<Map<String, Object>>) baseService.list(p);
       if (list == null || list.size() == 0) {
@@ -274,7 +280,7 @@ public class AssistStatisticsController {
       BigDecimal qbxsNum = new BigDecimal(String.valueOf(m.get("qbxsNum")));
       if(qbxsNum.compareTo(BigDecimal.ZERO) > 0){
         int hc = Integer.parseInt(String.valueOf(m.get("cs")))+ Integer.parseInt(String.valueOf(m.get("cf")));
-        m.put("hcl", new BigDecimal(String.valueOf(hc)).divide(qbxsNum, 4, RoundingMode.DOWN).multiply(oneHundred).setScale(2,RoundingMode.HALF_UP));
+        m.put("hcl", new BigDecimal(String.valueOf(hc)).divide(qbxsNum, 4, RoundingMode.HALF_UP).multiply(oneHundred).setScale(2,RoundingMode.DOWN));
       } else {
         m.put("hcl", "-");
       }
@@ -299,7 +305,7 @@ public class AssistStatisticsController {
         BigDecimal cQbxsNum = new BigDecimal(String.valueOf(c.get("qbxsNum")));
         if(cQbxsNum.compareTo(BigDecimal.ZERO) > 0){
           int hc = Integer.parseInt(String.valueOf(c.get("cs")))+ Integer.parseInt(String.valueOf(c.get("cf")));
-          c.put("hcl", new BigDecimal(String.valueOf(hc)).divide(cQbxsNum, 4, RoundingMode.DOWN).multiply(oneHundred).setScale(2,RoundingMode.HALF_UP));
+          c.put("hcl", new BigDecimal(String.valueOf(hc)).divide(cQbxsNum, 4, RoundingMode.HALF_UP).multiply(oneHundred).setScale(2,RoundingMode.DOWN));
         } else {
           c.put("hcl", "-");
         }
