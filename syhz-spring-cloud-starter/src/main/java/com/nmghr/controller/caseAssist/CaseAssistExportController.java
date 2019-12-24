@@ -6,6 +6,7 @@ import com.nmghr.basic.common.exception.GlobalErrorException;
 import com.nmghr.basic.core.common.LocalThreadStorage;
 import com.nmghr.basic.core.service.IBaseService;
 import com.nmghr.basic.core.util.ValidationUtils;
+import com.nmghr.service.ajglqbxs.AjglQbxsService;
 import com.nmghr.util.DateUtil;
 import org.apache.poi.ss.usermodel.BorderStyle;
 import org.apache.poi.ss.usermodel.HorizontalAlignment;
@@ -38,9 +39,11 @@ public class CaseAssistExportController {
 
   @Autowired
   private IBaseService baseService;
+  @Autowired
+  private AjglQbxsService ajglQbxsService;
 
   @RequestMapping(value = "/cluster/export")
-  public void clusterExport(String clusterIds, String curDeptName,String realName,String curUserPhone,HttpServletResponse response) throws Exception {
+  public void clusterExport(String clusterIds, String curDeptName, String realName, String curUserPhone, HttpServletResponse response) throws Exception {
     ValidationUtils.notNull(clusterIds, "clusterIds不能为空!");
     ValidationUtils.notNull(curDeptName, "curDeptName不能为空!");
     ValidationUtils.notNull(realName, "realName不能为空!");
@@ -67,12 +70,12 @@ public class CaseAssistExportController {
     }
 
     params = new HashMap<>();
-    params.put("clusterIds",clusterIds);
+    params.put("clusterIds", clusterIds);
     List<Map<String, Object>> list = getList(params, 2);
     XSSFWorkbook wb = null;
     try {
       // excel模板路径
-      wb = setSheets(curDeptName,realName, curUserPhone, list, json);
+      wb = setSheets(curDeptName, realName, curUserPhone, list, json);
       String fileName = "涉案线索协查参与地战果反馈表";
       ByteArrayOutputStream os = new ByteArrayOutputStream();
       wb.write(os);
@@ -105,8 +108,9 @@ public class CaseAssistExportController {
       log.error("导出excel出现异常:", e);
     }
   }
+
   @RequestMapping(value = "/caseAssist/export")
-  public void caseAssistExport(String assistIds, String curDeptName,String realName,String curUserPhone,HttpServletResponse response) throws Exception {
+  public void caseAssistExport(String assistIds, String curDeptName, String realName, String curUserPhone, HttpServletResponse response) throws Exception {
     ValidationUtils.notNull(assistIds, "assistIds不能为空!");
     ValidationUtils.notNull(curDeptName, "curDeptName不能为空!");
     ValidationUtils.notNull(realName, "realName不能为空!");
@@ -131,12 +135,12 @@ public class CaseAssistExportController {
     }
 
     params = new HashMap<>();
-    params.put("assistIds",assistIds);
+    params.put("assistIds", assistIds);
     List<Map<String, Object>> list = getList(params, 1);
     XSSFWorkbook wb = null;
     try {
       // excel模板路径
-      wb = setSheets(curDeptName,realName, curUserPhone, list, json);
+      wb = setSheets(curDeptName, realName, curUserPhone, list, json);
       String fileName = "涉案线索协查参与地战果反馈表";
       ByteArrayOutputStream os = new ByteArrayOutputStream();
       wb.write(os);
@@ -170,7 +174,7 @@ public class CaseAssistExportController {
     }
   }
 
-  private XSSFWorkbook setSheets(String curDeptName,String realName,String curUserPhone, List<Map<String, Object>> list, JSONObject config) throws IOException {
+  private XSSFWorkbook setSheets(String curDeptName, String realName, String curUserPhone, List<Map<String, Object>> list, JSONObject config) throws IOException {
     XSSFWorkbook wb;
     URL url = new URL(config.getString("url"));
     wb = new XSSFWorkbook(url.openStream());
@@ -215,7 +219,7 @@ public class CaseAssistExportController {
         c3.setCellValue(Double.parseDouble(String.valueOf(bean.get("cf"))));// 查否
         c3.setCellStyle(cStyle);
         XSSFCell c4 = row.createCell(4);
-        c4.setCellValue(Double.parseDouble(String.valueOf(bean.get("ysajList"))));// 移送
+        c4.setCellValue(Double.parseDouble(String.valueOf(bean.get("ysxz"))));// 移送
         c4.setCellStyle(cStyle);
         XSSFCell c5 = row.createCell(5);
         c5.setCellValue(Double.parseDouble(String.valueOf(bean.get("larqCount"))));// 立案
@@ -257,7 +261,7 @@ public class CaseAssistExportController {
       sfrC.setCellStyle(cStyle);
       shrow.createCell(1).setCellValue(realName);
       shrow.createCell(6).setCellValue("填报人：");
-      shrow.createCell(8).setCellValue(realName+"/"+curUserPhone);
+      shrow.createCell(8).setCellValue(realName + "/" + curUserPhone);
 
       CellRangeAddress shrA = new CellRangeAddress(rowIndex, rowIndex, 1, 5); //审核人
       sheet.addMergedRegion(shrA);
@@ -303,60 +307,38 @@ public class CaseAssistExportController {
 
   public List<Map<String, Object>> getList(Map<String, Object> params, int type) {
     try {
-      //查询
-      if (type == 2) { // 集群战役
-        LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJCLUSTERASSISTEXPORT");
-      }
-      if (type == 1) { // 案件协查
-        LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJASSISTEXPORT");
-      }
+      //查询1.案件协查  2.集群战役
+      LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, type == 2 ? "AJCLUSTERASSISTEXPORT" : "AJASSISTEXPORT");
       List<Map<String, Object>> list = (List<Map<String, Object>>) baseService.list(params);
       if (list == null || list.size() == 0) {
         return new ArrayList<>();
       }
       int xsNumSum = 0, csSum = 0, cfSum = 0, whcSum = 0, laNum = 0, paNum = 0, dhwdSum = 0, pzdbSum = 0,
-          xsjlSum = 0, ysajList = 0,zhrysSum=0, yjssSum=0;
+          xsjlSum = 0, zhrysSum = 0, yjssSum = 0, ysxzSum = 0;
       double sajzSum = 0;
       for (Map<String, Object> m : list) {
         m.put("cityCode", String.valueOf(m.get("applyDeptCode")).substring(0, 4) + "00");
-        if (m.get("ysajList") != null) {
-          String[] str = String.valueOf(m.get("ysajList")).replaceAll("\\]", "").replaceAll("\\[", "").split(",");
-          m.put("ysajList", str.length);
-          ysajList += str.length;
-        } else {
-          m.put("ysajList", 0);
-        }
+        ysxzSum += Integer.parseInt(String.valueOf(m.get("ysxz")));//移送行政处理次数
         if (m.get("zbajList") != null) {
-          int dhwd = 0, pzdb = 0, zhrys=0,yjss=0;
-          double sajz = 0;
-          String[] zbs = String.valueOf(m.get("zbajList")).split("_");
-          List<String> ajbhs = new ArrayList<>();
-          for (String s : zbs) {
-            Map<String, Object> zbmap = JSONObject.toJavaObject(JSONObject.parseObject(s), Map.class);
-            for (String key : zbmap.keySet()) {
-              String[] info = String.valueOf(zbmap.get(key)).split(",");
-              if(info.length==6){
-                dhwd += Integer.parseInt(info[1]);
-                sajz += Double.parseDouble(info[2]);
-                pzdb += Integer.parseInt(info[3]);
-                zhrys += Integer.parseInt(info[4]);
-                yjss += Integer.parseInt(info[5]);
-              }
-              ajbhs.add(key);
-            }
-          }
-          m.put("dhwd", dhwd);
-          m.put("sajz", sajz);
-          m.put("pzdb", pzdb);
-          m.put("zhrys", zhrys);
-          m.put("yjss", yjss);
-          Map res = getAjInfoData(ajbhs);
+          String[] zbs = String.valueOf(m.get("zbajList")).split(",");
+          List<String> ajbhs = Arrays.asList(zbs);
+          Map res = ajglQbxsService.getAjInfoData(ajbhs);
           m.putAll(res);
-          dhwdSum += dhwd;
-          sajzSum += sajz;
-          pzdbSum += pzdb;
-          zhrysSum += zhrys;
-          yjssSum += yjss;
+          if (res.containsKey("dhwd") && !StringUtils.isEmpty(res.get("dhwd"))) {
+            dhwdSum += Integer.parseInt(String.valueOf(res.get("dhwd")));
+          }
+          if (res.containsKey("sajz") && !StringUtils.isEmpty(res.get("sajz"))) {
+            sajzSum += Double.parseDouble(String.valueOf(res.get("sajz")));
+          }
+          if (res.containsKey("pzdb") && !StringUtils.isEmpty(res.get("pzdb"))) {
+            pzdbSum += Integer.parseInt(String.valueOf(res.get("pzdb")));
+          }
+          if (res.containsKey("zhrys") && !StringUtils.isEmpty(res.get("zhrys"))) {
+            zhrysSum += Integer.parseInt(String.valueOf(res.get("zhrys")));
+          }
+          if (res.containsKey("yjss") && !StringUtils.isEmpty(res.get("yjss"))) {
+            yjssSum += Integer.parseInt(String.valueOf(res.get("yjss")));
+          }
           if (res.containsKey("xsjl") && !org.springframework.util.StringUtils.isEmpty(res.get("xsjl"))) {
             xsjlSum += Integer.parseInt(String.valueOf(res.get("xsjl")));
           }
@@ -367,14 +349,14 @@ public class CaseAssistExportController {
             paNum += Integer.parseInt(String.valueOf(res.get("parqCount")));
           }
         } else {
-          m.put("dhwd", 0);
-          m.put("sajz", 0);
-          m.put("pzdb", 0);
-          m.put("zhrys", 0);
-          m.put("yjss", 0);
-          m.put("xsjl", 0);
-          m.put("larqCount", 0);
-          m.put("parqCount", 0);
+          m.put("dhwd", 0);//捣毁窝点
+          m.put("sajz", 0);//涉案价值
+          m.put("pzdb", 0);//逮捕
+          m.put("zhrys", 0);//抓获
+          m.put("yjss", 0);//移诉
+          m.put("xsjl", 0);//刑拘
+          m.put("larqCount", 0);//立案起
+          m.put("parqCount", 0);//破案起
         }
         m.remove("zbajList");
         int cs = Integer.parseInt(String.valueOf(m.get("cs")));
@@ -386,12 +368,12 @@ public class CaseAssistExportController {
         whcSum += whc;
         xsNumSum += xsNum;
         int hcs = cs + cf;
+        int total = whc + hcs;
         BigDecimal hc = new BigDecimal(String.valueOf(hcs));
-        if (xsNum > 0) {
-          hc = hc.divide(new BigDecimal(String.valueOf(xsNum)), 2, RoundingMode.DOWN).multiply(new BigDecimal("100")).setScale(0, RoundingMode.DOWN);
-          m.put("hcl", hc.intValue());
+        if (total > 0) {
+          m.put("hcl", hc.divide(new BigDecimal(String.valueOf(total)), 4, RoundingMode.HALF_UP).multiply(new BigDecimal("100")).setScale(2, RoundingMode.DOWN));
         } else {
-          m.put("hcl", 0);
+          m.put("hcl", '-');
         }
       }
       Map<String, Object> count = new HashMap<>();
@@ -409,12 +391,11 @@ public class CaseAssistExportController {
       count.put("yjss", yjssSum);
       count.put("xsjl", xsjlSum);
       count.put("sajz", sajzSum);
-      count.put("ysajList", ysajList);
+      count.put("ysxz", ysxzSum);
 
       BigDecimal hcSum = new BigDecimal(String.valueOf(csSum + cfSum));
       if (xsNumSum > 0) {
-        hcSum = hcSum.divide(new BigDecimal(String.valueOf(xsNumSum)), 2, RoundingMode.DOWN).multiply(new BigDecimal("100")).setScale(0, RoundingMode.DOWN);
-        count.put("hcl", hcSum.intValue());
+        count.put("hcl", hcSum.divide(new BigDecimal(String.valueOf(xsNumSum)), 4, RoundingMode.HALF_UP).multiply(new BigDecimal("100")).setScale(2, RoundingMode.DOWN));
       } else {
         count.put("hcl", 0);
       }
@@ -424,36 +405,4 @@ public class CaseAssistExportController {
     }
     return new ArrayList<>();
   }
-
-  private Map<String, Integer> getAjInfoData(List<String> ajbhs) throws Exception {
-    Map<String, Integer> res = new HashMap<>();
-    res.put("xsjl", 0);
-    res.put("larqCount", 0);
-    res.put("parqCount", 0);
-    Map<String, Object> params = new HashMap<>();
-    params.put("ajbhs", ajbhs);
-    LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJCLUSTERFEEDBACKAJINFO");
-    List<Map<String, Object>> ajList = (List<Map<String, Object>>) baseService.list(params);
-    if (ajList == null || ajList.size() == 0) {
-      return res;
-    }
-    int xsjl = 0, larqCount = 0, parqCount = 0;
-    for (Map<String, Object> aj : ajList) {
-      if (!org.springframework.util.StringUtils.isEmpty(aj.get("ryclcs"))) {
-        xsjl += Integer.parseInt(String.valueOf(aj.get("ryclcs")));
-      }
-      if (!org.springframework.util.StringUtils.isEmpty(aj.get("LARQ"))) {
-        larqCount++;
-      }
-      if (!org.springframework.util.StringUtils.isEmpty(aj.get("PARQ"))) {
-        parqCount++;
-      }
-    }
-    res.put("xsjl", xsjl);
-    res.put("larqCount", larqCount);
-    res.put("parqCount", parqCount);
-    return res;
-  }
-
-
 }
