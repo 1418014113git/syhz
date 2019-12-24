@@ -44,6 +44,7 @@ public class QbxsSignSaveHandler extends AbstractSaveHandler {
       LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJGLQBXSSIGNCHECKTODAY");
       Map<String, Object> rs = (Map<String, Object>) baseService.get(p);
       if(rs!=null){
+        //查询总条数
         p = new HashMap<>();
         p.put("assistId",map.get("assistId"));
         p.put("clueNum",Integer.parseInt(String.valueOf(map.get("clueNum"))) + Integer.parseInt(String.valueOf(rs.get("clueNum"))));

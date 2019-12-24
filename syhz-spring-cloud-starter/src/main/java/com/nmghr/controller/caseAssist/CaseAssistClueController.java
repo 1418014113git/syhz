@@ -371,7 +371,7 @@ public class CaseAssistClueController {
   public Object detailCount(@RequestParam Map<String, Object> requestMap) {
     ValidationUtils.notNull(requestMap.get("type"), "type集群或协查类型不能为空!");
     try {
-      return ajglQbxsService.feedBackResultList(requestMap);
+      return Result.ok(ajglQbxsService.feedBackResultList(requestMap));
     } catch (Exception e) {
       if (e instanceof GlobalErrorException) {
         GlobalErrorException ge = (GlobalErrorException) e;
