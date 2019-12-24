@@ -40,19 +40,19 @@ public class AssistStatisticsController {
     try {
       Map<String, Object> p = new HashMap<>();
       p.put("type", Integer.parseInt(String.valueOf(params.get("type"))));
-      if(params.get("fllb")!=null && !StringUtils.isEmpty(String.valueOf(params.get("fllb")))){
+      if (params.get("fllb") != null && !StringUtils.isEmpty(String.valueOf(params.get("fllb")))) {
         p.put("fllb", Integer.parseInt(String.valueOf(params.get("fllb"))));
       }
-      if(!StringUtils.isEmpty(params.get("start"))){
+      if (!StringUtils.isEmpty(params.get("start"))) {
         p.put("start", params.get("start"));
       }
-      if(!StringUtils.isEmpty(params.get("end"))){
+      if (!StringUtils.isEmpty(params.get("end"))) {
         p.put("end", params.get("end"));
       }
-      if(!StringUtils.isEmpty(params.get("deptType"))){
+      if (!StringUtils.isEmpty(params.get("deptType"))) {
         p.put("deptType", params.get("deptType"));
       }
-      if(!StringUtils.isEmpty(params.get("deptCode"))){
+      if (!StringUtils.isEmpty(params.get("deptCode"))) {
         p.put("deptCode", params.get("deptCode"));
       }
       LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "ASSISTINFOTJ");
@@ -116,7 +116,10 @@ public class AssistStatisticsController {
         }
       }
       //整理页面数据
-      return groupByAj(new ArrayList(deptCodeMap.values()));
+      if (StringUtils.isEmpty(params.get("deptType")) || "1".equals(String.valueOf(params.get("deptType")))) {
+        return groupByAj(new ArrayList(deptCodeMap.values()));
+      }
+      return deptCodeMap.values();
     } catch (Exception e) {
 
     }
@@ -137,13 +140,13 @@ public class AssistStatisticsController {
     try {
       Map<String, Object> p = new HashMap<>();
       p.put("type", Integer.parseInt(String.valueOf(params.get("type"))));
-      if(params.get("fllb")!=null && !StringUtils.isEmpty(String.valueOf(params.get("fllb")))){
+      if (params.get("fllb") != null && !StringUtils.isEmpty(String.valueOf(params.get("fllb")))) {
         p.put("fllb", Integer.parseInt(String.valueOf(params.get("fllb"))));
       }
-      if(!StringUtils.isEmpty(params.get("start"))){
+      if (!StringUtils.isEmpty(params.get("start"))) {
         p.put("start", params.get("start"));
       }
-      if(!StringUtils.isEmpty(params.get("end"))){
+      if (!StringUtils.isEmpty(params.get("end"))) {
         p.put("end", params.get("end"));
       }
       LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "ASSISTINFOTJ");
@@ -166,7 +169,7 @@ public class AssistStatisticsController {
         m.put("whc", 0);
         m.put("cs", 0);
         m.put("cf", 0);
-        m.put("hcl", 0);
+        m.put("hcl", "0.00");
         m.put("qbxsNum", 0);
         deptCodeMap.put(String.valueOf(m.get("deptCode")), m);
       }
@@ -228,33 +231,36 @@ public class AssistStatisticsController {
         }
       }
       //整理页面数据
-      return groupByFk(new ArrayList(deptCodeMap.values()));
+      if (StringUtils.isEmpty(params.get("deptType")) || "1".equals(String.valueOf(params.get("deptType")))) {
+        return groupByFk(new ArrayList(deptCodeMap.values()));
+      }
+      return deptCodeMap.values();
     } catch (Exception e) {
 
     }
     return new ArrayList<>();
   }
 
-  private Object groupByAj(List<Map<String, Object>> list){
+  private Object groupByAj(List<Map<String, Object>> list) {
     Map<String, Object> city = new LinkedHashMap<>();
     for (Map m : list) {
       String cityName = String.valueOf(m.get("cityName"));
       if (city.get(cityName) != null) {
         Map<String, Object> c = (Map<String, Object>) city.get(cityName);
-        c.put("cyNum", Integer.parseInt(String.valueOf(c.get("cyNum")))+ Integer.parseInt(String.valueOf(m.get("cyNum"))));
-        c.put("fqNum", Integer.parseInt(String.valueOf(c.get("fqNum")))+ Integer.parseInt(String.valueOf(m.get("fqNum"))));
-        c.put("larqCount", Integer.parseInt(String.valueOf(c.get("larqCount")))+ Integer.parseInt(String.valueOf(m.get("larqCount"))));
-        c.put("parqCount", Integer.parseInt(String.valueOf(c.get("parqCount")))+ Integer.parseInt(String.valueOf(m.get("parqCount"))));
-        c.put("sajz", new BigDecimal(String.valueOf(c.get("sajz"))).add(new BigDecimal(String.valueOf(m.get("sajz")))).setScale(4, RoundingMode.DOWN));
-        c.put("zhrys", Integer.parseInt(String.valueOf(c.get("zhrys")))+ Integer.parseInt(String.valueOf(m.get("zhrys"))));
-        c.put("pzdb", Integer.parseInt(String.valueOf(c.get("pzdb")))+ Integer.parseInt(String.valueOf(m.get("pzdb"))));
-        c.put("yjss", Integer.parseInt(String.valueOf(c.get("yjss")))+ Integer.parseInt(String.valueOf(m.get("yjss"))));
-        c.put("dhwd", Integer.parseInt(String.valueOf(c.get("dhwd")))+ Integer.parseInt(String.valueOf(m.get("dhwd"))));
-        c.put("spnum", Integer.parseInt(String.valueOf(c.get("spnum")))+ Integer.parseInt(String.valueOf(m.get("spnum"))));
-        c.put("ypnum", Integer.parseInt(String.valueOf(c.get("ypnum")))+ Integer.parseInt(String.valueOf(m.get("ypnum"))));
-        c.put("hjnum", Integer.parseInt(String.valueOf(c.get("hjnum")))+ Integer.parseInt(String.valueOf(m.get("hjnum"))));
-        c.put("fllbnum", Integer.parseInt(String.valueOf(c.get("fllbnum")))+ Integer.parseInt(String.valueOf(m.get("fllbnum"))));
-        c.put("xsjl", Integer.parseInt(String.valueOf(c.get("xsjl")))+ Integer.parseInt(String.valueOf(m.get("xsjl"))));
+        c.put("cyNum", Integer.parseInt(String.valueOf(c.get("cyNum"))) + Integer.parseInt(String.valueOf(m.get("cyNum"))));
+        c.put("fqNum", Integer.parseInt(String.valueOf(c.get("fqNum"))) + Integer.parseInt(String.valueOf(m.get("fqNum"))));
+        c.put("larqCount", Integer.parseInt(String.valueOf(c.get("larqCount"))) + Integer.parseInt(String.valueOf(m.get("larqCount"))));
+        c.put("parqCount", Integer.parseInt(String.valueOf(c.get("parqCount"))) + Integer.parseInt(String.valueOf(m.get("parqCount"))));
+        c.put("sajz", new BigDecimal(String.valueOf(c.get("sajz"))).add(new BigDecimal(String.valueOf(m.get("sajz")))).setScale(4, RoundingMode.DOWN).toString());
+        c.put("zhrys", Integer.parseInt(String.valueOf(c.get("zhrys"))) + Integer.parseInt(String.valueOf(m.get("zhrys"))));
+        c.put("pzdb", Integer.parseInt(String.valueOf(c.get("pzdb"))) + Integer.parseInt(String.valueOf(m.get("pzdb"))));
+        c.put("yjss", Integer.parseInt(String.valueOf(c.get("yjss"))) + Integer.parseInt(String.valueOf(m.get("yjss"))));
+        c.put("dhwd", Integer.parseInt(String.valueOf(c.get("dhwd"))) + Integer.parseInt(String.valueOf(m.get("dhwd"))));
+        c.put("spnum", Integer.parseInt(String.valueOf(c.get("spnum"))) + Integer.parseInt(String.valueOf(m.get("spnum"))));
+        c.put("ypnum", Integer.parseInt(String.valueOf(c.get("ypnum"))) + Integer.parseInt(String.valueOf(m.get("ypnum"))));
+        c.put("hjnum", Integer.parseInt(String.valueOf(c.get("hjnum"))) + Integer.parseInt(String.valueOf(m.get("hjnum"))));
+        c.put("fllbnum", Integer.parseInt(String.valueOf(c.get("fllbnum"))) + Integer.parseInt(String.valueOf(m.get("fllbnum"))));
+        c.put("xsjl", Integer.parseInt(String.valueOf(c.get("xsjl"))) + Integer.parseInt(String.valueOf(m.get("xsjl"))));
         List<Map<String, Object>> dArray = (List<Map<String, Object>>) c.get("list");
         Map<String, Object> cn = new HashMap<>();
         cn.putAll(m);
@@ -274,38 +280,39 @@ public class AssistStatisticsController {
     }
     return city.values();
   }
-  private Object groupByFk(List<Map<String, Object>> list){
+
+  private Object groupByFk(List<Map<String, Object>> list) {
     Map<String, Object> city = new LinkedHashMap<>();
     for (Map m : list) {
       BigDecimal qbxsNum = new BigDecimal(String.valueOf(m.get("qbxsNum")));
-      if(qbxsNum.compareTo(BigDecimal.ZERO) > 0){
-        int hc = Integer.parseInt(String.valueOf(m.get("cs")))+ Integer.parseInt(String.valueOf(m.get("cf")));
-        m.put("hcl", new BigDecimal(String.valueOf(hc)).divide(qbxsNum, 4, RoundingMode.HALF_UP).multiply(oneHundred).setScale(2,RoundingMode.DOWN));
+      if (qbxsNum.compareTo(BigDecimal.ZERO) > 0) {
+        int hc = Integer.parseInt(String.valueOf(m.get("cs"))) + Integer.parseInt(String.valueOf(m.get("cf")));
+        m.put("hcl", new BigDecimal(String.valueOf(hc)).divide(qbxsNum, 4, RoundingMode.HALF_UP).multiply(oneHundred).setScale(2, RoundingMode.DOWN).toString());
       } else {
         m.put("hcl", "-");
       }
       String cityName = String.valueOf(m.get("cityName"));
       if (city.get(cityName) != null) {
         Map<String, Object> c = (Map<String, Object>) city.get(cityName);
-        c.put("cyNum", Integer.parseInt(String.valueOf(c.get("cyNum")))+ Integer.parseInt(String.valueOf(m.get("cyNum"))));
-        c.put("fqNum", Integer.parseInt(String.valueOf(c.get("fqNum")))+ Integer.parseInt(String.valueOf(m.get("fqNum"))));
-        c.put("larqCount", Integer.parseInt(String.valueOf(c.get("larqCount")))+ Integer.parseInt(String.valueOf(m.get("larqCount"))));
-        c.put("parqCount", Integer.parseInt(String.valueOf(c.get("parqCount")))+ Integer.parseInt(String.valueOf(m.get("parqCount"))));
-        c.put("sajz", new BigDecimal(String.valueOf(c.get("sajz"))).add(new BigDecimal(String.valueOf(m.get("sajz")))).setScale(4, RoundingMode.DOWN));
-        c.put("zhrys", Integer.parseInt(String.valueOf(c.get("zhrys")))+ Integer.parseInt(String.valueOf(m.get("zhrys"))));
-        c.put("pzdb", Integer.parseInt(String.valueOf(c.get("pzdb")))+ Integer.parseInt(String.valueOf(m.get("pzdb"))));
-        c.put("yjss", Integer.parseInt(String.valueOf(c.get("yjss")))+ Integer.parseInt(String.valueOf(m.get("yjss"))));
-        c.put("dhwd", Integer.parseInt(String.valueOf(c.get("dhwd")))+ Integer.parseInt(String.valueOf(m.get("dhwd"))));
-        c.put("xsjl", Integer.parseInt(String.valueOf(c.get("xsjl")))+ Integer.parseInt(String.valueOf(m.get("xsjl"))));
-        c.put("whc", Integer.parseInt(String.valueOf(c.get("whc")))+ Integer.parseInt(String.valueOf(m.get("whc"))));
-        c.put("cs", Integer.parseInt(String.valueOf(c.get("cs")))+ Integer.parseInt(String.valueOf(m.get("cs"))));
-        c.put("cf", Integer.parseInt(String.valueOf(c.get("cf")))+ Integer.parseInt(String.valueOf(m.get("cf"))));
-        c.put("qbxsNum", Integer.parseInt(String.valueOf(c.get("qbxsNum")))+ Integer.parseInt(String.valueOf(m.get("qbxsNum"))));
+        c.put("cyNum", Integer.parseInt(String.valueOf(c.get("cyNum"))) + Integer.parseInt(String.valueOf(m.get("cyNum"))));
+        c.put("fqNum", Integer.parseInt(String.valueOf(c.get("fqNum"))) + Integer.parseInt(String.valueOf(m.get("fqNum"))));
+        c.put("larqCount", Integer.parseInt(String.valueOf(c.get("larqCount"))) + Integer.parseInt(String.valueOf(m.get("larqCount"))));
+        c.put("parqCount", Integer.parseInt(String.valueOf(c.get("parqCount"))) + Integer.parseInt(String.valueOf(m.get("parqCount"))));
+        c.put("sajz", new BigDecimal(String.valueOf(c.get("sajz"))).add(new BigDecimal(String.valueOf(m.get("sajz")))).setScale(4, RoundingMode.DOWN).toString());
+        c.put("zhrys", Integer.parseInt(String.valueOf(c.get("zhrys"))) + Integer.parseInt(String.valueOf(m.get("zhrys"))));
+        c.put("pzdb", Integer.parseInt(String.valueOf(c.get("pzdb"))) + Integer.parseInt(String.valueOf(m.get("pzdb"))));
+        c.put("yjss", Integer.parseInt(String.valueOf(c.get("yjss"))) + Integer.parseInt(String.valueOf(m.get("yjss"))));
+        c.put("dhwd", Integer.parseInt(String.valueOf(c.get("dhwd"))) + Integer.parseInt(String.valueOf(m.get("dhwd"))));
+        c.put("xsjl", Integer.parseInt(String.valueOf(c.get("xsjl"))) + Integer.parseInt(String.valueOf(m.get("xsjl"))));
+        c.put("whc", Integer.parseInt(String.valueOf(c.get("whc"))) + Integer.parseInt(String.valueOf(m.get("whc"))));
+        c.put("cs", Integer.parseInt(String.valueOf(c.get("cs"))) + Integer.parseInt(String.valueOf(m.get("cs"))));
+        c.put("cf", Integer.parseInt(String.valueOf(c.get("cf"))) + Integer.parseInt(String.valueOf(m.get("cf"))));
+        c.put("qbxsNum", Integer.parseInt(String.valueOf(c.get("qbxsNum"))) + Integer.parseInt(String.valueOf(m.get("qbxsNum"))));
 
         BigDecimal cQbxsNum = new BigDecimal(String.valueOf(c.get("qbxsNum")));
-        if(cQbxsNum.compareTo(BigDecimal.ZERO) > 0){
-          int hc = Integer.parseInt(String.valueOf(c.get("cs")))+ Integer.parseInt(String.valueOf(c.get("cf")));
-          c.put("hcl", new BigDecimal(String.valueOf(hc)).divide(cQbxsNum, 4, RoundingMode.HALF_UP).multiply(oneHundred).setScale(2,RoundingMode.DOWN));
+        if (cQbxsNum.compareTo(BigDecimal.ZERO) > 0) {
+          int hc = Integer.parseInt(String.valueOf(c.get("cs"))) + Integer.parseInt(String.valueOf(c.get("cf")));
+          c.put("hcl", new BigDecimal(String.valueOf(hc)).divide(cQbxsNum, 4, RoundingMode.HALF_UP).multiply(oneHundred).setScale(2, RoundingMode.DOWN).toString());
         } else {
           c.put("hcl", "-");
         }
@@ -328,6 +335,7 @@ public class AssistStatisticsController {
     }
     return city.values();
   }
+
   private BigDecimal oneHundred = new BigDecimal("100");
 
 }

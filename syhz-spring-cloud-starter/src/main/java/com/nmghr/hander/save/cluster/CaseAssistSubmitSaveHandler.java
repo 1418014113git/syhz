@@ -10,15 +10,14 @@ import com.nmghr.hander.dto.ApproveParam;
 import com.nmghr.hander.save.ajglqbxs.QbxsSignSaveHandler;
 import com.nmghr.hander.save.examine.ExamineSaveHandler;
 import com.nmghr.service.ajglqbxs.CaseAssistService;
+import com.nmghr.util.DateUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 /**
  * 案件协查
