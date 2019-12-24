@@ -15,15 +15,16 @@ import java.util.Map;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.nmghr.basic.core.service.IBaseService;
 import com.nmghr.common.AppeErrorException;
 import com.nmghr.entity.operation.OperationResult;
+import com.nmghr.entity.query.Page;
 import com.nmghr.entity.query.QueryResult;
 import com.nmghr.service.app.AppCaseServise;
 import com.nmghr.service.app.AppClueServise;
@@ -32,6 +33,7 @@ import com.nmghr.service.app.AppMessageService;
 import com.nmghr.service.app.DeptServise;
 import com.nmghr.service.app.NoticeServise;
 import com.nmghr.service.app.UserService;
+import com.nmghr.util.ListPageUtil;
 import com.nmghr.util.SyhzUtil;
 import com.nmghr.util.app.AppObjectIdUtil;
 import com.nmghr.util.app.AppVerifyUtils;
@@ -39,7 +41,6 @@ import com.nmghr.util.app.Result;
 import com.nmghr.util.app.SyhzAppErrorEnmu;
 import com.nmghr.vo.OperationRequestVo;
 import com.nmghr.vo.QueryRequestVo;
-
 
 /**
  * 陕西环食药APP入门
@@ -74,7 +75,7 @@ public class AppMainController {
 
 	private static AppObjectIdUtil AppObjectIdUtil;
 
-	@RequestMapping(value = "/hsyzapp/main", method = { RequestMethod.GET, RequestMethod.POST })
+	@PostMapping(value = "/hsyzapp/main")
 	@ResponseBody
 	public String appMain(@RequestBody Map<String, Object> requestBody) {
 		String method = SyhzUtil.setDate(requestBody.get("method"));
@@ -110,9 +111,7 @@ public class AppMainController {
 				// 获取参数
 				AppVerifyUtils.getOperationCondition(conditionMap, operationRequestVo);
 				String getDataObjId = AppVerifyUtils.getOperateDataObjId(operationRequestVo);
-
 				return (String) getOperateMethod(getDataObjId, operationRequestVo, requestBody, conditionMap);
-
 			} catch (AppeErrorException e) {
 				e.printStackTrace();
 				return Result.fail(operationRequestVo.getJsonrpc(), operationRequestVo.getId(), e.getCode(),
@@ -137,6 +136,12 @@ public class AppMainController {
 		}
 		return Result.fail(SyhzUtil.setDate(requestBody.get("jsonrpc")), SyhzUtil.setDate(requestBody.get("id")),
 				SyhzAppErrorEnmu.ERROR_500.getCode(), SyhzAppErrorEnmu.ERROR_500.getMessage());
+	}
+
+	@GetMapping(value = "/hsyzapp/main")
+	@ResponseBody
+	public Object ping() {
+		return null;
 	}
 
 	private Object getQueryMethod(String getDataObjId, QueryRequestVo queryRequestVo, Map<String, Object> requestBody,
@@ -271,9 +276,21 @@ public class AppMainController {
 	// 获取部门下用户
 	public Object getDeptUser(QueryRequestVo queryRequestVo, Map<String, Object> requestBody,
 			Map<String, Object> conditionMap) throws Exception {
+		Page page = AppVerifyUtils.getQueryPage(queryRequestVo);
+		int pageSize = page.getPageSize();
+		int pageNo = page.getPageNo();
 		// 查询
-		List<Map<String, Object>> messageList = (List<Map<String, Object>>) UserService.page(conditionMap, 1, 1);
-		QueryResult result = AppVerifyUtils.setQueryResult(queryRequestVo, messageList);
+		List<Map<String, Object>> messageList = (List<Map<String, Object>>) UserService.page(conditionMap, pageNo,
+				pageSize);
+		int total = messageList.size();
+
+		if (messageList == null || messageList.size() == 0) {
+		} else {
+			ListPageUtil<Map<String, Object>> listPageUtil = new ListPageUtil<Map<String, Object>>(messageList, pageNo,
+					pageSize);
+			messageList = listPageUtil.getPagedList();
+		}
+		QueryResult result = AppVerifyUtils.setQueryPageResult(queryRequestVo, pageNo, pageSize, total, messageList);
 		return Result.ok(queryRequestVo.getJsonrpc(), queryRequestVo.getId(), result);
 	}
 
