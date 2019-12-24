@@ -11,7 +11,7 @@ eureka:
 file:
   path: D://111//检验鉴定委托书.docx
 mq:
-  url: tcp://192.168.42.189:61616
+  url: tcp://192.168.42.229:61616
   name: admin
   password: admin
 lanxin:
