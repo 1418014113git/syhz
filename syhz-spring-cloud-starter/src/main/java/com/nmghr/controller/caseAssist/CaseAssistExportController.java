@@ -371,7 +371,7 @@ public class CaseAssistExportController {
         int total = whc + hcs;
         BigDecimal hc = new BigDecimal(String.valueOf(hcs));
         if (total > 0) {
-          m.put("hcl", hc.divide(new BigDecimal(String.valueOf(total)), 4, RoundingMode.HALF_UP).multiply(new BigDecimal("100")).setScale(2, RoundingMode.DOWN));
+          m.put("hcl", hc.divide(new BigDecimal(String.valueOf(total)), 4, RoundingMode.HALF_UP).multiply(new BigDecimal("100")).setScale(2, RoundingMode.DOWN).toString());
         } else {
           m.put("hcl", '-');
         }
@@ -395,7 +395,7 @@ public class CaseAssistExportController {
 
       BigDecimal hcSum = new BigDecimal(String.valueOf(csSum + cfSum));
       if (xsNumSum > 0) {
-        count.put("hcl", hcSum.divide(new BigDecimal(String.valueOf(xsNumSum)), 4, RoundingMode.HALF_UP).multiply(new BigDecimal("100")).setScale(2, RoundingMode.DOWN));
+        count.put("hcl", hcSum.divide(new BigDecimal(String.valueOf(xsNumSum)), 4, RoundingMode.HALF_UP).multiply(new BigDecimal("100")).setScale(2, RoundingMode.DOWN).toString());
       } else {
         count.put("hcl", 0);
       }

@@ -43,9 +43,6 @@ public class CaseClusterUpdateHandler extends AbstractUpdateHandler {
       return id;
     } else {
       modify(String.valueOf(body.get("id")), body);
-//      if ("5".equals(String.valueOf(body.get("status")))) {
-//        createSignInfo(body.get("userId"), body.get("userName"), body.get("curDeptCode"), body.get("curDeptName"), id);
-//      }
       return id;
     }
   }

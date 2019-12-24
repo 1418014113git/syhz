@@ -130,7 +130,7 @@ public class CaseAssistController {
               BigDecimal xsNum = new BigDecimal(String.valueOf(m.get("xsNum")));
               BigDecimal hc = new BigDecimal(String.valueOf(m.get("hc")));
               if (xsNum.compareTo(BigDecimal.ZERO) > 0) {
-                m.put("hcl",  hc.divide(xsNum, 4, RoundingMode.HALF_UP).multiply(new BigDecimal("100")).setScale(2, RoundingMode.DOWN));
+                m.put("hcl",  hc.divide(xsNum, 4, RoundingMode.HALF_UP).multiply(new BigDecimal("100")).setScale(2, RoundingMode.DOWN).toString());
               } else {
                 m.put("hcl", 0);
               }
@@ -141,7 +141,7 @@ public class CaseAssistController {
               BigDecimal xsNum = new BigDecimal(String.valueOf(m.get("xsNum")));
               BigDecimal hc = new BigDecimal(String.valueOf(m.get("hc")));
               if (xsNum.compareTo(BigDecimal.ZERO) > 0) {
-                m.put("hcl", hc.divide(xsNum, 4, RoundingMode.HALF_UP).multiply(new BigDecimal("100")).setScale(2, RoundingMode.DOWN));
+                m.put("hcl", hc.divide(xsNum, 4, RoundingMode.HALF_UP).multiply(new BigDecimal("100")).setScale(2, RoundingMode.DOWN).toString());
               } else {
                 m.put("hcl", 0);
               }
