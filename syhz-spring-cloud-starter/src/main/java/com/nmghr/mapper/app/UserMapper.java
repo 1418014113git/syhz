@@ -31,12 +31,12 @@ public interface UserMapper {
 
 	@Select("<script> select DISTINCT gu.id,gu.real_name as realName, gu.user_name as userName from u_user_depart_rel uudr INNER JOIN g_user gu on uudr.user_id = gu.id INNER JOIN u_depart ud on uudr.depart_id = ud.id\r\n"
 			+ "<where> <if test=\"departCode!=null and departCode!=''\">(ud.parent_depart_code = #{departCode} or ud.depart_code = #{departCode})</if>\r\n"
-			+ "<if test=\"name!=null and name!=''\"> and gu.real_name like '%${name}%'</if>\r\n"
+			+ "<if test=\"name!=null and name!=''\"> and (gu.real_name like '%${name}%' or  gu.user_name like '%${name}%') </if>\r\n"
 			+ "<if test=\"type!=null and type!=''\"> and gu.user_type = #{type}</if></where> </script>")
 	List<Map<String, Object>> getDeptUser(Map<String, Object> map);
 
 	@Update("UPDATE `g_user` SET \r\n"
-			+ "`user_state`=#{userState}, `user_name`=#{userName}, `real_name`=#{realName}, `user_id_number`=#{userIdNumber}, `user_sex`=#{userSex}, `remark`=#{remark}, `phone`=#{phone}, `nation`=#{nation}, \r\n"
+			+ "`user_state`=#{userState},  `real_name`=#{realName}, `user_id_number`=#{userIdNumber}, `user_sex`=#{userSex}, `remark`=#{remark}, `phone`=#{phone}, `nation`=#{nation}, \r\n"
 			+ "`politics_status`=#{politicsStatus}, `culture_degree`=#{cultureDegree}, `degree`=#{degree}, `worker_grade`=#{workerGrade}, `worker_duty`=#{workerDuty}, `worker_time`=#{workerTime}, \r\n"
 			+ "`worker_post`=#{workerPost}, `join_police_time`=#{joinPoliceTime}, `join_hsy_time`=#{joinHsyTime}, `worker_phone`=#{workerPhone}, `pc_ip`=#{ip}, `birth_time`=#{birthTime}, `age`=#{age}, `complete`=1, `last_id`=#{lastId}, `last_name`=#{lastName}, `last_time`=NOW() \r\n"
 			+ "WHERE id=#{id}")
