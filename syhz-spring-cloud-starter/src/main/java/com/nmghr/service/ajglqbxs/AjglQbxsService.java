@@ -187,6 +187,7 @@ public class AjglQbxsService {
       for (Map<String, Object> m : deptInfos) {
         qdIds.add(m.get("id"));
         codes.add(m.get("deptCode"));
+        delSignDept(m.get("deptId"), body.get("assistId"), m.get("deptCode"), "1".equals(type) ? 1 : 2);
       }
       param = new HashMap<>();
       param.put("qbxsIds", ids);
@@ -197,6 +198,25 @@ public class AjglQbxsService {
       LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJGLQBXSDEPTREISSUE");
       baseService.remove(param);
     }
+  }
+
+  private void delSignDept(Object assistDeptId, Object assistId, Object code, int type) throws Exception {
+    List<Object> codes = new ArrayList<>();
+    codes.add(code);
+    Map<String, Object> delP = new HashMap<>();
+    delP.put("assistDeptId", assistDeptId);
+    delP.put("assistType", type);
+    LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJGLQBXSDEPT");
+    List<Map<String, Object>> clueDeptList = (List<Map<String, Object>>) baseService.list(delP);
+    delP.put("signDelFlag", "nodel"); // 删除签收
+    if (clueDeptList == null || clueDeptList.size() < 2) {
+      delP.put("signDelFlag", "del"); // 删除签收
+    }
+    delP.put("codes", codes);
+    delP.put("assistId", assistId);
+
+    LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJGLQBXSSIGNDEL");
+    baseService.remove(delP);
   }
 
   private void saveMapper(String ids, Object id, Object assistType) {
@@ -298,15 +318,13 @@ public class AjglQbxsService {
     baseP.put("assistId", body.get("assistId"));
     if (!StringUtils.isEmpty(body.get("receiveCode"))) {
       List codes = new ArrayList<>();
-      codes.add(body.get("receiveCode"));
       baseP.put("codes", codes);
+      LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJGLQBXSDEPTONE");
+      Map<String, Object> map = (Map<String, Object>) baseService.get(String.valueOf(body.get("qbxsId")));
+      if(map!=null){
+        delSignDept(map.get("deptId"), body.get("assistId"), body.get("receiveCode"), "1".equals(String.valueOf(body.get("assistType"))) ? 1 : 2);
+      }
     }
-    LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJGLQBXSDEPT");
-    List<Map<String, Object>> clueDeptList = (List<Map<String, Object>>) baseService.list(baseP);
-    if (clueDeptList == null || clueDeptList.size() < 2) {
-      baseP.put("signDelFlag", "del"); // 删除签收
-    }
-
     baseP.put("assistType", "1".equals(String.valueOf(body.get("assistType"))) ? 1 : 2);
     LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJGLQBXSDEPTDEL");
     baseService.update("", baseP);
@@ -360,6 +378,14 @@ public class AjglQbxsService {
   public Object feedBackList(Map<String, Object> requestMap) throws Exception {
     int pageNum = Integer.parseInt(String.valueOf(requestMap.get("pageNum")));
     int pageSize = Integer.parseInt(String.valueOf(requestMap.get("pageSize")));
+
+    if(!StringUtils.isEmpty(requestMap.get("qbxsResult"))){
+      String qbxsResult = String.valueOf(requestMap.get("qbxsResult"));
+      String[] res = qbxsResult.split(",");
+      requestMap.put("qbxsResult", Arrays.asList(res));
+    } else {
+      requestMap.put("qbxsResult", null);
+    }
 
     Map<String, Object> params = new HashMap<>();
     params.put("assistType", requestMap.get("assistType"));
@@ -694,7 +720,7 @@ public class AjglQbxsService {
       int hcs = cs + cf;
       int total = whc + hcs;
       if (total > 0) {
-        m.put("hcl", new BigDecimal(String.valueOf(hcs)).divide(new BigDecimal(String.valueOf(total)), 4, RoundingMode.HALF_UP).multiply(new BigDecimal("100")).setScale(2, RoundingMode.DOWN));
+        m.put("hcl", new BigDecimal(String.valueOf(hcs)).divide(new BigDecimal(String.valueOf(total)), 4, RoundingMode.HALF_UP).multiply(new BigDecimal("100")).setScale(2, RoundingMode.DOWN).toString());
       } else {
         m.put("hcl", "-");
       }
@@ -720,7 +746,7 @@ public class AjglQbxsService {
 
     BigDecimal hcSum = new BigDecimal(String.valueOf(csSum + cfSum));
     if (xsNumSum > 0) {
-      count.put("hcl", hcSum.divide(new BigDecimal(String.valueOf(xsNumSum)), 4, RoundingMode.HALF_UP).multiply(new BigDecimal("100")).setScale(2, RoundingMode.DOWN));
+      count.put("hcl", hcSum.divide(new BigDecimal(String.valueOf(xsNumSum)), 4, RoundingMode.HALF_UP).multiply(new BigDecimal("100")).setScale(2, RoundingMode.DOWN).toString());
     } else {
       count.put("hcl", "-");
     }
