@@ -297,6 +297,8 @@ public class CaseAssistClueController {
   public Object feedBackClues(@RequestParam Map<String, Object> body) {
     ValidationUtils.notNull(body.get("assistId"), "assistId不能为空!");
     ValidationUtils.notNull(body.get("assistType"), "assistType不能为空!");
+    ValidationUtils.notNull(body.get("pageNum"), "pageNum不能为空!");
+    ValidationUtils.notNull(body.get("pageSize"), "pageSize不能为空!");
     try {
       Object obj = ajglQbxsService.feedBackList(body);
       return Result.ok(obj);
