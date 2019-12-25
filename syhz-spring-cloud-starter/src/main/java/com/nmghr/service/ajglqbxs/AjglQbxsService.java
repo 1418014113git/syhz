@@ -379,6 +379,14 @@ public class AjglQbxsService {
     int pageNum = Integer.parseInt(String.valueOf(requestMap.get("pageNum")));
     int pageSize = Integer.parseInt(String.valueOf(requestMap.get("pageSize")));
 
+    if(!StringUtils.isEmpty(requestMap.get("qbxsResult"))){
+      String qbxsResult = String.valueOf(requestMap.get("qbxsResult"));
+      String[] res = qbxsResult.split(",");
+      requestMap.put("qbxsResult", Arrays.asList(res));
+    } else {
+      requestMap.put("qbxsResult", null);
+    }
+
     Map<String, Object> params = new HashMap<>();
     params.put("assistType", requestMap.get("assistType"));
     if (StringUtils.isEmpty(requestMap.get("assistType"))) {
