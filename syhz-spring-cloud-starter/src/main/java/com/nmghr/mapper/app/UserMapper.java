@@ -11,16 +11,17 @@ import org.apache.ibatis.annotations.Update;
 @Mapper
 public interface UserMapper {
 
-	@Select("<script> SELECT\r\n"
-			+ "gu.id, IFNULL(gu.user_name, '') AS 'userName', IFNULL(gu.real_name, '') AS 'realName', IFNULL(gu.remark, '') AS remark, IFNULL(gu.user_id_number, '') AS 'userIdNumber', IFNULL(gu.user_sex, '') AS 'userSex',\r\n"
-			+ "IFNULL(gu.phone, '') AS phone, IFNULL(gu.user_state, '') AS 'userState', IFNULL(gu.user_sort, '') AS 'userSort', IFNULL(gu.nation, '') AS 'nation', IFNULL(gu.politics_status, '') AS 'politicsStatus', IFNULL(gu.culture_degree, '') AS 'cultureDegree',\r\n"
-			+ "IFNULL(gu.degree, '') AS 'degree', IFNULL(gu.worker_grade, '') AS 'workerGrade', IFNULL(gu.worker_duty, '') AS 'workerDuty', IFNULL(STR_TO_DATE(gu.worker_time, '%Y-%m-%d'),'') AS 'workerTime',\r\n"
-			+ "IFNULL(gu.worker_post, '') AS 'workerPost', IFNULL(STR_TO_DATE(gu.join_police_time,'%Y-%m-%d'),'') AS 'joinPoliceTime',\r\n"
-			+ "IFNULL(STR_TO_DATE(gu.join_hsy_time,'%Y-%m-%d'),'') AS 'joinHsyTime', IFNULL(gu.worker_phone, '') AS 'workerPhone', IFNULL(gu.pc_ip, '') AS 'ip', IFNULL( STR_TO_DATE(gu.birth_time,'%Y-%m-%d'),'') AS 'birthTime',\r\n"
-			+ "IFNULL(gu.age, '') AS 'age', IFNULL(ud.id, '') AS departId, IFNULL(ud.area_code, '') AS areaCode, IFNULL(ud.depart_name, '') AS departName, IFNULL(ud.depart_code, '') AS departCode,\r\n"
-			+ "IFNULL(ud.depart_type, '') AS departType, IFNULL(ud.parent_depart_id, '') AS parentDepId, IFNULL(ud.parent_depart_code, '') AS parentDepCode\r\n"
-			+ "FROM g_user gu\r\n" + "LEFT JOIN u_user_depart_rel uudr ON gu.id = uudr.user_id\r\n"
-			+ "LEFT JOIN u_depart ud ON uudr.depart_id = ud.id\r\n" + "WHERE user_name =#{userName} </script>")
+  @Select("<script> SELECT\r\n"
+      + "gu.id, IFNULL(gu.user_name, '') AS 'userName', IFNULL(gu.real_name, '') AS 'realName', IFNULL(gu.remark, '') AS remark, IFNULL(gu.user_id_number, '') AS 'userIdNumber', IFNULL(gu.user_sex, '') AS 'userSex',\r\n"
+      + "IFNULL(gu.phone, '') AS phone, IFNULL(gu.user_state, '') AS 'userState', IFNULL(gu.user_sort, '') AS 'userSort', IFNULL(gu.nation, '') AS 'nation', IFNULL(gu.politics_status, '') AS 'politicsStatus', IFNULL(gu.culture_degree, '') AS 'cultureDegree',\r\n"
+      + "IFNULL(gu.degree, '') AS 'degree', IFNULL(gu.worker_grade, '') AS 'workerGrade', IFNULL(gu.worker_duty, '') AS 'workerDuty', IFNULL(STR_TO_DATE(gu.worker_time, '%Y-%m-%d'),'') AS 'workerTime',\r\n"
+      + "IFNULL(gu.worker_post, '') AS 'workerPost', IFNULL(STR_TO_DATE(gu.join_police_time,'%Y-%m-%d'),'') AS 'joinPoliceTime',\r\n"
+      + "IFNULL(STR_TO_DATE(gu.join_hsy_time,'%Y-%m-%d'),'') AS 'joinHsyTime', IFNULL(gu.worker_phone, '') AS 'workerPhone', IFNULL(gu.pc_ip, '') AS 'ip', IFNULL( STR_TO_DATE(gu.birth_time,'%Y-%m-%d'),'') AS 'birthTime',\r\n"
+      + "IFNULL(gu.age, '') AS 'age', IFNULL(ud.id, '') AS departId, IFNULL(ud.area_code, '') AS areaCode, IFNULL(ud.depart_name, '') AS departName, IFNULL(ud.depart_code, '') AS departCode,\r\n"
+      + "IFNULL(ud.depart_type, '') AS departType, IFNULL(ud.parent_depart_code, '') AS parentDepCode\r\n"
+      + ",(case when (SELECT  count(uur.id) FROM u_role ur LEFT JOIN u_user_role_rel  uur on ur.id=uur.role_id WHERE  ur.role_code in ('10001','1009') and uur.user_id=gu.id)>0 then 1 else  0 end ) as parentDepId\r\n"
+      + "FROM g_user gu LEFT JOIN u_user_depart_rel uudr ON gu.id = uudr.user_id\r\n"
+      + "LEFT JOIN u_depart ud ON uudr.depart_id = ud.id WHERE user_name =#{userName}</script>")
 	Map<String, Object> getUser(@Param("userName") String userName);
 
 	@Select("<script> select d.id,d.depart_name deptName,d.depart_code deptCode,d.area_code areaCode,d.parent_depart_id parentId  from u_depart d \r\n"
