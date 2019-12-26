@@ -61,6 +61,8 @@ public class AjglQbxsFeedBackService {
     //立案村案件
     if(!StringUtils.isEmpty(body.get("handleResult")) && "1".equals(String.valueOf(body.get("handleResult")))){
       param.put("zbxss", body.get("zbxss"));
+    } else {
+      param.put("zbxss", "");
     }
     if(!StringUtils.isEmpty(body.get("backResult"))){
       param.put("backResult", body.get("backResult"));
