@@ -245,11 +245,6 @@ public class CaseAssistClueController {
   public Object delClue(@RequestBody Map<String, Object> body) {
     ValidationUtils.notNull(body.get("assistId"), "assistId不能为空!");
     ValidationUtils.notNull(body.get("qbxsId"), "qbxsId不能为空!");
-//    baseP.put("qbxsIds", body.get("qbxsId"));
-//    baseP.put("ids", body.get("qbxsDeptId"));
-//    baseP.put("assistId", body.get("assistId"));
-//    baseP.put("codes", new ArrayList<>().add(body.get("receiveCode")));
-//    baseP.put("assistType", "1".equals(String.valueOf(body.get("assistType"))) ? 1 : 2);
     try {
       Object obj = ajglQbxsService.removeClue(body);
       return Result.ok(obj);
