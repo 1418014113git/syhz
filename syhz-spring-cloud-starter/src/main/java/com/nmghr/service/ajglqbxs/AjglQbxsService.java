@@ -425,7 +425,7 @@ public class AjglQbxsService {
       sbd.append(",").append(base.get("qbxsId"));
       base.put("ysxz", "2".equals(String.valueOf(base.get("handleResult"))) ? 1 : 0);
       baseData.put(String.valueOf(base.get("qbxsId")), base);
-      if (base.get("zbxsAjbhs") != null) {
+      if (!StringUtils.isEmpty(base.get("zbxsAjbhs"))) {
         Map res = getAjInfoData(ajbhCheck(String.valueOf(base.get("zbxsAjbhs"))));
         base.putAll(res);
       } else {
@@ -675,7 +675,7 @@ public class AjglQbxsService {
     for (Map<String, Object> m : list) {
       m.put("deptType", getDeptType(String.valueOf(m.get("deptCode"))));
       ysxzSum += Integer.parseInt(String.valueOf(m.get("ysxz")));//移送行政处理次数
-      if (m.get("zbajList") != null) {
+      if (!StringUtils.isEmpty(m.get("zbajList"))) {
         Map res = getAjInfoData(ajbhCheck(String.valueOf(m.get("zbajList"))));
         m.putAll(res);
         if (res.containsKey("dhwd") && !StringUtils.isEmpty(res.get("dhwd"))) {
@@ -835,6 +835,9 @@ public class AjglQbxsService {
     res.put("yjss", 0);//移诉
     res.put("dhwd", 0);//捣毁窝点
     res.put("sajz", 0);//涉案价值
+    if(ajbhs==null || ajbhs.size()==0){
+      return res;
+    }
     Map<String, Object> params = new HashMap<>();
     params.put("ajbhs", ajbhs);
     LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJASSISTFEEDBACKAJINFO");

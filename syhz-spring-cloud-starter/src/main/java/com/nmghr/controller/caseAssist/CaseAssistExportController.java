@@ -423,7 +423,7 @@ public class CaseAssistExportController {
       for (Map<String, Object> m : list) {
         m.put("cityCode", String.valueOf(m.get("applyDeptCode")).substring(0, 4) + "00");
         ysxzSum += Integer.parseInt(String.valueOf(m.get("ysxz")));//移送行政处理次数
-        if (m.get("zbajList") != null) {
+        if (!StringUtils.isEmpty(m.get("zbajList"))) {
           String[] zbs = String.valueOf(m.get("zbajList")).split(",");
           List<String> ajbhs = Arrays.asList(zbs);
           Map res = ajglQbxsService.getAjInfoData(ajbhs);
