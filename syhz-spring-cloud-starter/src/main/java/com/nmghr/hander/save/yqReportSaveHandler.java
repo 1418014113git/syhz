@@ -45,13 +45,11 @@ public class yqReportSaveHandler extends AbstractSaveHandler {
   @Transactional
   public Object save(Map<String, Object> requestBody) throws Exception {
     // 添加主表
-
     String attachment = String.valueOf(requestBody.get("attachment"));
     if(attachment!=null && !"".equals(attachment)){
       JSONArray attachments = JSONArray.parseArray(attachment);
       try {
       for (int i = 0; i < attachments.size(); i++) {
-
           JSONObject jsonObject = attachments.getJSONObject(i);
           String path = String.valueOf(jsonObject.get("path"));
           String name = String.valueOf(jsonObject.get("name"));
