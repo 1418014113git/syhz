@@ -454,7 +454,7 @@ public class CaseAssistExportController {
           }
         } else {
           m.put("dhwd", 0);//捣毁窝点
-          m.put("sajz", 0);//涉案价值
+          m.put("sajz", "0.00");//涉案价值
           m.put("pzdb", 0);//逮捕
           m.put("zhrys", 0);//抓获
           m.put("yjss", 0);//移诉
@@ -494,14 +494,14 @@ public class CaseAssistExportController {
       count.put("zhrys", zhrysSum);
       count.put("yjss", yjssSum);
       count.put("xsjl", xsjlSum);
-      count.put("sajz", sajzSum);
+      count.put("sajz", new BigDecimal(String.valueOf(sajzSum)).setScale(2, RoundingMode.HALF_UP).toString());
       count.put("ysxz", ysxzSum);
 
       BigDecimal hcSum = new BigDecimal(String.valueOf(csSum + cfSum));
       if (xsNumSum > 0) {
         count.put("hcl", hcSum.divide(new BigDecimal(String.valueOf(xsNumSum)), 4, RoundingMode.HALF_UP).multiply(new BigDecimal("100")).setScale(2, RoundingMode.DOWN).toString());
       } else {
-        count.put("hcl", 0);
+        count.put("hcl", "-");
       }
       list.add(count);
       return list;
