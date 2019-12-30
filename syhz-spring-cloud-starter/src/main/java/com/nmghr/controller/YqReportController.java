@@ -50,13 +50,13 @@ public class YqReportController {
   private IBaseService baseService;
 
   @RequestMapping("/total")
-  public Map<String,Object> getTotal() throws Exception {
+  public Map<String,Object> getTotal(@RequestParam  Map<String,Object> param) throws Exception {
     Map<String,Object> totalMap = new HashMap<>();
     totalMap.put("day",0);
     totalMap.put("week",0);
     totalMap.put("month",0);
     LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "YQREPORTTOTAL");
-   List<Map<String,Object>> result = (List<Map<String, Object>>) baseService.list(null);
+   List<Map<String,Object>> result = (List<Map<String, Object>>) baseService.list(param);
     for (Map<String, Object> map : result) {
       if("1".equals(String.valueOf(map.get("category")))){
         totalMap.put("day",map.get("total"));
