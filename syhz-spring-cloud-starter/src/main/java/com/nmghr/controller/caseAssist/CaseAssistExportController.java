@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.nmghr.basic.common.Constant;
 import com.nmghr.basic.common.exception.GlobalErrorException;
 import com.nmghr.basic.core.common.LocalThreadStorage;
+import com.nmghr.basic.core.page.Paging;
 import com.nmghr.basic.core.service.IBaseService;
 import com.nmghr.basic.core.util.ValidationUtils;
 import com.nmghr.service.ajglqbxs.AjglQbxsService;
@@ -43,11 +44,16 @@ public class CaseAssistExportController {
   private AjglQbxsService ajglQbxsService;
 
   @RequestMapping(value = "/cluster/export")
-  public void clusterExport(String clusterIds, String curDeptName, String realName, String curUserPhone, HttpServletResponse response) throws Exception {
-    ValidationUtils.notNull(clusterIds, "clusterIds不能为空!");
-    ValidationUtils.notNull(curDeptName, "curDeptName不能为空!");
-    ValidationUtils.notNull(realName, "realName不能为空!");
-    ValidationUtils.notNull(curUserPhone, "curUserPhone不能为空!");
+  public void clusterExport(@RequestParam Map<String, Object> req, HttpServletResponse response) throws Exception {
+    ValidationUtils.notNull(req.get("curDeptName"), "curDeptName不能为空!");
+    ValidationUtils.notNull(req.get("realName"), "realName不能为空!");
+    ValidationUtils.notNull(req.get("curUserPhone"), "curUserPhone不能为空!");
+    ValidationUtils.notNull(req.get("category"), "category不能为空!");
+
+    String curDeptName = String.valueOf(req.get("curDeptName"));
+    String realName = String.valueOf(req.get("realName"));
+    String curUserPhone = String.valueOf(req.get("curUserPhone"));
+    String category = String.valueOf(req.get("category"));
 
     Map<String, Object> params = new HashMap<>();
     params.put("configKey", "clusterExport");
@@ -69,9 +75,44 @@ public class CaseAssistExportController {
       throw new GlobalErrorException("999889", "导出配置信息错误");
     }
 
+    List<Map<String, Object>> list = new ArrayList<>();
+    List<Object> ids = new ArrayList<>();
+    if ("1".equals(category)) {
+      Map<String, Object> p = new HashMap<>();
+      p.putAll(req);
+      if (!StringUtils.isEmpty(p.get("reginCode"))) {
+        p.put("cityCode", p.get("reginCode"));
+      } else {
+        if (StringUtils.isEmpty(p.get("cityCode"))) {
+          if (!StringUtils.isEmpty(p.get("provinceCode"))) {
+            p.put("cityCode", p.get("provinceCode"));
+          }
+        }
+      }
+      if (!StringUtils.isEmpty(req.get("isCheck")) && Boolean.valueOf(String.valueOf(req.get("isCheck")))) {
+        p.put("isCheck", 0);
+      } else {
+        p.put("isCheck", 3);
+      }
+      p.remove("curDeptName");
+      p.remove("realName");
+      p.remove("curUserPhone");
+      p.remove("category");
+      ids = getClusterAllIds(p);
+    } else {
+      ValidationUtils.notNull(req.get("clusterIds"), "clusterIds不能为空!");
+      String clusterIds = String.valueOf(req.get("clusterIds"));
+      ids = Arrays.asList(clusterIds.split(","));
+    }
     params = new HashMap<>();
-    params.put("clusterIds", clusterIds);
-    List<Map<String, Object>> list = getList(params, 2);
+    if (ids != null && ids.size() > 0) {
+      params.put("clusterIds", ids);
+    }
+    list = getList(params, 2);
+    if (list == null) {
+      list = new ArrayList<>();
+    }
+
     XSSFWorkbook wb = null;
     try {
       // excel模板路径
@@ -109,12 +150,41 @@ public class CaseAssistExportController {
     }
   }
 
+  private List<Object> getClusterAllIds(Map<String, Object> req) throws Exception {
+    List<Object> res = new ArrayList<>();
+    LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJCLUSTERASSIST");
+    List<Map<String, Object>> obj = (List<Map<String, Object>>) baseService.list(req);
+    if (obj != null && obj.size() > 0) {
+      for (Map<String, Object> m : obj) {
+        res.add(m.get("clusterId"));
+      }
+    }
+    return res;
+  }
+
+  private List<Object> getAssistAllIds(Map<String, Object> req) throws Exception {
+    List<Object> res = new ArrayList<>();
+    LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJASSIST");
+    List<Map<String, Object>> obj = (List<Map<String, Object>>) baseService.list(req);
+    if (obj != null && obj.size() > 0) {
+      for (Map<String, Object> m : obj) {
+        res.add(m.get("assistId"));
+      }
+    }
+    return res;
+  }
+
   @RequestMapping(value = "/caseAssist/export")
-  public void caseAssistExport(String assistIds, String curDeptName, String realName, String curUserPhone, HttpServletResponse response) throws Exception {
-    ValidationUtils.notNull(assistIds, "assistIds不能为空!");
-    ValidationUtils.notNull(curDeptName, "curDeptName不能为空!");
-    ValidationUtils.notNull(realName, "realName不能为空!");
-    ValidationUtils.notNull(curUserPhone, "curUserPhone不能为空!");
+  public void caseAssistExport(@RequestParam Map<String, Object> req, HttpServletResponse response) throws Exception {
+    ValidationUtils.notNull(req.get("curDeptName"), "curDeptName不能为空!");
+    ValidationUtils.notNull(req.get("realName"), "realName不能为空!");
+    ValidationUtils.notNull(req.get("curUserPhone"), "curUserPhone不能为空!");
+    ValidationUtils.notNull(req.get("category"), "category不能为空!");
+
+    String curDeptName = String.valueOf(req.get("curDeptName"));
+    String realName = String.valueOf(req.get("realName"));
+    String curUserPhone = String.valueOf(req.get("curUserPhone"));
+    String category = String.valueOf(req.get("category"));
 
     Map<String, Object> params = new HashMap<>();
     params.put("configKey", "assistExport");
@@ -134,9 +204,43 @@ public class CaseAssistExportController {
       throw new GlobalErrorException("999889", "导出配置信息错误");
     }
 
+    List<Map<String, Object>> list = new ArrayList<>();
+    List<Object> ids = new ArrayList<>();
+    if ("1".equals(category)) {
+      Map<String, Object> p = new HashMap<>();
+      p.putAll(req);
+      if (!StringUtils.isEmpty(p.get("reginCode"))) {
+        p.put("cityCode", p.get("reginCode"));
+      } else {
+        if (StringUtils.isEmpty(p.get("cityCode"))) {
+          if (!StringUtils.isEmpty(p.get("provinceCode"))) {
+            p.put("cityCode", p.get("provinceCode"));
+          }
+        }
+      }
+      if (!StringUtils.isEmpty(req.get("isCheck")) && Boolean.valueOf(String.valueOf(req.get("isCheck")))) {
+        p.put("isCheck", 0);
+      } else {
+        p.put("isCheck", 3);
+      }
+      p.remove("curDeptName");
+      p.remove("realName");
+      p.remove("curUserPhone");
+      p.remove("category");
+      ids = getAssistAllIds(p);
+    } else {
+      ValidationUtils.notNull(req.get("assistIds"), "assistIds不能为空!");
+      String assistIds = String.valueOf(req.get("assistIds"));
+      ids = Arrays.asList(assistIds.split(","));
+    }
     params = new HashMap<>();
-    params.put("assistIds", assistIds);
-    List<Map<String, Object>> list = getList(params, 1);
+    if (ids != null && ids.size() > 0) {
+      params.put("assistIds", ids);
+    }
+    list = getList(params, 1);
+    if (list == null) {
+      list = new ArrayList<>();
+    }
     XSSFWorkbook wb = null;
     try {
       // excel模板路径
@@ -319,7 +423,7 @@ public class CaseAssistExportController {
       for (Map<String, Object> m : list) {
         m.put("cityCode", String.valueOf(m.get("applyDeptCode")).substring(0, 4) + "00");
         ysxzSum += Integer.parseInt(String.valueOf(m.get("ysxz")));//移送行政处理次数
-        if (m.get("zbajList") != null) {
+        if (!StringUtils.isEmpty(m.get("zbajList"))) {
           String[] zbs = String.valueOf(m.get("zbajList")).split(",");
           List<String> ajbhs = Arrays.asList(zbs);
           Map res = ajglQbxsService.getAjInfoData(ajbhs);
