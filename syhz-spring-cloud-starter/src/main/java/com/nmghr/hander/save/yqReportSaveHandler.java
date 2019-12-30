@@ -19,6 +19,7 @@ import com.nmghr.basic.core.service.handler.impl.AbstractSaveHandler;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
@@ -34,9 +35,15 @@ import java.util.Map;
 @Service("yqreportSaveHandler")
 public class yqReportSaveHandler extends AbstractSaveHandler {
 
+  private static final String dateStringFormat1 ="yyyy.MM.dd";
+  private static final String dateStringFormat2 ="yyyy-MM-dd";
+  private static final String dateStringFormat3 ="yyyy.MM";
+  private static final String dateStringFormat4 ="yyyyMMdd";
+
   public yqReportSaveHandler(IBaseService baseService) {
     super(baseService);
   }
+
 
   /**
    * 增加舆情报告
@@ -46,95 +53,102 @@ public class yqReportSaveHandler extends AbstractSaveHandler {
   public Object save(Map<String, Object> requestBody) throws Exception {
     // 添加主表
     String attachment = String.valueOf(requestBody.get("attachment"));
-    if(attachment!=null && !"".equals(attachment)){
+    if (attachment != null && !"".equals(attachment)) {
       JSONArray attachments = JSONArray.parseArray(attachment);
-      try {
       for (int i = 0; i < attachments.size(); i++) {
-          JSONObject jsonObject = attachments.getJSONObject(i);
-          String path = String.valueOf(jsonObject.get("path"));
-          String name = String.valueOf(jsonObject.get("name"));
-          String category = String.valueOf(requestBody.get("category"));
-          if ("1".equals(category)) {
+        JSONObject jsonObject = attachments.getJSONObject(i);
+        String name = String.valueOf(jsonObject.get("name"));
+        String category = String.valueOf(requestBody.get("category"));
+        try {
+          if (null != name) {
+            SimpleDateFormat sdf = new SimpleDateFormat(dateStringFormat1);
+            SimpleDateFormat sdf2 = new SimpleDateFormat(dateStringFormat2);
+            SimpleDateFormat sdf3 = new SimpleDateFormat(dateStringFormat3);
+            SimpleDateFormat sdf4 = new SimpleDateFormat(dateStringFormat4);
+
             //日报
-            String shortName = name.substring(0,name.lastIndexOf("."));
+            if ("1".equals(category)) {
+              String shortName = name.substring(0,name.lastIndexOf("."));
+              if("".equals(shortName) || shortName.length() != 14 ){
+                throw new GlobalErrorException(GlobalErrorEnum.PARAM_NOT_VALID.getCode(), "报告保存失败，请确认文件名是否正确");
+              }
+              String time = shortName.substring(0,8);
+              Date createTime = sdf4.parse(time);
+              requestBody.put("createTime", createTime);
 
-            if("".equals(shortName) || shortName.length() != 14 ){
-              throw new GlobalErrorException(GlobalErrorEnum.PARAM_NOT_VALID.getCode(), "报告保存失败，请确认文件名是否正确");
+              Date date = getInit(-1,time,false);
+              String dayString = sdf.format(date) + "日报";
+              requestBody.put("title", dayString);
             }
-            String title = name.substring(0, 8);
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
-            Date time = sdf.parse(title);
-            Calendar calendar = Calendar.getInstance();
-            calendar.setTime(time);
-            calendar.add(calendar.DATE, -1);
-            Date newTime = calendar.getTime();
-            title = sdf.format(newTime);
-            String titleOK = title.substring(0, 4) + "." + title.substring(4, 6) + "." + title.substring(6, 8) + "日报";
-            Date createTime = sdf.parse(name.substring(0, 8));
-            requestBody.put("title", titleOK);
-            requestBody.put("createTime", createTime);
-            requestBody.put("fileName", name);
-            requestBody.put("attachment", jsonObject.toJSONString());
-            LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "YQREPORT");
-            baseService.save(requestBody);
-          }
-          if ("2".equals(category)) {
-            String shortName = name.substring(0,name.lastIndexOf("."));
-            if("".equals(shortName) || shortName.length() != 29 || !shortName.contains("-") ){
-              throw new GlobalErrorException(GlobalErrorEnum.PARAM_NOT_VALID.getCode(), "报告保存失败，请确认文件名是否正确");
+            // 周报
+            if ("2".equals(category)) {
+              String shortName = name.substring(0,name.lastIndexOf("."));
+              if("".equals(shortName) || shortName.length() != 29 || !shortName.contains("-") ){
+                throw new GlobalErrorException(GlobalErrorEnum.PARAM_NOT_VALID.getCode(), "报告上传失败，请联系管理员！");
+              }
+              String[] time = shortName.split("-");
+              if(time!=null && time.length == 2) {
+                String startTime = time[0].substring(0, 8);
+                String endTime = time[1].substring(0, 8);
+                Date createTime = sdf4.parse(endTime);
+                requestBody.put("createTime", createTime);
+                Date date1 = getInit(0, startTime, false);
+                Date date2 = getInit(-1, endTime, false);
+                String startDateString = sdf.format(date1);
+                String endDateString = sdf.format(date2);
+                String weekTitleOK = startDateString + "-" + endDateString + "周报";
+                requestBody.put("title", weekTitleOK);
+              }
             }
-            //周报
-            String[] time = name.split("-");
-            String start = time[0].substring(0, 4) + "." + time[0].substring(4, 6) + "." + time[0].substring(6, 8);
-            String end = time[1].substring(0, 8);
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
-            Date endTime = sdf.parse(end);
-            Calendar calendar = Calendar.getInstance();
-            calendar.setTime(endTime);
-            calendar.add(calendar.DATE, -1);
-            Date newTime = calendar.getTime();
-            end = sdf.format(newTime);
-            end = end.substring(0, 4) + "." + end.substring(4, 6) + "." + end.substring(6, 8);
-            String weekTitleOK = start + "-" + end + "周报";
-            Date createTime = sdf.parse(time[1].substring(0, 8));
-            requestBody.put("title", weekTitleOK);
-            requestBody.put("createTime", createTime);
-            requestBody.put("fileName", name);
-            requestBody.put("attachment", jsonObject.toJSONString());
-            LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "YQREPORT");
-            baseService.save(requestBody);
+            // 月报
+            if ("3".equals(category)) {
 
-          }
-          if ("3".equals(category)) {
-            //月报
-            String shortName = name.substring(0,name.lastIndexOf("."));
-            if("".equals(shortName) || shortName.length() != 17 || !shortName.contains("-") ){
-              throw new GlobalErrorException(GlobalErrorEnum.PARAM_NOT_VALID.getCode(), "报告保存失败，请确认文件名是否正确");
+              String shortName = name.substring(0,name.lastIndexOf("."));
+              if("".equals(shortName) || shortName.length() != 17 || !shortName.contains("-") ){
+                throw new GlobalErrorException(GlobalErrorEnum.PARAM_NOT_VALID.getCode(), "报告上传失败，请联系管理员！");
+              }
+              String[] time = shortName.split("-");
+              if(time!=null && time.length == 2) {
+                String startTime = time[0].substring(0, 8);
+                Date createTime = sdf4.parse(time[1].substring(0, 8));
+                requestBody.put("createTime", createTime);
+                Date date = sdf4.parse(startTime);
+                String monthString = sdf3.format(date) + "月报";
+                requestBody.put("title", monthString);
+              }
             }
-            String[] time = name.split("-");
-            String start = time[0];
-            String title = start.substring(0, 4) + "." + start.substring(4, 6) + "月报";
-            String end = time[1].substring(0, 8);
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
-            Date createTime = sdf.parse(time[1].substring(0, 8));
-            requestBody.put("title", title);
-            requestBody.put("createTime", createTime);
+
             requestBody.put("fileName", name);
             requestBody.put("attachment", jsonObject.toJSONString());
             LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "YQREPORT");
             baseService.save(requestBody);
           }
+        } catch (Exception e) {
+          throw new GlobalErrorException(GlobalErrorEnum.PARAM_NOT_VALID.getCode(),
+              "报告上传失败，请联系管理员！");
         }
-
-
       }
-      catch (Exception e){
-        throw new GlobalErrorException(GlobalErrorEnum.PARAM_NOT_VALID.getCode(), "报告保存失败，请确认文件名是否正确");
-      }
+
     }
 
     return null;
 
 
+  }
+
+  public Date getInit(int day,String dateStr,boolean useNow) throws ParseException {
+    Date date = null;
+    if(useNow){
+      date = new Date();
+    }else{
+      date = new SimpleDateFormat("yyyyMMdd").parse(dateStr);
+    }
+
+    //Calendar calendar =new GregorianCalendar();
+    Calendar calendar = Calendar.getInstance();
+    calendar.setTime(date);
+    calendar.add(calendar.DATE, day);
+    date = calendar.getTime();
+    return date;
   }
 }
