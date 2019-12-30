@@ -85,7 +85,7 @@ public interface UserExtMapper {
 
 	@Select("SELECT uur.user_id as creationId,gu.real_name as creationName FROM u_role ur \n"
 			+ "LEFT JOIN u_user_role_rel uur on ur.id=uur.role_id\n" + " LEFT JOIN g_user gu on uur.user_id=gu.id\n"
-			+ " WHERE ur.role_code=#{roleCode} and uur.user_id in\n"
+      + " WHERE ur.role_code in (${roleCode}) and uur.user_id in\n"
 			+ "(SELECT uud.user_id FROM u_depart ud LEFT JOIN u_user_depart_rel uud on uud.depart_id=ud.id WHERE ud.depart_code like '%${deptCode}%')\n"
 			+ "")
 	List<Map<String, Object>> getRoleUser(Map<String, Object> map);

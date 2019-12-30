@@ -301,7 +301,7 @@ public class CaseMergeController {
     String deptCode = getDeptCode(creationDeptCode, applyDeptCode);
     if (deptCode != null) {// 如果由总对给大队下发，给支队管理员发消息
       Map<String, Object> requestMap = new HashMap<String, Object>();
-      requestMap.put("roleCode", "10001");
+      requestMap.put("roleCode", "1007,1009,9999,9998");//管理员code
       requestMap.put("deptCode", deptCode);
       List<Map<String, Object>> mapList = (List<Map<String, Object>>) UserExtService.get(requestMap);
       if (mapList != null && mapList.size() > 0) {
