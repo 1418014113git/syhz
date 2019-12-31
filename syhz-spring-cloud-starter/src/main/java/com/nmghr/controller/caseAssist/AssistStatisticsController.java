@@ -1,6 +1,5 @@
 package com.nmghr.controller.caseAssist;
 
-import com.alibaba.fastjson.JSONObject;
 import com.nmghr.basic.common.Constant;
 import com.nmghr.basic.core.common.LocalThreadStorage;
 import com.nmghr.basic.core.service.IBaseService;
@@ -66,7 +65,7 @@ public class AssistStatisticsController {
         m.put("cyNum", 0);
         m.put("larqCount", 0);
         m.put("parqCount", 0);
-        m.put("sajz", 0);
+        m.put("sajz", "0.00");
         m.put("zhrys", 0);
         m.put("pzdb", 0);
         m.put("yjss", 0);
@@ -134,7 +133,6 @@ public class AssistStatisticsController {
   @GetMapping("/assistFk")
   @ResponseBody
   public Object list(@RequestParam Map<String, Object> params) {
-//    deptCode, deptName,cityCode,cityName,    cyNum,    fqNum,    whc,    cs,    cf,    qbxsNum
     ValidationUtils.notNull(params.get("type"), "type不能为空!");
     ValidationUtils.regexp(params.get("type"), "^[12]$", "非法输入");
     try {
@@ -149,6 +147,12 @@ public class AssistStatisticsController {
       if (!StringUtils.isEmpty(params.get("end"))) {
         p.put("end", params.get("end"));
       }
+      if (!StringUtils.isEmpty(params.get("deptType"))) {
+        p.put("deptType", params.get("deptType"));
+      }
+      if (!StringUtils.isEmpty(params.get("deptCode"))) {
+        p.put("deptCode", params.get("deptCode"));
+      }
       LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "ASSISTINFOTJ");
       List<Map<String, Object>> list = (List<Map<String, Object>>) baseService.list(p);
       if (list == null || list.size() == 0) {
@@ -160,7 +164,7 @@ public class AssistStatisticsController {
         m.put("cyNum", 0);
         m.put("larqCount", 0);
         m.put("parqCount", 0);
-        m.put("sajz", 0);
+        m.put("sajz", "0.00");
         m.put("zhrys", 0);
         m.put("pzdb", 0);
         m.put("yjss", 0);
@@ -251,7 +255,7 @@ public class AssistStatisticsController {
         c.put("fqNum", Integer.parseInt(String.valueOf(c.get("fqNum"))) + Integer.parseInt(String.valueOf(m.get("fqNum"))));
         c.put("larqCount", Integer.parseInt(String.valueOf(c.get("larqCount"))) + Integer.parseInt(String.valueOf(m.get("larqCount"))));
         c.put("parqCount", Integer.parseInt(String.valueOf(c.get("parqCount"))) + Integer.parseInt(String.valueOf(m.get("parqCount"))));
-        c.put("sajz", new BigDecimal(String.valueOf(c.get("sajz"))).add(new BigDecimal(String.valueOf(m.get("sajz")))).setScale(4, RoundingMode.DOWN).toString());
+        c.put("sajz", new BigDecimal(String.valueOf(c.get("sajz"))).add(new BigDecimal(String.valueOf(m.get("sajz")))).setScale(2, RoundingMode.HALF_UP).toString());
         c.put("zhrys", Integer.parseInt(String.valueOf(c.get("zhrys"))) + Integer.parseInt(String.valueOf(m.get("zhrys"))));
         c.put("pzdb", Integer.parseInt(String.valueOf(c.get("pzdb"))) + Integer.parseInt(String.valueOf(m.get("pzdb"))));
         c.put("yjss", Integer.parseInt(String.valueOf(c.get("yjss"))) + Integer.parseInt(String.valueOf(m.get("yjss"))));
@@ -298,7 +302,7 @@ public class AssistStatisticsController {
         c.put("fqNum", Integer.parseInt(String.valueOf(c.get("fqNum"))) + Integer.parseInt(String.valueOf(m.get("fqNum"))));
         c.put("larqCount", Integer.parseInt(String.valueOf(c.get("larqCount"))) + Integer.parseInt(String.valueOf(m.get("larqCount"))));
         c.put("parqCount", Integer.parseInt(String.valueOf(c.get("parqCount"))) + Integer.parseInt(String.valueOf(m.get("parqCount"))));
-        c.put("sajz", new BigDecimal(String.valueOf(c.get("sajz"))).add(new BigDecimal(String.valueOf(m.get("sajz")))).setScale(4, RoundingMode.DOWN).toString());
+        c.put("sajz", new BigDecimal(String.valueOf(c.get("sajz"))).add(new BigDecimal(String.valueOf(m.get("sajz")))).setScale(2, RoundingMode.HALF_UP).toString());
         c.put("zhrys", Integer.parseInt(String.valueOf(c.get("zhrys"))) + Integer.parseInt(String.valueOf(m.get("zhrys"))));
         c.put("pzdb", Integer.parseInt(String.valueOf(c.get("pzdb"))) + Integer.parseInt(String.valueOf(m.get("pzdb"))));
         c.put("yjss", Integer.parseInt(String.valueOf(c.get("yjss"))) + Integer.parseInt(String.valueOf(m.get("yjss"))));

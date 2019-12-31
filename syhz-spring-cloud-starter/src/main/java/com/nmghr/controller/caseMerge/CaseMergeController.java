@@ -301,20 +301,25 @@ public class CaseMergeController {
     String deptCode = getDeptCode(creationDeptCode, applyDeptCode);
     if (deptCode != null) {// 如果由总对给大队下发，给支队管理员发消息
       Map<String, Object> requestMap = new HashMap<String, Object>();
-      requestMap.put("roleCode", "10001");
-      requestMap.put("deptCode", deptCode);
-      List<Map<String, Object>> mapList = (List<Map<String, Object>>) UserExtService.get(requestMap);
-      if (mapList != null && mapList.size() > 0) {
-        for (Map<String, Object> map : mapList) {
-          body.put("creationId", map.get("creationId"));
-          body.put("creationName", map.get("creationName"));
-          Map<String, Object> sendMap = setMap(title, content, body.get("creationId"), body.get("creationName"),
-              body.get("userId"), body.get("userName"), body.get("applyDeptCode"), body.get("applyDeptName"),
-              body.get("id"));
-          sendMessageService.sendMessage(sendMap, QueueConfig.SAVEMESSAGE);
-          sendMessageService.sendMessage(sendMap, QueueConfig.TIMELYMESSAGE);
+      LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "GLYCODE");
+      Map<String, Object> glyMap = (Map<String, Object>) baseService.get("");// 查询字段管理员code
+      if (glyMap != null && glyMap.containsKey("glyCode")) {
+        requestMap.put("roleCode", glyMap.get("glyCode"));// 管理员code
+        requestMap.put("deptCode", deptCode);
+        List<Map<String, Object>> mapList = (List<Map<String, Object>>) UserExtService.get(requestMap);
+        if (mapList != null && mapList.size() > 0) {
+          for (Map<String, Object> map : mapList) {
+            body.put("creationId", map.get("creationId"));
+            body.put("creationName", map.get("creationName"));
+            Map<String, Object> sendMap = setMap(title, content, body.get("creationId"), body.get("creationName"),
+                body.get("userId"), body.get("userName"), body.get("applyDeptCode"), body.get("applyDeptName"),
+                body.get("id"));
+            sendMessageService.sendMessage(sendMap, QueueConfig.SAVEMESSAGE);
+            sendMessageService.sendMessage(sendMap, QueueConfig.TIMELYMESSAGE);
+          }
         }
       }
+
     }
 
     return baseService;
@@ -354,5 +359,6 @@ public class CaseMergeController {
     ValidationUtils.notNull(requestParams.get("userId"), "获取不到用户信息");
     ValidationUtils.notNull(requestParams.get("userName"), "获取不到用户信息");
   }
+
 
 }

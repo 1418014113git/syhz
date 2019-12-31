@@ -110,7 +110,6 @@ public class Result extends com.nmghr.basic.common.Result {
 		retMap.put("id", id);
 		retMap.put("result", result);
 		String JsonStr = JSONObject.toJSONString(retMap);
-		System.out.println("----JsonStr:" + JsonStr);
 		return JsonStr;
 	}
 
