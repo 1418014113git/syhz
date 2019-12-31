@@ -110,7 +110,8 @@ public class EnclosureAuditService {
 		trainWorkorderExamineService.examineWorkFlowData(baseService, headers, map);
 		Map<String, Object> sendMap = activeMq(map, baseService, 0);
 		int sendFlag = SyhzUtil.setDateInt(sendMap.get("sendFlag"));
-		if (sendFlag == 0) {
+    int moveFlag = SyhzUtil.setDateInt(requestBody.get("moveFlag"));// 是否为内部信息移动 1是
+		if (sendFlag == 0 && moveFlag != 1) {
 			snedMessgeService.sendMessage(sendMap, QueueConfig.KNOWLEDGE);
 			snedMessgeService.sendMessage(sendMap, QueueConfig.TIMELYMESSAGE);
 		}
@@ -119,7 +120,9 @@ public class EnclosureAuditService {
 		map.put("fractionDeptCode", SyhzUtil.setDate(requestBody.get("belongDepCode")));
 		map.put("fractionAreaCode", SyhzUtil.setDate(requestBody.get("areaCode")));
 		map.put("fractionDeptName", SyhzUtil.setDate(requestBody.get("belongDepName")));
-		rule1(map, baseService);
+		if (moveFlag != 1) {
+			rule1(map, baseService);
+		}
 		audit(map);
 	}
 

@@ -404,7 +404,6 @@ public class AjglQbxsService {
     }
     Map<String, Object> result = new LinkedHashMap<>();
     result.put("titles", heads);
-
     //根据条件查询线索
     if (StringUtils.isEmpty(requestMap.get("assistType")) || "2".equals(String.valueOf(requestMap.get("assistType")))) {
       LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJGLQBXSBASEFEEDBACELIST");
@@ -418,6 +417,10 @@ public class AjglQbxsService {
       result.put("list", new ArrayList<>());
       return result;
     }
+    Map<String, Object> cityMap = new HashMap<>();
+    if ("2".equals(String.valueOf(requestMap.get("showType")))) {
+      cityMap = getRegin("61");
+    }
     Map<String, Object> baseData = new LinkedHashMap<>();
     StringBuilder sbd = new StringBuilder();
     List<Map<String, Object>> list = pages.getList();
@@ -430,7 +433,7 @@ public class AjglQbxsService {
         base.putAll(res);
       } else {
         base.put("dhwd", 0);
-        base.put("sajz", 0);
+        base.put("sajz", "0.00");
         base.put("pzdb", 0);
         base.put("xsjl", 0);
         base.put("zhrys", 0);
@@ -440,7 +443,8 @@ public class AjglQbxsService {
       }
       base.remove("zbajList");
       if ("2".equals(String.valueOf(requestMap.get("showType")))) {
-        base.put("cityName", getRegin(String.valueOf(base.get("receiveCode")).substring(0, 6)));
+        String cityName = String.valueOf(cityMap.get(String.valueOf(base.get("receiveCode")).substring(0, 6)));
+        base.put("cityName", cityName.replace("陕西省", ""));
       } else {
         base.put("cityName", getCity(String.valueOf(base.get("receiveName"))));
       }
@@ -625,7 +629,7 @@ public class AjglQbxsService {
       if (!StringUtils.isEmpty(aj.get("sajz"))) {
         o.put("sajz", aj.get("sajz"));
       } else {
-        o.put("sajz", 0);
+        o.put("sajz", "0.00");
       }
       if (!StringUtils.isEmpty(aj.get("dbrys"))) {
         o.put("pzdb", aj.get("dbrys"));
@@ -704,7 +708,7 @@ public class AjglQbxsService {
         }
       } else {
         m.put("dhwd", 0);//捣毁窝点
-        m.put("sajz", 0);//涉案价值
+        m.put("sajz", "0.00");//涉案价值
         m.put("pzdb", 0);//逮捕
         m.put("zhrys", 0);//抓获
         m.put("yjss", 0);//移诉
@@ -744,7 +748,7 @@ public class AjglQbxsService {
     count.put("zhrys", zhrysSum);
     count.put("yjss", yjssSum);
     count.put("xsjl", xsjlSum);
-    count.put("sajz", sajzSum);
+    count.put("sajz", new BigDecimal(String.valueOf(sajzSum)).setScale(2, RoundingMode.HALF_UP).toString());
     count.put("ysxz", ysxzSum);
 
     BigDecimal hcSum = new BigDecimal(String.valueOf(csSum + cfSum));
@@ -810,7 +814,7 @@ public class AjglQbxsService {
     res.put("pzdb", 0);//逮捕
     res.put("yjss", 0);//移诉
     res.put("dhwd", 0);//捣毁窝点
-    res.put("sajz", 0);//涉案价值
+    res.put("sajz", "0.00");//涉案价值
     Map<String, Object> params = new HashMap<>();
     params.put("ajbhs", ajbhs);
     if (fllb != null) {
@@ -821,7 +825,11 @@ public class AjglQbxsService {
     if (ajList == null || ajList.size() == 0) {
       return res;
     }
-    return ajList.get(0);
+    Map<String, Object> ajinfo = ajList.get(0);
+    if(ajinfo!=null && !StringUtils.isEmpty(ajinfo.get("sajz"))){
+      ajinfo.put("sajz", new BigDecimal(String.valueOf(ajinfo.get("sajz"))).setScale(2, RoundingMode.HALF_UP).toString());
+    }
+    return ajinfo;
   }
 
 
@@ -834,8 +842,8 @@ public class AjglQbxsService {
     res.put("pzdb", 0);//逮捕
     res.put("yjss", 0);//移诉
     res.put("dhwd", 0);//捣毁窝点
-    res.put("sajz", 0);//涉案价值
-    if(ajbhs==null || ajbhs.size()==0){
+    res.put("sajz", "0.00");//涉案价值
+    if (ajbhs == null || ajbhs.size() == 0) {
       return res;
     }
     Map<String, Object> params = new HashMap<>();
@@ -845,7 +853,11 @@ public class AjglQbxsService {
     if (ajList == null || ajList.size() == 0) {
       return res;
     }
-    return ajList.get(0);
+    Map<String, Object> ajinfo = ajList.get(0);
+    if(ajinfo!=null && !StringUtils.isEmpty(ajinfo.get("sajz"))){
+      ajinfo.put("sajz", new BigDecimal(String.valueOf(ajinfo.get("sajz"))).setScale(2, RoundingMode.HALF_UP).toString());
+    }
+    return ajinfo;
   }
 
   private String getCity(String name) {
@@ -867,18 +879,18 @@ public class AjglQbxsService {
     return "";
   }
 
-  private String getRegin(String code) throws Exception {
+  private Map<String, Object> getRegin(String code) throws Exception {
     Map<String, Object> params = new HashMap<>();
     params.put("lx", "xzqh");
-    params.put("code", code.substring(0, 4));
+    params.put("code", code);
+    LocalThreadStorage.put(Constant.CONTROLLER_PAGE, false);
     LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "TCPCODELEFTLIKE");
     List<Map<String, Object>> maps = (List<Map<String, Object>>) baseService.list(params);
     Map<String, Object> result = new HashMap<>();
     for (Map<String, Object> map : maps) {
       result.put(String.valueOf(map.get("code")), map.get("codeName"));
     }
-    String str = String.valueOf(result.get(code));
-    return str.replace("陕西省", "");
+    return result;
   }
 
   /**
