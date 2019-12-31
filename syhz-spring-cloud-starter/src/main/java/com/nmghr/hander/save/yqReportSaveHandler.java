@@ -55,12 +55,18 @@ public class yqReportSaveHandler extends AbstractSaveHandler {
   public Object save(Map<String, Object> requestBody) throws Exception {
     // 添加主表
     String attachment = String.valueOf(requestBody.get("attachment"));
+
+    String category = String.valueOf(requestBody.get("category"));
+    if(category == null || "null".equals(category) || "".equals(category)){
+      throw new GlobalErrorException(GlobalErrorEnum.PARAM_NOT_VALID.getCode(), "请选择报告类型");
+    }
+
     if (attachment != null && !"".equals(attachment)) {
        JSONArray attachments = JSONArray.parseArray(attachment);
       for (int i = 0; i < attachments.size(); i++) {
         JSONObject jsonObject = attachments.getJSONObject(i);
         String name = String.valueOf(jsonObject.get("name"));
-        String category = String.valueOf(requestBody.get("category"));
+
 //        String name = String.valueOf(requestBody.get("name"));
 //        String category = String.valueOf(requestBody.get("category"));
         try {
