@@ -28,32 +28,42 @@ import com.nmghr.service.DeptNameService;
 @RequestMapping("/casesupervise")
 public class CaseSuperviseController {
 
-	@Autowired
-	@Qualifier("baseService")
-	private IBaseService baseService;
-	@Autowired
-	private DeptNameService DeptNameService;
+  @Autowired
+  @Qualifier("baseService")
+  private IBaseService baseService;
+  @Autowired
+  private DeptNameService DeptNameService;
 
-	// 案件督办破案情况统计
-	@PostMapping("/total")
-	@ResponseBody
-	public Object list(@RequestBody Map<String, Object> requestBody) throws Exception {
-		requestBody.put("flag", 1);
-		List<Map<String, Object>> cityList = (List<Map<String, Object>>) DeptNameService.get(requestBody);
-		for (Map<String, Object> city : cityList) {
-			String cCode = String.valueOf(city.get("areaCode"));
-			if ("610403".equals(cCode)) {// 杨凌师范区特殊处理
-				city.put("areaCodeSpe", cCode);
-			} else {
-				city.put("areaCode", cCode.substring(0, 4));
-			}
-			requestBody.putAll(city);
-			LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "CASESUPERVISETOTALTWO");
-			Map<String, Object> totalList = (Map<String, Object>) baseService.get(requestBody);
-			requestBody.remove("areaCodeSpe");
-			city.put("totalList", totalList);
-		}
-		return cityList;
-	}
+  // 案件督办破案情况统计
+  @PostMapping("/total")
+  @ResponseBody
+  public Object list(@RequestBody Map<String, Object> requestBody) throws Exception {
+    requestBody.put("flag", 1);
+    List<Map<String, Object>> cityList = (List<Map<String, Object>>) DeptNameService.get(requestBody);
+    for (Map<String, Object> city : cityList) {
+      String cCode = String.valueOf(city.get("areaCode"));
+      if ("610403".equals(cCode)) {// 杨凌师范区特殊处理
+        city.put("areaCodeSpe", cCode);
+      } else {
+        city.put("areaCode", cCode.substring(0, 4));
+      }
+      requestBody.putAll(city);
+      LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "CASESUPERVISETOTALTWO");
+      Map<String, Object> totalList = (Map<String, Object>) baseService.get(requestBody);
+      requestBody.remove("areaCodeSpe");
+      city.put("totalList", totalList);
+    }
+    return cityList;
+  }
+
+  @PostMapping("/one")
+  @ResponseBody
+  // 扇形统计
+  public Object get(@RequestBody Map<String, Object> requestBody) throws Exception {
+    LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "CASESUPERVISETOTAL");
+    Map<String, Object> totalList = (Map<String, Object>) baseService.get(requestBody);
+    return totalList;
+
+  }
 
 }
