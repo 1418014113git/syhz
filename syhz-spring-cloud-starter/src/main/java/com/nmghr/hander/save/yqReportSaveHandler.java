@@ -24,6 +24,8 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * <功能描述/>
@@ -54,22 +56,24 @@ public class yqReportSaveHandler extends AbstractSaveHandler {
     // 添加主表
     String attachment = String.valueOf(requestBody.get("attachment"));
     if (attachment != null && !"".equals(attachment)) {
-      JSONArray attachments = JSONArray.parseArray(attachment);
+       JSONArray attachments = JSONArray.parseArray(attachment);
       for (int i = 0; i < attachments.size(); i++) {
         JSONObject jsonObject = attachments.getJSONObject(i);
         String name = String.valueOf(jsonObject.get("name"));
         String category = String.valueOf(requestBody.get("category"));
+//        String name = String.valueOf(requestBody.get("name"));
+//        String category = String.valueOf(requestBody.get("category"));
         try {
+
           if (null != name) {
             SimpleDateFormat sdf = new SimpleDateFormat(dateStringFormat1);
             SimpleDateFormat sdf2 = new SimpleDateFormat(dateStringFormat2);
             SimpleDateFormat sdf3 = new SimpleDateFormat(dateStringFormat3);
             SimpleDateFormat sdf4 = new SimpleDateFormat(dateStringFormat4);
-
             //日报
             if ("1".equals(category)) {
               String shortName = name.substring(0,name.lastIndexOf("."));
-              if("".equals(shortName) || shortName.length() != 14 ){
+              if(!isDate(shortName,false)){
                 throw new GlobalErrorException(GlobalErrorEnum.PARAM_NOT_VALID.getCode(), "报告保存失败，请确认文件名是否正确");
               }
               String time = shortName.substring(0,8);
@@ -83,11 +87,13 @@ public class yqReportSaveHandler extends AbstractSaveHandler {
             // 周报
             if ("2".equals(category)) {
               String shortName = name.substring(0,name.lastIndexOf("."));
-              if("".equals(shortName) || shortName.length() != 29 || !shortName.contains("-") ){
-                throw new GlobalErrorException(GlobalErrorEnum.PARAM_NOT_VALID.getCode(), "报告上传失败，请联系管理员！");
-              }
+
               String[] time = shortName.split("-");
               if(time!=null && time.length == 2) {
+                if(!isDate(time[0],false) || !isDate(time[1],false)){
+                  throw new GlobalErrorException(GlobalErrorEnum.PARAM_NOT_VALID.getCode(), "报告保存失败，请确认文件名是否正确");
+                }
+
                 String startTime = time[0].substring(0, 8);
                 String endTime = time[1].substring(0, 8);
                 Date createTime = sdf4.parse(endTime);
@@ -98,23 +104,36 @@ public class yqReportSaveHandler extends AbstractSaveHandler {
                 String endDateString = sdf.format(date2);
                 String weekTitleOK = startDateString + "-" + endDateString + "周报";
                 requestBody.put("title", weekTitleOK);
-              }
+              }else{
+                  throw new GlobalErrorException(GlobalErrorEnum.PARAM_NOT_VALID.getCode(), "报告保存失败，请确认文件名是否正确");
+                }
             }
             // 月报
             if ("3".equals(category)) {
-
               String shortName = name.substring(0,name.lastIndexOf("."));
-              if("".equals(shortName) || shortName.length() != 17 || !shortName.contains("-") ){
-                throw new GlobalErrorException(GlobalErrorEnum.PARAM_NOT_VALID.getCode(), "报告上传失败，请联系管理员！");
-              }
               String[] time = shortName.split("-");
+
               if(time!=null && time.length == 2) {
-                String startTime = time[0].substring(0, 8);
-                Date createTime = sdf4.parse(time[1].substring(0, 8));
+                if(!isDate(time[0],true) || !isDate(time[1],true)){
+                  throw new GlobalErrorException(GlobalErrorEnum.PARAM_NOT_VALID.getCode(), "报告保存失败，请确认文件名是否正确");
+                }
+                String startTime = time[0];
+                Date createTime = sdf4.parse(time[1]);
                 requestBody.put("createTime", createTime);
                 Date date = sdf4.parse(startTime);
                 String monthString = sdf3.format(date) + "月报";
                 requestBody.put("title", monthString);
+              }else {
+                  throw new GlobalErrorException(GlobalErrorEnum.PARAM_NOT_VALID.getCode(), "报告保存失败，请确认文件名是否正确");
+              }
+            }
+
+            //检查title
+            LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "YQREPORTTITLECHECK");
+            Map<String,Object> countMap = (Map<String, Object>) baseService.get(requestBody);
+            if(countMap!=null && countMap.get("count")!=null){
+              if(Integer.valueOf(String.valueOf(countMap.get("count")))>0){
+                throw new GlobalErrorException(GlobalErrorEnum.PARAM_NOT_VALID.getCode(), "报告标题重复，请确认后重新上传");
               }
             }
 
@@ -124,16 +143,18 @@ public class yqReportSaveHandler extends AbstractSaveHandler {
             baseService.save(requestBody);
           }
         } catch (Exception e) {
-          throw new GlobalErrorException(GlobalErrorEnum.PARAM_NOT_VALID.getCode(),
-              "报告上传失败，请联系管理员！");
+          if(e.getClass() == GlobalErrorException.class) {
+            throw new GlobalErrorException(GlobalErrorEnum.PARAM_NOT_VALID.getCode(),
+                    e.getMessage());
+          }else{
+            throw new GlobalErrorException(GlobalErrorEnum.PARAM_NOT_VALID.getCode(),
+                    "报告上传失败，请联系管理员！");
+          }
         }
+
       }
-
     }
-
     return null;
-
-
   }
 
   public Date getInit(int day,String dateStr,boolean useNow) throws ParseException {
@@ -143,12 +164,35 @@ public class yqReportSaveHandler extends AbstractSaveHandler {
     }else{
       date = new SimpleDateFormat("yyyyMMdd").parse(dateStr);
     }
-
     //Calendar calendar =new GregorianCalendar();
     Calendar calendar = Calendar.getInstance();
     calendar.setTime(date);
     calendar.add(calendar.DATE, day);
     date = calendar.getTime();
     return date;
+  }
+
+
+  /**
+   * 功能：判断字符串是否为日期格式
+   *
+   * @param strDate 文件名称
+   * @param flag 是否为8位日期格式,如果是则为true,否则为false
+   * @return
+   */
+  public static boolean isDate(String strDate, boolean flag) {
+    String el = "";
+    if (flag) {
+      el = "(([0-9]{3}[1-9]|[0-9]{2}[1-9][0-9]{1}|[0-9]{1}[1-9][0-9]{2}|[1-9][0-9]{3})(((0[13578]|1[02])(0[1-9]|[12][0-9]|3[01]))|((0[469]|11)(0[1-9]|[12][0-9]|30))|(02(0[1-9]|[1][0-9]|2[0-8]))))|((([0-9]{2})(0[48]|[2468][048]|[13579][26])|((0[48]|[2468][048]|[3579][26])00))0229)";
+    } else {
+      el = "^((([0-9]{3}[1-9]|[0-9]{2}[1-9][0-9]{1}|[0-9]{1}[1-9][0-9]{2}|[1-9][0-9]{3})(((0[13578]|1[02])(0[1-9]|[12][0-9]|3[01]))|((0[469]|11)(0[1-9]|[12][0-9]|30))|(02(0[1-9]|[1][0-9]|2[0-8]))))|((([0-9]{2})(0[48]|[2468][048]|[13579][26])|((0[48]|[2468][048]|[3579][26])00))0229))([0-1]?[0-9]|2[0-3])([0-5][0-9])([0-5][0-9])$";
+    }
+    Pattern pattern = Pattern.compile(el);
+    Matcher m = pattern.matcher(strDate);
+    if (m.matches()) {
+      return true;
+    } else {
+      return false;
+    }
   }
 }
