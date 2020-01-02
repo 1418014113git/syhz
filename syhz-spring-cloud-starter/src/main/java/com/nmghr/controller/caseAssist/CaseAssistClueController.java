@@ -245,11 +245,6 @@ public class CaseAssistClueController {
   public Object delClue(@RequestBody Map<String, Object> body) {
     ValidationUtils.notNull(body.get("assistId"), "assistId不能为空!");
     ValidationUtils.notNull(body.get("qbxsId"), "qbxsId不能为空!");
-//    baseP.put("qbxsIds", body.get("qbxsId"));
-//    baseP.put("ids", body.get("qbxsDeptId"));
-//    baseP.put("assistId", body.get("assistId"));
-//    baseP.put("codes", new ArrayList<>().add(body.get("receiveCode")));
-//    baseP.put("assistType", "1".equals(String.valueOf(body.get("assistType"))) ? 1 : 2);
     try {
       Object obj = ajglQbxsService.removeClue(body);
       return Result.ok(obj);
@@ -297,6 +292,8 @@ public class CaseAssistClueController {
   public Object feedBackClues(@RequestParam Map<String, Object> body) {
     ValidationUtils.notNull(body.get("assistId"), "assistId不能为空!");
     ValidationUtils.notNull(body.get("assistType"), "assistType不能为空!");
+    ValidationUtils.notNull(body.get("pageNum"), "pageNum不能为空!");
+    ValidationUtils.notNull(body.get("pageSize"), "pageSize不能为空!");
     try {
       Object obj = ajglQbxsService.feedBackList(body);
       return Result.ok(obj);
@@ -371,7 +368,7 @@ public class CaseAssistClueController {
   public Object detailCount(@RequestParam Map<String, Object> requestMap) {
     ValidationUtils.notNull(requestMap.get("type"), "type集群或协查类型不能为空!");
     try {
-      return ajglQbxsService.feedBackResultList(requestMap);
+      return Result.ok(ajglQbxsService.feedBackResultList(requestMap));
     } catch (Exception e) {
       if (e instanceof GlobalErrorException) {
         GlobalErrorException ge = (GlobalErrorException) e;

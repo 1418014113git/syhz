@@ -138,8 +138,7 @@ public class CaseClusterController {
               BigDecimal xsNum = new BigDecimal(String.valueOf(m.get("xsNum")));
               BigDecimal hc = new BigDecimal(String.valueOf(m.get("hc")));
               if (xsNum.compareTo(BigDecimal.ZERO) > 0) {
-                hc = hc.divide(xsNum, 4, RoundingMode.DOWN).multiply(new BigDecimal("100")).setScale(2, RoundingMode.HALF_UP);
-                m.put("hcl", hc.intValue());
+                m.put("hcl", hc.divide(xsNum, 4, RoundingMode.HALF_UP).multiply(new BigDecimal("100")).setScale(2, RoundingMode.DOWN).toString());
               } else {
                 m.put("hcl", "-");
               }
@@ -150,8 +149,7 @@ public class CaseClusterController {
               BigDecimal xsNum = new BigDecimal(String.valueOf(m.get("xsNum")));
               BigDecimal hc = new BigDecimal(String.valueOf(m.get("hc")));
               if (xsNum.compareTo(BigDecimal.ZERO) > 0) {
-                hc = hc.divide(xsNum, 4, RoundingMode.DOWN).multiply(new BigDecimal("100")).setScale(2, RoundingMode.HALF_UP);
-                m.put("hcl", hc.intValue());
+                m.put("hcl", hc.divide(xsNum, 4, RoundingMode.HALF_UP).multiply(new BigDecimal("100")).setScale(2, RoundingMode.DOWN).toString());
               } else {
                 m.put("hcl", "-");
               }

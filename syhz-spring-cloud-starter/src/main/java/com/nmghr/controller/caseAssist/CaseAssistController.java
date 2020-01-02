@@ -130,8 +130,7 @@ public class CaseAssistController {
               BigDecimal xsNum = new BigDecimal(String.valueOf(m.get("xsNum")));
               BigDecimal hc = new BigDecimal(String.valueOf(m.get("hc")));
               if (xsNum.compareTo(BigDecimal.ZERO) > 0) {
-                hc = hc.divide(xsNum, 4, RoundingMode.DOWN).multiply(new BigDecimal("100")).setScale(2, RoundingMode.HALF_UP);
-                m.put("hcl", hc.intValue());
+                m.put("hcl",  hc.divide(xsNum, 4, RoundingMode.HALF_UP).multiply(new BigDecimal("100")).setScale(2, RoundingMode.DOWN).toString());
               } else {
                 m.put("hcl", 0);
               }
@@ -142,8 +141,7 @@ public class CaseAssistController {
               BigDecimal xsNum = new BigDecimal(String.valueOf(m.get("xsNum")));
               BigDecimal hc = new BigDecimal(String.valueOf(m.get("hc")));
               if (xsNum.compareTo(BigDecimal.ZERO) > 0) {
-                hc = hc.divide(xsNum, 4, RoundingMode.DOWN).multiply(new BigDecimal("100")).setScale(2, RoundingMode.HALF_UP);
-                m.put("hcl", hc.intValue());
+                m.put("hcl", hc.divide(xsNum, 4, RoundingMode.HALF_UP).multiply(new BigDecimal("100")).setScale(2, RoundingMode.DOWN).toString());
               } else {
                 m.put("hcl", 0);
               }
@@ -355,7 +353,6 @@ public class CaseAssistController {
   public Object appraise(@RequestBody Map<String, Object> body) {
     ValidationUtils.notNull(body.get("assistId"), "assistId不能为空!");
     ValidationUtils.notNull(body.get("deptCode"), "deptCode不能为空!");
-    ValidationUtils.notNull(body.get("commentText"), "commentText不能为空!");
     ValidationUtils.notNull(body.get("score"), "score不能为空!");
     try {
       LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJASSISTDEPT");
