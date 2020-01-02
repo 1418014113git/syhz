@@ -120,7 +120,7 @@ public class AssistStatisticsController {
       }
       return deptCodeMap.values();
     } catch (Exception e) {
-
+      log.error(e.getMessage());
     }
     return new ArrayList<>();
   }
@@ -199,7 +199,15 @@ public class AssistStatisticsController {
             qbxsMap.put("cs", m.get("cs"));
             qbxsMap.put("cf", m.get("cf"));
             qbxsMap.put("qbxsNum", m.get("qbxsNum"));
+            BigDecimal qbxsNum = new BigDecimal(String.valueOf(m.get("qbxsNum")));
+            if (qbxsNum.compareTo(BigDecimal.ZERO) > 0) {
+              int hc = Integer.parseInt(String.valueOf(m.get("cs"))) + Integer.parseInt(String.valueOf(m.get("cf")));
+              qbxsMap.put("hcl", new BigDecimal(String.valueOf(hc)).divide(qbxsNum, 4, RoundingMode.HALF_UP).multiply(oneHundred).setScale(2, RoundingMode.DOWN).toString());
+            } else {
+              qbxsMap.put("hcl", "-");
+            }
           } else {
+            qbxsMap = new HashMap<>();
             qbxsMap.put("whc", 0);
             qbxsMap.put("cs", 0);
             qbxsMap.put("cf", 0);

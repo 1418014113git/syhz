@@ -815,6 +815,10 @@ public class AjglQbxsService {
     res.put("yjss", 0);//移诉
     res.put("dhwd", 0);//捣毁窝点
     res.put("sajz", "0.00");//涉案价值
+    if(ajbhs==null || ajbhs.size()==0){
+      return res;
+    }
+    ajbhs = ajbhCheck(ajbhs);
     Map<String, Object> params = new HashMap<>();
     params.put("ajbhs", ajbhs);
     if (fllb != null) {
@@ -826,7 +830,10 @@ public class AjglQbxsService {
       return res;
     }
     Map<String, Object> ajinfo = ajList.get(0);
-    if(ajinfo!=null && !StringUtils.isEmpty(ajinfo.get("sajz"))){
+    if(ajinfo==null || ajinfo.size()==0){
+      return res;
+    }
+    if(!StringUtils.isEmpty(ajinfo.get("sajz"))){
       ajinfo.put("sajz", new BigDecimal(String.valueOf(ajinfo.get("sajz"))).setScale(2, RoundingMode.HALF_UP).toString());
     }
     return ajinfo;
@@ -846,6 +853,7 @@ public class AjglQbxsService {
     if (ajbhs == null || ajbhs.size() == 0) {
       return res;
     }
+    ajbhs = ajbhCheck(ajbhs);
     Map<String, Object> params = new HashMap<>();
     params.put("ajbhs", ajbhs);
     LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJASSISTFEEDBACKAJINFO");
@@ -854,7 +862,10 @@ public class AjglQbxsService {
       return res;
     }
     Map<String, Object> ajinfo = ajList.get(0);
-    if(ajinfo!=null && !StringUtils.isEmpty(ajinfo.get("sajz"))){
+    if(ajinfo==null || ajinfo.size()==0){
+      return res;
+    }
+    if(!StringUtils.isEmpty(ajinfo.get("sajz"))){
       ajinfo.put("sajz", new BigDecimal(String.valueOf(ajinfo.get("sajz"))).setScale(2, RoundingMode.HALF_UP).toString());
     }
     return ajinfo;
@@ -907,6 +918,20 @@ public class AjglQbxsService {
     Map<String, Object> map = new HashMap<>();
     String[] zbajbhs = ajbh.split(",");
     for (String s : zbajbhs) {
+      if (!StringUtils.isEmpty(s)) {
+        map.put(s, s);
+      }
+    }
+    return new ArrayList(map.values());
+  }
+  /**
+   * 案件编号去重
+   *
+   * @return
+   */
+  private List<String> ajbhCheck(List<String> ajbhs) {
+    Map<String, Object> map = new HashMap<>();
+    for (String s : ajbhs) {
       if (!StringUtils.isEmpty(s)) {
         map.put(s, s);
       }
