@@ -19,6 +19,7 @@ import com.nmghr.basic.core.service.IBaseService;
 import com.nmghr.basic.core.service.handler.ISaveHandler;
 import com.nmghr.basic.core.util.SpringUtils;
 import com.nmghr.basic.core.util.ValidationUtils;
+import com.nmghr.handler.message.QueueConfig;
 import com.nmghr.util.SyhzUtil;
 
 /**
@@ -34,11 +35,17 @@ public class EnclosureAuditService {
 	TrainWorkorderExamineService trainWorkorderExamineService;
 	@Autowired
 	EsService esService;
+	@Autowired
+	private SendMessageService snedMessgeService;
+
 	private static String ALIAS_ENCLOSURE = "TRAINKONWLEGEENCLOSURE";// 法律法规
 	private static String ALIAS_TRAINRULECONFIG = "TRAINRULECONFIG";// 法律法规
 	private static String ALIAS_PERSONKNOWLEDGE = "PERSONKNOWLEDGE";// 附件基本信息
 	private static String ALIAS_KNOWLEDGEENCLOSURE = "KNOWLEDGEENCLOSURE";// 行业标准
+	// private static String ALIAS_ACCPETDEPARTCODE = "ACCPETDEPARTCODE";// 消息发送单位
+	private static String ALIAS_TRAINUSERNAME = "TRAINUSERNAME";// 消息发送人
 
+	// 积分参数组装
 	public Map<String, Object> rule(Map<String, Object> ruleMap, IBaseService baseService) throws Exception {
 		LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, ALIAS_PERSONKNOWLEDGE);
 		String tableId = SyhzUtil.setDate(ruleMap.get("tableId"));
@@ -56,12 +63,12 @@ public class EnclosureAuditService {
 			ruleMap.put("fractionTime", dateFormat.format(date));
 			if (person != null) {
 				ruleMap.putAll(person);
-
 			}
 		}
 		return ruleMap;
 	}
 
+	// 附件保存
 	public void enclouseSave(Map<String, Object> requestBody, Object id, IBaseService baseService, int belongMode)
 			throws Exception {
 		String enclosure = String.valueOf(requestBody.get("enclosure"));// 附件Josn传
@@ -84,6 +91,7 @@ public class EnclosureAuditService {
 			Map<String, Object> requestBody, IBaseService baseService) throws Exception {
 		Map<String, Object> map = new HashMap<String, Object>();
 		map.put("tableId", courseId);
+		map.put("tableIds", courseId);
 		map.put("id", courseId);
 		map.put("belongMode", belongMode);
 		map.put("belongType", SyhzUtil.setDate(requestBody.get("type")));
@@ -97,17 +105,50 @@ public class EnclosureAuditService {
 		map.put("deptCode", SyhzUtil.setDate(requestBody.get("belongDepCode")));
 		map.put("deptName", SyhzUtil.setDate(requestBody.get("belongDepName")));
 		map.put("deptAreaCode", SyhzUtil.setDate(requestBody.get("areaCode")));
+		map.put("title", SyhzUtil.setDate(requestBody.get("title")));
 		Map<String, String> headers = new HashMap<String, String>();
 		trainWorkorderExamineService.examineWorkFlowData(baseService, headers, map);
+		Map<String, Object> sendMap = activeMq(map, baseService, 0);
+		int sendFlag = SyhzUtil.setDateInt(sendMap.get("sendFlag"));
+    int moveFlag = SyhzUtil.setDateInt(requestBody.get("moveFlag"));// 是否为内部信息移动 1是
+		if (sendFlag == 0 && moveFlag != 1) {
+			snedMessgeService.sendMessage(sendMap, QueueConfig.KNOWLEDGE);
+			snedMessgeService.sendMessage(sendMap, QueueConfig.TIMELYMESSAGE);
+		}
 		map.put("fractionUserId", SyhzUtil.setDate(requestBody.get("creationId")));
 		map.put("fractionUserName", SyhzUtil.setDate(requestBody.get("creationName")));
 		map.put("fractionDeptCode", SyhzUtil.setDate(requestBody.get("belongDepCode")));
 		map.put("fractionAreaCode", SyhzUtil.setDate(requestBody.get("areaCode")));
 		map.put("fractionDeptName", SyhzUtil.setDate(requestBody.get("belongDepName")));
-		rule1(map, baseService);
+		if (moveFlag != 1) {
+			rule1(map, baseService);
+		}
 		audit(map);
 	}
 
+	public void subimtaduitFail(Object workId, Object courseId, int belongSys, int belongMode,
+			Map<String, Object> requestBody, IBaseService baseService) throws Exception {
+		Map<String, Object> map = new HashMap<String, Object>();
+		map.put("tableId", courseId);
+		map.put("tableIds", courseId);
+		map.put("id", courseId);
+		map.put("belongMode", belongMode);
+		map.put("belongType", SyhzUtil.setDate(requestBody.get("type")));
+		map.put("belongSys", belongSys);
+		map.put("workId", workId);
+		map.put("currentAuditType", 0);
+		map.put("remark", "提交");
+		map.put("documentId", SyhzUtil.setDate(requestBody.get("documentId")));
+		map.put("creationId", SyhzUtil.setDate(requestBody.get("creationId")));
+		map.put("creationName", SyhzUtil.setDate(requestBody.get("creationName")));
+		map.put("deptCode", SyhzUtil.setDate(requestBody.get("belongDepCode")));
+		map.put("deptName", SyhzUtil.setDate(requestBody.get("belongDepName")));
+		map.put("deptAreaCode", SyhzUtil.setDate(requestBody.get("areaCode")));
+		Map<String, String> headers = new HashMap<String, String>();
+		trainWorkorderExamineService.examineWorkFlowData(baseService, headers, map);
+	}
+
+	// es审核
 	public void audit(Map<String, Object> requestBody) {
 		int belongSys = SyhzUtil.setDateInt(requestBody.get("belongSys"));
 		int belongMode = SyhzUtil.setDateInt(requestBody.get("belongMode"));
@@ -130,23 +171,25 @@ public class EnclosureAuditService {
 		}
 	}
 
+	// 增加积分
 	public void rule1(Map<String, Object> requestBody, IBaseService baseService) throws Exception {
 		int belongSys = SyhzUtil.setDateInt(requestBody.get("belongSys"));
 		int belongMode = SyhzUtil.setDateInt(requestBody.get("belongMode"));
 		int currentAuditType = SyhzUtil.setDateInt(requestBody.get("currentAuditType"));
 		int deptAreaCode = SyhzUtil.setDateInt(requestBody.get("deptAreaCode"));
-		String id = SyhzUtil.setDate(requestBody.get("tableId"));
+		String id = SyhzUtil.setDate(requestBody.get("tableIds"));
 		if (currentAuditType == 2 && deptAreaCode == 610000) {
 			String[] documentIds = id.split(",");
 			for (int i = 0; i < documentIds.length; i++) {
 				Map<String, Object> ruleMap = rule(requestBody, baseService);
-				ruleMap.put("tableId", id);
+				ruleMap.put("tableId", documentIds[i]);
 				ISaveHandler saveHandler = SpringUtils.getBean("trainFractionSaveHandler", ISaveHandler.class);
 				Object object = saveHandler.save(ruleMap);// 保存到数据库s
 			}
 		}
 	}
 
+	// 审核参数组装
 	public Map<String, Object> audit(Map<String, Object> map, int belongSys, int belongMode) {
 		Map<String, Object> repsponseMap = new HashMap<String, Object>();
 		Map<String, Object> departInfo = (Map<String, Object>) map.get("departInfo");// 附件Josn传
@@ -160,6 +203,7 @@ public class EnclosureAuditService {
 		repsponseMap.put("myDept", departMap.get("myDept"));
 		repsponseMap.put("cityDept", departMap.get("cityDept"));
 		repsponseMap.put("provinceDept", departMap.get("provinceDept"));
+		repsponseMap.put("draft", SyhzUtil.setDateInt(map.get("draft")));
 		return repsponseMap;
 	}
 
@@ -214,6 +258,84 @@ public class EnclosureAuditService {
 		return responseMap;
 	}
 
+	// 消息发送
+	public Map<String, Object> activeMq(Map<String, Object> map, IBaseService baseService, int i) throws Exception {
+
+		Map<String, Object> responseMap = new HashMap<String, Object>();
+		int belongSys = SyhzUtil.setDateInt(map.get("belongSys"));
+		int belongMode = SyhzUtil.setDateInt(map.get("belongMode"));
+		int currentAuditType = SyhzUtil.setDateInt(map.get("currentAuditType"));
+		String deptCode = SyhzUtil.setDate(map.get("deptCode"));
+		String deptName = SyhzUtil.setDate(map.get("deptName"));
+		if (currentAuditType == 3 || "610000530000".equals(deptCode)) {// 审核不通过或者省级审核发送消息
+			if (belongSys == 1) {
+				responseMap.put("title", "知识库资料审核结果");
+				if (belongMode == 1) {
+					responseMap.put("bussionTypeInfo", 302);
+					responseMap.put("bussionTable", "1");// 302 法律法规、303行业标准、304规则制度、305案例指引、306培训资料
+				}
+				if (belongMode == 2) {
+					responseMap.put("bussionTypeInfo", 303);
+					responseMap.put("bussionTable", "2");
+
+				}
+				if (belongMode == 3) {
+					responseMap.put("bussionTypeInfo", 304);
+					responseMap.put("bussionTable", "3");
+
+				}
+				if (belongMode == 4) {
+					responseMap.put("bussionTypeInfo", 305);
+					responseMap.put("bussionTable", "4");
+
+				}
+			}
+			if (belongSys == 2) {
+				responseMap.put("title", "培训资料审核结果");
+				responseMap.put("bussionTypeInfo", 306);
+				responseMap.put("bussionTable", "5");
+			}
+			responseMap.put("bussionId", map.get("tableId"));
+			responseMap.put("id", map.get("tableId"));
+			LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, ALIAS_TRAINUSERNAME);
+			Map<String, Object> user = (Map<String, Object>) baseService.get(responseMap);
+			String title = SyhzUtil.setDate(user.get("title"));
+			String userName = SyhzUtil.setDate(user.get("userName"));
+			int userId = SyhzUtil.setDateInt(user.get("userId"));
+			responseMap.put("bussionType", 3);
+			String con = "";
+			if (currentAuditType == 2) {
+				con = "你上传的资料《" + title + "》 已通过最终审核，详细信息查看审核记录";
+			}
+			if (currentAuditType == 3) {
+				con = "资料《" + title + "》" + deptName + "未审核通过，请修改后重新提交";
+				responseMap.put("acceptId", userId);
+			}
+			responseMap.put("content", con);
+			responseMap.put("status", 0);
+			responseMap.put("creator", map.get("creationId"));
+			responseMap.put("creatorName", map.get("creationName"));
+
+			responseMap.put("deptCode", deptCode);
+			responseMap.put("deptName", deptName);
+			if (i == 0) {
+				responseMap.put("acceptId", SyhzUtil.setDateInt(map.get("creationId")));
+				responseMap.put("acceptName", SyhzUtil.setDate(map.get("creationName")));
+
+			}
+			if (i == 1) {
+				responseMap.put("acceptId", userId);
+				responseMap.put("acceptName", userName);
+
+			}
+			responseMap.put("sendFlag", 0);// 发送
+			responseMap.put("category", 1);// 弹出信息
+		} else {
+			responseMap.put("sendFlag", 1);// 不发送
+		}
+		return responseMap;
+	}
+
 	// 根据标题排序
 	public Map<String, Object> titleSubstring(Map<String, Object> enclosureMap, JSONObject json) {
 		String enName = String.valueOf(json.get("enName"));
@@ -264,4 +386,5 @@ public class EnclosureAuditService {
 			ValidationUtils.notNull(enPathOld, "附件旧地址不能为空");
 		}
 	}
+
 }

@@ -172,8 +172,8 @@ public class ExamQuestionsSaveHandler extends AbstractSaveHandler {
         if(requestBody.get("source") == null || "".equals(requestBody.get("source"))){
             throw new GlobalErrorException("998001", "请输入出处!");
         }
-        if(requestBody.get("source") != null && String.valueOf(requestBody.get("source")).length() > 50){
-            throw new GlobalErrorException("998001", "出处长度大于50!");
+        if(requestBody.get("source") != null && String.valueOf(requestBody.get("source")).length() > 1000){
+            throw new GlobalErrorException("998001", "出处长度大于1000!");
         }
         if("1".equals(requestBody.get("type")) || "2".equals(requestBody.get("type"))){
             Map<String,Object> points = (Map<String, Object>) requestBody.get("points");

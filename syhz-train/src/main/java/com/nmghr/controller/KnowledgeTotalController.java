@@ -53,6 +53,7 @@ public class KnowledgeTotalController {
 				LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, ALIAS_KNOWLEDGETOTAL);
 				map.putAll(city);
 				Map<String, Object> cityTotal = (Map<String, Object>) baseService.get(map);
+				map.remove("areaCodeSpe");
 				Sum(cityTotal);
 				city.putAll(cityTotal);
 			}
@@ -118,8 +119,9 @@ public class KnowledgeTotalController {
 				}
 				LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, ALIAS_KNOWLEDGEUSETOTAL);
 				map.putAll(city);
-				Map<String, Object> cityTotal = (Map<String, Object>) baseService.get(map);
-				city.putAll(cityTotal);
+				List<Map<String, Object>> cityTotal = (List<Map<String, Object>>) baseService.list(map);
+				map.remove("areaCodeSpe");
+				city.putAll(ListToMap(cityTotal));
 			}
 			return cityCodeList;
 		} else {
@@ -129,8 +131,8 @@ public class KnowledgeTotalController {
 					areaCode.remove("areaCode");
 					LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, ALIAS_KNOWLEDGEUSETOTAL);
 					map.putAll(areaCode);
-					Map<String, Object> areaTotal = (Map<String, Object>) baseService.get(map);
-					areaCode.putAll(areaTotal);
+					List<Map<String, Object>> areaTotal = (List<Map<String, Object>>) baseService.list(map);
+					areaCode.putAll(ListToMap(areaTotal));
 				}
 			}
 			return areaCodeList;
@@ -148,14 +150,14 @@ public class KnowledgeTotalController {
 				String cityCode = String.valueOf(city.get("areaCode"));
 				if ("610403".equals(cityCode)) {
 					city.put("areaCodeSpe", cityCode);
-
 				} else {
 					city.put("areaCode", cityCode.substring(0, 4));
 				}
 				LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, ALIAS_TRAINCOURSELOGSTATISTICS);
 				map.putAll(city);
-				Map<String, Object> cityTotal = (Map<String, Object>) baseService.get(map);
-				city.putAll(cityTotal);
+				List<Map<String, Object>> cityTotal = (List<Map<String, Object>>) baseService.list(map);
+				map.remove("areaCodeSpe");
+				city.putAll(ListToMap(cityTotal));
 			}
 			return cityCodeList;
 		} else {
@@ -165,8 +167,8 @@ public class KnowledgeTotalController {
 					areaCode.remove("areaCode");
 					LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, ALIAS_TRAINCOURSELOGSTATISTICS);
 					map.putAll(areaCode);
-					Map<String, Object> areaTotal = (Map<String, Object>) baseService.get(map);
-					areaCode.putAll(areaTotal);
+					List<Map<String, Object>> areaTotal = (List<Map<String, Object>>) baseService.list(map);
+					areaCode.putAll(ListToMap(areaTotal));
 				}
 			}
 			return areaCodeList;
@@ -188,6 +190,15 @@ public class KnowledgeTotalController {
 		int total4 = SyhzUtil.setDateInt(map.get("total4"));
 		int total0 = total1 + total2 + total3 + total4;
 		map.put("total0", total0);
+	}
+
+	private Map<String, Object> ListToMap(List<Map<String, Object>> list) {
+		Map<String, Object> map0 = list.get(0);
+		Map<String, Object> map1 = list.get(1);
+		map0.put("total5", SyhzUtil.setDateInt(map1.get("total01")));
+		map0.put("total6", SyhzUtil.setDateInt(map1.get("total02")));
+		map0.put("total7", SyhzUtil.setDateInt(map1.get("total03")));
+		return map0;
 	}
 
 	// 列总数

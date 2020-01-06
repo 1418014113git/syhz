@@ -85,11 +85,11 @@ public class ExaminationController {
     if(!"1".equals(String.valueOf(requestBody.get("status")))) {
       // 校验表单数据
       validParams(2, requestBody);
-      Result checkResult = (Result) checkExamination(requestBody);
-      if (checkResult != null && !checkResult.isSuccess()) {
-        //返回false
-        return checkResult;
-      }
+//      Result checkResult = (Result) checkExamination(requestBody);
+//      if (checkResult != null && !checkResult.isSuccess()) {
+//        //返回false
+//        return checkResult;
+//      }
       //考试名称查重(除了当前记录)
       LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMINATIONCOUNTBYNAMEIDDEPT");
       Map<String, Object> result = (Map<String, Object>) baseService.get(requestBody);
@@ -108,7 +108,7 @@ public class ExaminationController {
     LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "EXAMINATIONCHECK");
     Map<String,Object> result = (Map<String, Object>) baseService.get(String.valueOf(requestBody.get("id")));
     if (result != null && result.get("num") != null && Integer.parseInt(String.valueOf(result.get("num"))) > 0) {
-      return Result.fail(GlobalErrorEnum.PARAM_NOT_VALID.getCode(), "考试已经开始，暂不能修改或删除");
+      return Result.fail(GlobalErrorEnum.PARAM_NOT_VALID.getCode(), "考试已经开始，暂不能删除");
     }
     //无异常
     return Result.ok(null);
@@ -178,8 +178,6 @@ public class ExaminationController {
     return paging;
     //return  scoreList;
   }
-
-
   /*
    所有成绩列表无分页
     */

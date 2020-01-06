@@ -7,13 +7,27 @@ server:
     contextPath: /syhz
 
 spring:
+  activemq:
+    broker-url: ${mq.url}
+    user: ${mq.name}
+    password: ${mq.password}
+    pool:
+      enabled: false
+    packages: #是否信任所有包
+      trust-all: true
+  jms: #默认情况下，activemq使用的是queue模式，如果要使用topic模式，必须设置为true
+    pub-sub-domain: false
   jackson:
     dateFormat: yyyy-MM-dd HH:mm:ss
     timeZone: GMT+8
   application:
     name: syhz-api
   profiles:
-    active: dev
+    active: test
+  data:
+    mongodb:
+      uri: ${mongo.uri}
+      auth: true
   datasource:
     separator: ;;
     url: ${db.url}
@@ -41,15 +55,15 @@ spring:
         password: ${upms.password}
         type: com.alibaba.druid.pool.DruidDataSource
         driver-class-name: com.mysql.jdbc.Driver
-  elasticsearch: 
+  elasticsearch:
     bboss:
       elasticPassword: changeme
       elasticUser: elastic
-      elasticsearch: 
+      elasticsearch:
         dateFormat: yyyy.MM.dd
         discoverHost: false
         rest:
-          hostNames: 192.168.42.187:9200
+          hostNames: ${elasticsearch.hostNames}
         scrollBlockedWaitTimeout: 0
         scrollThreadCount: 200
         scrollThreadQueue: 200
@@ -88,7 +102,7 @@ spring:
 #        validateSQL: select 1
       dslfile:
         refreshInterval: -1
-      
+
 eureka:
   client:
     registerWithEureka: false
@@ -113,3 +127,6 @@ lanxin:
   linkmsg: http://192.168.1.104:8080/syh.html?
   lxApi: https://staging430.t.lanxin.cn/cgi-bin/message/custom/send?rand=97
   roleCode: sys_admin
+  runFlag: ${lanxin.runFlag}
+log:
+  level: ${log.level}
