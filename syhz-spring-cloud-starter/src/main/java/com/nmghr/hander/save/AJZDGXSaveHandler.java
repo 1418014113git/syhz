@@ -72,6 +72,9 @@ public class AJZDGXSaveHandler extends AbstractSaveHandler {
     param.put("signUserName", requestBody.get("userName"));
     param.put("signTime", new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
     param.put("updateUserId", requestBody.get("userId"));
+    //针对部门
+    param.put("nextOrgCode", requestBody.get("noticeOrgCode"));
+    param.put("nextOrgName", requestBody.get("noticeOrgName"));
     if (requestBody.get("revokeReason") != null) {
       param.put("revokeReason", requestBody.get("revokeReason"));
     }
