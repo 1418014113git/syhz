@@ -11,8 +11,6 @@ package com.nmghr.entity.operation;
 import java.util.List;
 import java.util.Map;
 
-import com.nmghr.entity.query.Page;
-import com.nmghr.entity.query.Source;
 import com.nmghr.entity.query.UserInfo;
 import com.nmghr.util.SyhzUtil;
 
@@ -35,13 +33,19 @@ public class OperationRequest {
     OperationRequest operationRequest = new OperationRequest();
 
     String version = SyhzUtil.setDate(paramsMapData.get("version"));
-    String sessionId = SyhzUtil.setDate(paramsMapData.get("sessionId"));
-    int transaction = SyhzUtil.setDateInt(paramsMapData.get("transaction"));
-    UserInfo userInfo = UserInfo.dataToVo(paramsMapData);
     operationRequest.setVersion(version);
+    
+    String sessionId = SyhzUtil.setDate(paramsMapData.get("sessionId"));
     operationRequest.setSessionId(sessionId);
+    
+    int transaction = SyhzUtil.setDateInt(paramsMapData.get("transaction"));
     operationRequest.setTransaction(transaction);
-//    operationRequest.setOperations(operations);
+    
+    UserInfo userInfo = UserInfo.dataToVo(paramsMapData);
+    operationRequest.setUserInfo(userInfo);
+
+    List<Operation> operations = Operation.dataToListVo(paramsMapData);
+    operationRequest.setOperations(operations);
 
     return operationRequest;
   }
@@ -78,7 +82,7 @@ public class OperationRequest {
     this.transaction = transaction;
   }
 
-  public List<Operation> getOperations() {
+	public List<Operation> getOperations() {
     return operations;
   }
 

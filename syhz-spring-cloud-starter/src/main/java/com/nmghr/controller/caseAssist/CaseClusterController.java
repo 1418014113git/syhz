@@ -138,10 +138,9 @@ public class CaseClusterController {
               BigDecimal xsNum = new BigDecimal(String.valueOf(m.get("xsNum")));
               BigDecimal hc = new BigDecimal(String.valueOf(m.get("hc")));
               if (xsNum.compareTo(BigDecimal.ZERO) > 0) {
-                hc = hc.divide(xsNum, 2, RoundingMode.DOWN).multiply(new BigDecimal("100")).setScale(0, RoundingMode.DOWN);
-                m.put("hcl", hc.intValue());
+                m.put("hcl", hc.divide(xsNum, 4, RoundingMode.HALF_UP).multiply(new BigDecimal("100")).setScale(2, RoundingMode.DOWN).toString());
               } else {
-                m.put("hcl", 0);
+                m.put("hcl", "-");
               }
               array.add(m);
               bean.put("deptList",array);
@@ -150,10 +149,9 @@ public class CaseClusterController {
               BigDecimal xsNum = new BigDecimal(String.valueOf(m.get("xsNum")));
               BigDecimal hc = new BigDecimal(String.valueOf(m.get("hc")));
               if (xsNum.compareTo(BigDecimal.ZERO) > 0) {
-                hc = hc.divide(xsNum, 2, RoundingMode.DOWN).multiply(new BigDecimal("100")).setScale(0, RoundingMode.DOWN);
-                m.put("hcl", hc.intValue());
+                m.put("hcl", hc.divide(xsNum, 4, RoundingMode.HALF_UP).multiply(new BigDecimal("100")).setScale(2, RoundingMode.DOWN).toString());
               } else {
-                m.put("hcl", 0);
+                m.put("hcl", "-");
               }
               array.add(m);
               bean.put("deptList",array);
@@ -386,7 +384,7 @@ public class CaseClusterController {
    */
   @GetMapping("/signList")
   @ResponseBody
-  public Object signList(String assistId, String deptCode, Integer pageNum, Integer pageSize) {
+  public Object signList(String assistId, String deptCode, String deptType, String curDeptCode,Integer pageNum, Integer pageSize) {
     if (pageNum == null) {
       pageNum = 1;
     }
@@ -394,11 +392,19 @@ public class CaseClusterController {
       pageSize = 15;
     }
     ValidationUtils.notNull(assistId, "assistId不能为空!");
+    ValidationUtils.notNull(deptType, "deptType不能为空!");
+    if(!"123".contains(deptType)){
+      return Result.fail("999667", "deptType不正确");
+    }
     try {
       Map<String, Object> p = new HashMap<>();
       p.put("assistId", assistId);
       p.put("assistType", 2);
-      if (deptCode != null) {
+      p.put("deptType",Integer.parseInt(deptType));
+      if(!StringUtils.isEmpty(curDeptCode)){
+        p.put("curDeptCode", curDeptCode);
+      }
+      if (!StringUtils.isEmpty(deptCode)) {
         p.put("deptCode", deptCode);
       }
       LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJGLQBXSSIGN");
@@ -551,7 +557,7 @@ public class CaseClusterController {
    */
   @GetMapping("/numberValid")
   @ResponseBody
-  public Object numberValid(String dept, String numStr) {
+  public Object numberValid(String dept, String numStr, String id) {
     try {
       ValidationUtils.notNull(dept, "dept不能为空!");
       if (dept.length() < 6) {
@@ -560,6 +566,7 @@ public class CaseClusterController {
       Map<String, Object> params = new HashMap<>();
       params.put("deptCode", dept);
       params.put("number", numStr);
+      params.put("id", id);
       LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJCLUSTERNUMBERCHECK");
       List<Map<String, Object>> list = (List<Map<String, Object>>) baseService.list(params);
       return Result.ok((list == null || list.size() == 0));

@@ -10,15 +10,14 @@ import com.nmghr.hander.dto.ApproveParam;
 import com.nmghr.hander.save.ajglqbxs.QbxsSignSaveHandler;
 import com.nmghr.hander.save.examine.ExamineSaveHandler;
 import com.nmghr.service.ajglqbxs.CaseAssistService;
+import com.nmghr.util.DateUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 /**
  * 案件协查
@@ -46,7 +45,7 @@ public class CaseAssistSubmitSaveHandler extends AbstractSaveHandler {
     if (!validName(String.valueOf(body.get("curDeptCode")), String.valueOf(body.get("title")), body.get("id"))) {
       throw new GlobalErrorException("999667", "案件协查标题已存在，请确认后重新输入！");
     }
-    if(body.get("assistNumber")!=null){
+    if(!StringUtils.isEmpty(body.get("assistNumber")) && !"1".equals(String.valueOf(body.get("category")))){
       String assistId = "";
       if (body.containsKey("id") && !StringUtils.isEmpty(body.get("id"))) {
         assistId = String.valueOf(body.get("id"));
@@ -65,6 +64,9 @@ public class CaseAssistSubmitSaveHandler extends AbstractSaveHandler {
       if(!validNum(id)){
         throw new GlobalErrorException("999667", "未导入线索，请导入线索后再提交！");
       }
+      if(StringUtils.isEmpty(body.get("acceptDeptName"))||StringUtils.isEmpty(body.get("acceptDeptId"))){
+        throw new GlobalErrorException("999667", "审核单位信息异常！");
+      }
       createApprove(body, id, false); //创建审核
       return id;
     } else {
@@ -75,7 +77,7 @@ public class CaseAssistSubmitSaveHandler extends AbstractSaveHandler {
         id = body.get("id");
         modify(String.valueOf(id), body);
       }
-      if ("4".equals(String.valueOf(body.get("status")))) {
+      if ("5".equals(String.valueOf(body.get("status")))) {
         // 判断线索是否已导入
         if(!validNum(id)){
           throw new GlobalErrorException("999667", "未导入线索，请导入线索后再提交！");

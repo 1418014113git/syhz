@@ -23,10 +23,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * 案件协查
@@ -64,16 +61,19 @@ public class CaseAssistController {
     if (params.get("pageSize") != null && !StringUtils.isEmpty(params.get("pageSize"))) {
       pageSize = Integer.parseInt(String.valueOf(params.get("pageSize")));
     }
-    if(params.get("reginCode")!=null){
-      params.put("queryDeptCode",params.get("reginCode"));
+    if(!StringUtils.isEmpty(params.get("reginCode"))){
+      params.put("cityCode",params.get("reginCode"));
     } else {
-      if(params.get("cityCode")!=null){
-        params.put("queryDeptCode",params.get("cityCode"));
-      } else {
-        if(params.get("provinceCode")!=null){
-          params.put("queryDeptCode",params.get("provinceCode"));
+      if(StringUtils.isEmpty(params.get("cityCode"))){
+        if(!StringUtils.isEmpty(params.get("provinceCode"))){
+          params.put("cityCode",params.get("provinceCode"));
         }
       }
+    }
+    if(!StringUtils.isEmpty(params.get("isCheck"))&&Boolean.valueOf(String.valueOf(params.get("isCheck")))){
+      params.put("isCheck",0);
+    } else {
+      params.put("isCheck",3);
     }
     try {
       LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJASSIST");
@@ -81,7 +81,7 @@ public class CaseAssistController {
       if(obj==null || obj.getList().size()==0){
         return obj;
       }
-      Map<String, Object> temp = new HashMap<>();
+      Map<String, Object> temp = new LinkedHashMap<>();
       List<Object> ids = new ArrayList();
       List<Map<String, Object>> pglist = obj.getList();
       for (Map<String, Object> m : pglist) {
@@ -92,6 +92,7 @@ public class CaseAssistController {
       Map<String, Object> p = new HashMap<>();
       p.put("assistIds", ids);
       p.put("curDeptCode", params.get("curDeptCode"));
+      LocalThreadStorage.put(Constant.CONTROLLER_PAGE, false);
       LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJASSISTDEPTCLUE");
       List<Map<String, Object>> deptInfo = (List<Map<String, Object>>) baseService.list(p);
       if (deptInfo != null && deptInfo.size() > 0) {
@@ -129,8 +130,7 @@ public class CaseAssistController {
               BigDecimal xsNum = new BigDecimal(String.valueOf(m.get("xsNum")));
               BigDecimal hc = new BigDecimal(String.valueOf(m.get("hc")));
               if (xsNum.compareTo(BigDecimal.ZERO) > 0) {
-                hc = hc.divide(xsNum, 2, RoundingMode.DOWN).multiply(new BigDecimal("100")).setScale(0, RoundingMode.DOWN);
-                m.put("hcl", hc.intValue());
+                m.put("hcl",  hc.divide(xsNum, 4, RoundingMode.HALF_UP).multiply(new BigDecimal("100")).setScale(2, RoundingMode.DOWN).toString());
               } else {
                 m.put("hcl", 0);
               }
@@ -141,8 +141,7 @@ public class CaseAssistController {
               BigDecimal xsNum = new BigDecimal(String.valueOf(m.get("xsNum")));
               BigDecimal hc = new BigDecimal(String.valueOf(m.get("hc")));
               if (xsNum.compareTo(BigDecimal.ZERO) > 0) {
-                hc = hc.divide(xsNum, 2, RoundingMode.DOWN).multiply(new BigDecimal("100")).setScale(0, RoundingMode.DOWN);
-                m.put("hcl", hc.intValue());
+                m.put("hcl", hc.divide(xsNum, 4, RoundingMode.HALF_UP).multiply(new BigDecimal("100")).setScale(2, RoundingMode.DOWN).toString());
               } else {
                 m.put("hcl", 0);
               }
@@ -266,12 +265,11 @@ public class CaseAssistController {
       LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJJBXXSYH");
       Map<String, Object> caseBean = (Map<String, Object>) baseService.get(String.valueOf(bean.get("ajbh")));
       bean.putAll(caseBean);
-
       bean.put("cityCode", String.valueOf(bean.get("applyDeptCode")).substring(0,4)+"00");
-
       if(!StringUtils.isEmpty(bean.get("readKey"))){
         bean.put("readKey", Sms4Util.Decrypt(String.valueOf(bean.get("readKey"))));
       }
+      setCityNum(id, bean);
       return Result.ok(bean);
     } catch (Exception e) {
       if (e instanceof GlobalErrorException) {
@@ -282,6 +280,14 @@ public class CaseAssistController {
       }
     }
     return Result.fail("999668", "查询异常");
+  }
+
+  private void setCityNum(Object id, Map<String, Object> bean) throws Exception {
+    Map<String, Object> params = new HashMap<>();
+    params.put("assistId", id);
+    LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJASSISTDEPTNUMS");
+    List<Object> list = (List<Object>) baseService.list(params);
+    bean.put("cityNum", list!=null?list.size():0);
   }
 
   /**
@@ -347,7 +353,6 @@ public class CaseAssistController {
   public Object appraise(@RequestBody Map<String, Object> body) {
     ValidationUtils.notNull(body.get("assistId"), "assistId不能为空!");
     ValidationUtils.notNull(body.get("deptCode"), "deptCode不能为空!");
-    ValidationUtils.notNull(body.get("commentText"), "commentText不能为空!");
     ValidationUtils.notNull(body.get("score"), "score不能为空!");
     try {
       LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJASSISTDEPT");
@@ -370,7 +375,7 @@ public class CaseAssistController {
    */
   @GetMapping("/signList")
   @ResponseBody
-  public Object signList(String assistId, String deptCode, Integer pageNum, Integer pageSize) {
+  public Object signList(String assistId, String deptCode, String deptType, String curDeptCode, Integer pageNum, Integer pageSize) {
     if (pageNum == null) {
       pageNum = 1;
     }
@@ -378,11 +383,19 @@ public class CaseAssistController {
       pageSize = 15;
     }
     ValidationUtils.notNull(assistId, "assistId不能为空!");
+    ValidationUtils.notNull(deptType, "deptType不能为空!");
+    if(!"123".contains(deptType)){
+      return Result.fail("999667", "deptType不正确");
+    }
     try {
       Map<String, Object> p = new HashMap<>();
       p.put("assistId", assistId);
       p.put("assistType", 1);
-      if (deptCode != null) {
+      p.put("deptType",Integer.parseInt(deptType));
+      if(!StringUtils.isEmpty(curDeptCode)){
+        p.put("curDeptCode", curDeptCode);
+      }
+      if (!StringUtils.isEmpty(deptCode)) {
         p.put("deptCode", deptCode);
       }
       LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJGLQBXSSIGN");
@@ -582,7 +595,7 @@ public class CaseAssistController {
 //      ValidationUtils.notNull(body.get("citys"), "Citys不能为空!");
       ValidationUtils.notNull(body.get("status"), "status!");
       String status = String.valueOf(body.get("status"));
-      if (!"0".equals(status) && !"1".equals(status) && !"4".equals(status)) {
+      if (!"0".equals(status) && !"1".equals(status) && !"5".equals(status)) {
         throw new GlobalErrorException("999667", "status状态异常");
       }
       if ("1".equals(status)) {

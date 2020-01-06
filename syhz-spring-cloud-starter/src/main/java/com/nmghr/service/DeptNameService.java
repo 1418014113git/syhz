@@ -1,6 +1,7 @@
 package com.nmghr.service;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -55,35 +56,38 @@ public class DeptNameService implements IBaseService {
 		String departCode = SyhzUtil.setDate(requestMap.get("departCode"));
 		String reginCode = SyhzUtil.setDate(requestMap.get("reginCode"));
 		int flag = SyhzUtil.setDateInt(requestMap.get("flag"));
+		int i = 2;
 		List<Map<String, Object>> cList = null;
-		if (!"".equals(provinceCode)) {
-			cList = userExtMapper.getCity();
-		}
-		if (!"".equals(cityCode)) {
-			cList = userExtMapper.getCityDepart(cityCode);
-		}
+
 		if (!"".equals(departCode)) {
 			cList = userExtMapper.getDepart(departCode);
-		}
-		if (!"".equals(reginCode)) {
+		} else if (!"".equals(reginCode)) {
 			cList = userExtMapper.getReginDepart(reginCode);
+		} else if (!"".equals(cityCode)) {
+			cList = userExtMapper.getCityDepart(cityCode);
+		} else if (!"".equals(provinceCode)) {
+			cList = userExtMapper.getCity();
+			i = 1;
 		}
-		if (flag != 1) {
 
+		if (flag != 1) {
 			for (Map<String, Object> city : cList) {
 				Object dCode = city.get("departCode");
-				// List<Map<String, Object>> depart = userExtMapper.getDepart(departCode);
-				// city.put("children", depart);
-				if (!"".equals(provinceCode)) {
-					Map<String, Object> type = userExtMapper.getDepartType(dCode);
-					city.putAll(type);
-				} else {
-					Map<String, Object> type = userExtMapper.getMyDepartType(dCode);
-					city.putAll(type);
-				}
+				List<Map<String, Object>> type = userExtMapper.getMyDepartType(dCode, i);
+				city.putAll(type.get(0));// 添加人数合计
+				city.putAll(setMap(type.get(1)));// 添加部门数合计
 			}
 		}
 		return cList;
+	}
+
+	private Map<String, Object> setMap(Map<String, Object> map) {
+		Map<String, Object> newMap = new HashMap<String, Object>();
+		newMap.put("p1", map.get("r1"));
+		newMap.put("p2", map.get("r2"));
+		newMap.put("p3", map.get("r3"));
+		return newMap;
+
 	}
 
 	@Override

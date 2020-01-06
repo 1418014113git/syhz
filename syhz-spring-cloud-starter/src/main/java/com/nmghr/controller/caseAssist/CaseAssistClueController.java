@@ -46,6 +46,8 @@ public class CaseAssistClueController {
 
   /**
    * 案件协查列表
+   * type 1协查，2集群
+   * category 食药环分类
    *
    * @return
    */
@@ -58,7 +60,7 @@ public class CaseAssistClueController {
                            @RequestParam("category") Object category,
                            @RequestParam("curDeptCode") Object curDeptCode,
                            @RequestParam("curDeptName") Object curDeptName,
-                           @RequestParam("assistId") Object assistId,Object xfType) {
+                           @RequestParam("assistId") Object assistId, String xfType) {
     try {
       if (null != mulFile) {
         Collection<LinkedHashMap> list = ExcelUtil.importExcel(LinkedHashMap.class, mulFile.getInputStream(), 0);
@@ -68,23 +70,25 @@ public class CaseAssistClueController {
             log.error("excel uploadFile error, Maximum length exceeds 1000 ");
             throw new GlobalErrorException("99952", "最多不能超过1000条");
           }
-
+          List<String> keys = new ArrayList<>();
           List<LinkedHashMap<String, Object>> params = IteratorUtils.toList(list.iterator());
-//          List<LinkedHashMap<String, Object>> params = IteratorUtils.toList(list.iterator());
           if (params.size() > 0) {
             LinkedHashMap<String, Object> map = params.get(0);
-//            LinkedHashMap<String, Object> map = params.get(0);
-            List<String> keys = IteratorUtils.toList(map.keySet().iterator());
+            keys = IteratorUtils.toList(map.keySet().iterator());
             StringBuilder err = new StringBuilder();
             if (!keys.contains("序号")) {
-              err.append("标题必须包含《序号》;");
+              err.append(mulFile.getOriginalFilename()).append("没有序号列，请修改后重新上传。");
             }
             if (!keys.contains("地址")) {
-              err.append("标题必须包含《地址》;");
+              err.append(mulFile.getOriginalFilename()).append("没有地址列，请修改后重新上传。");
             }
             if (err.length() > 0) {
               return Result.fail("999668", err.toString());
             }
+          }
+          // 获取模板标题对比
+          if (checkTitle(type, assistId, keys)) {
+            return Result.fail("999669", "导入线索列标题必须相同，请修改后重新上传。");
           }
           Map<String, Object> data = new HashMap<>();
           data.put("type", type);
@@ -119,13 +123,22 @@ public class CaseAssistClueController {
     return Result.fail("999669", "保存失败");
   }
 
-  /**
-   * 协查线索列表
-   *
-   * @return
-   */
-  public Object clueList() {
-    return null;
+  private Boolean checkTitle(Object type, Object assistId, List<String> keys) throws Exception {
+    Map<String, Object> titleP = new HashMap<>();
+    titleP.put("assistType", type);
+    titleP.put("assistId", assistId);
+    LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJGLQBXSBYASSIST");
+    List<Map<String, Object>> titles = (List<Map<String, Object>>) baseService.list(titleP);
+    if (titles != null && titles.size() > 0) {
+      int flag = 0;
+      for (Map<String, Object> map : titles) {
+        if (keys.contains(map.get("title"))) {
+          flag++;
+        }
+      }
+      return keys.size() != flag;
+    }
+    return false;
   }
 
   /**
@@ -182,9 +195,10 @@ public class CaseAssistClueController {
     }
 
     try {
-      body.put("assistType",2);
-      Object obj = ajglQbxsService.distributeClue(body);
-      return Result.ok(obj);
+      if (!StringUtils.isEmpty(body.get("curDeptType"))) {
+        return ajglQbxsService.issue(body);
+      }
+      return ajglQbxsService.distributeClue(body);
     } catch (Exception e) {
       if (e instanceof GlobalErrorException) {
         GlobalErrorException ge = (GlobalErrorException) e;
@@ -208,7 +222,7 @@ public class CaseAssistClueController {
     ValidationUtils.notNull(body.get("qbxsId"), "qbxsId不能为空!");
 
     try {
-      Object obj = ajglQbxsService.cancelDistribute(body.get("assistId"), body.get("qbxsId"),body.get("qbxsDeptId"));
+      Object obj = ajglQbxsService.cancelDistribute(body);
       return Result.ok(obj);
     } catch (Exception e) {
       if (e instanceof GlobalErrorException) {
@@ -231,9 +245,8 @@ public class CaseAssistClueController {
   public Object delClue(@RequestBody Map<String, Object> body) {
     ValidationUtils.notNull(body.get("assistId"), "assistId不能为空!");
     ValidationUtils.notNull(body.get("qbxsId"), "qbxsId不能为空!");
-
     try {
-      Object obj = ajglQbxsService.removeClue(body.get("assistId"), body.get("qbxsId"), body.get("qbxsDeptId"));
+      Object obj = ajglQbxsService.removeClue(body);
       return Result.ok(obj);
     } catch (Exception e) {
       if (e instanceof GlobalErrorException) {
@@ -254,7 +267,7 @@ public class CaseAssistClueController {
   @GetMapping("/getCluesNum")
   @ResponseBody
   public Object getCluesNum(@RequestParam Map<String, Object> body) {
-    ValidationUtils.notNull(body.get("assistId"), "集群战役Id不能为空!");
+    ValidationUtils.notNull(body.get("assistId"), "assistId不能为空!");
     try {
       Object obj = ajglQbxsService.getClueTotal(String.valueOf(body.get("assistId")));
       return Result.ok(obj);
@@ -277,15 +290,11 @@ public class CaseAssistClueController {
   @GetMapping("/feedBackClues")
   @ResponseBody
   public Object feedBackClues(@RequestParam Map<String, Object> body) {
-    ValidationUtils.notNull(body.get("assistId"), "集群战役Id不能为空!");
+    ValidationUtils.notNull(body.get("assistId"), "assistId不能为空!");
+    ValidationUtils.notNull(body.get("assistType"), "assistType不能为空!");
+    ValidationUtils.notNull(body.get("pageNum"), "pageNum不能为空!");
+    ValidationUtils.notNull(body.get("pageSize"), "pageSize不能为空!");
     try {
-      if(body.get("reginCode")!=null){
-        body.put("cityCode",body.get("reginCode"));
-      } else {
-        if(body.get("cityCode")!=null){
-          body.put("cityCode",body.get("cityCode"));
-        }
-      }
       Object obj = ajglQbxsService.feedBackList(body);
       return Result.ok(obj);
     } catch (Exception e) {
@@ -307,17 +316,12 @@ public class CaseAssistClueController {
   @PostMapping("/feedBack")
   @ResponseBody
   public Object feedBack(@RequestBody Map<String, Object> body) {
-    ValidationUtils.notNull(body.get("type"), "处理类型不能为空!");
+    ValidationUtils.notNull(body.get("assistType"), "assistType不能为空!");
     ValidationUtils.notNull(body.get("fbId"), "反馈id不能为空!");
-    if ("result".equals(body.get("type"))) {
-      ValidationUtils.notNull(body.get("qbxsResult"), "反馈结果不能为空!");
-    } else if ("saveSyajs".equals(body.get("type")) || "deleteSyajs".equals(body.get("type"))) {
-      ValidationUtils.notNull(body.get("syajs"), "syajs不能为空!");
-    } else if ("saveZbxss".equals(body.get("type")) || "deleteZbxss".equals(body.get("type"))) {
-      ValidationUtils.notNull(body.get("zbxss"), "zbxss不能为空!");
-    } else {
-      return Result.fail("999887", "参数异常");
-    }
+    ValidationUtils.notNull(body.get("assistId"), "assistId不能为空!");
+    ValidationUtils.notNull(body.get("qbxsResult"), "协查情况不能为空!");
+//    ValidationUtils.notNull(body.get("handleResult"), "处理方式不能为空!");
+    ValidationUtils.notNull(body.get("backResult"), "反馈内容不能为空!");
     try {
       return Result.ok(ajglQbxsFeedBackService.feedBack(body));
     } catch (Exception e) {
@@ -340,17 +344,9 @@ public class CaseAssistClueController {
   @ResponseBody
   public Object feedBackAJList(@RequestParam Map<String, Object> param) {
     ValidationUtils.notNull(param.get("fbId"), "fbId不能为空!");
+    ValidationUtils.notNull(param.get("assistType"), "assistType不能为空!");
     try {
-      if ("detail".equals(param.get("type"))) {
-        return ajglQbxsService.feedBackDetail(param);
-      }
-      if ("ys".equals(param.get("type"))) {
-        return ajglQbxsService.feedBackSyAJList(param);
-      }
-      if ("zb".equals(param.get("type"))) {
-        return ajglQbxsService.feedBackZbAJList(param);
-      }
-      return new ArrayList<>();
+      return ajglQbxsService.feedBackDetail(param);
     } catch (Exception e) {
       if (e instanceof GlobalErrorException) {
         GlobalErrorException ge = (GlobalErrorException) e;
@@ -370,8 +366,9 @@ public class CaseAssistClueController {
   @GetMapping("/detailCount")
   @ResponseBody
   public Object detailCount(@RequestParam Map<String, Object> requestMap) {
+    ValidationUtils.notNull(requestMap.get("type"), "type集群或协查类型不能为空!");
     try {
-      return ajglQbxsService.feedBackResultList(requestMap);
+      return Result.ok(ajglQbxsService.feedBackResultList(requestMap));
     } catch (Exception e) {
       if (e instanceof GlobalErrorException) {
         GlobalErrorException ge = (GlobalErrorException) e;
@@ -385,26 +382,31 @@ public class CaseAssistClueController {
 
   /**
    * 案件协查情况统计
+   * type // 1移送，2侦办
    *
    * @return
    */
   @GetMapping("/ajSearch")
   @ResponseBody
   public Object ajSearch(@RequestParam Map<String, Object> requestMap) {
+    ValidationUtils.notNull(requestMap.get("fbId"), "fbId不能为空!");
+    ValidationUtils.notNull(requestMap.get("assistId"), "assistId不能为空!");
     try {
+//      List ajbhs = getAjbhs(requestMap);
       Map<String, Object> params = new HashMap<>();
-      params.put("fbId", requestMap.get("fbId"));
-      params.put("assistId", requestMap.get("assistId"));
-      params.put("type", requestMap.get("type"));
-      List ajbhs = getAjbhs(params);
-      params = new HashMap<>();
       params.put("departCode", requestMap.get("deptCode"));
       params.put("ajmc", requestMap.get("ajmc"));
-      if (ajbhs != null) {
-        params.put("ajbhs", ajbhs);
-      }
+//      if (ajbhs != null && ajbhs.size() > 0) {
+//        params.put("ajbhs", ajbhs);
+//      }
       LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJASSISTSEARCH");
-      return baseService.list(params);
+      List<Map<String, Object>> list = (List<Map<String, Object>>) baseService.list(params);
+      for (Map<String, Object> aj : list) {
+        aj.put("dhwd", aj.get("dhwds"));
+        aj.put("pzdb", aj.get("dbrys"));
+        aj.put("yjss", aj.get("ysrys"));
+      }
+      return list;
     } catch (Exception e) {
       if (e instanceof GlobalErrorException) {
         GlobalErrorException ge = (GlobalErrorException) e;
@@ -432,8 +434,8 @@ public class CaseAssistClueController {
       map.put("assistType", 2);
       map.put("num", 0);
       LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJCLUSTERNEEDFEEDBACK");
-      Map<String, Object> obj= (Map<String, Object>) baseService.get(String.valueOf(param.get("deptCode")));
-      if(obj!=null && obj.containsKey("num")){
+      Map<String, Object> obj = (Map<String, Object>) baseService.get(String.valueOf(param.get("deptCode")));
+      if (obj != null && obj.containsKey("num")) {
         map.putAll(obj);
       }
       result.add(map);
@@ -457,41 +459,17 @@ public class CaseAssistClueController {
 
 
   private List getAjbhs(Map<String, Object> params) throws Exception {
-    if ("1".equals(params.get("type"))) {
-      LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJCLUSTERFEEDBACK");
-      Map<String, Object> fb = (Map<String, Object>) baseService.get(params);
-      if (fb == null) {
-        return null;
-      }
-      Object ys = fb.get("syajs");
-      if (ys == null || StringUtils.isEmpty(ys)) {
-        return null;
-      }
-      return JSONArray.parseArray(String.valueOf(ys)).toJavaList(String.class);
+    LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "1".equals(String.valueOf(params.get("assistType"))) ? "AJASSISTFEEDBACK" : "AJCLUSTERFEEDBACK");
+    Map<String, Object> fb = (Map<String, Object>) baseService.get(params);
+    if (fb == null) {
+      return null;
     }
-    if ("2".equals(params.get("type"))) {
-      //查询
-      LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJCLUSTERFEEDBACK");
-      Map<String, Object> fb = (Map<String, Object>) baseService.get(params);
-      if (fb == null) {
-        return null;
-      }
-      Object zb = fb.get("zbxss");
-      if (zb == null || StringUtils.isEmpty(zb)) {
-        return null;
-      }
-      Map<String, Object> zbJson = JSONObject.toJavaObject(JSONObject.parseObject(String.valueOf(zb)), Map.class);
-      if (zbJson == null) {
-        return null;
-      }
-      List<String> ajbhs = IteratorUtils.toList(zbJson.keySet().iterator());
-      if (ajbhs == null || ajbhs.size() == 0) {
-        return null;
-      } else {
-        return ajbhs;
-      }
+    String zb = String.valueOf(fb.get("zbxss"));
+    if (zb == null || StringUtils.isEmpty(zb)) {
+      return null;
     }
-    return null;
+    String[] ajbhs = zb.split(",");
+    return Arrays.asList(ajbhs);
   }
 
 

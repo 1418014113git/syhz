@@ -8,6 +8,12 @@
 
 package com.nmghr.entity.operation;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import com.nmghr.util.SyhzUtil;
+
 /**
  * 字段对象数组
  *
@@ -18,6 +24,22 @@ package com.nmghr.entity.operation;
 public class OperationFieldValue {
   private String field;// 字段名称
   private String value;// 字段值
+
+  public static List<OperationFieldValue> dataToListVo(Object object) {
+    List<Object> fieldValueListReq = (List<Object>) object;
+    List<OperationFieldValue> fieldValueList = new ArrayList<OperationFieldValue>();
+    if (fieldValueListReq.size() >= 1) {
+      OperationFieldValue operationFieldValue = null;
+      for (Object obj: fieldValueListReq) {
+        Map<String,Object> objMap = (Map<String, Object>) obj;
+        operationFieldValue = new OperationFieldValue();
+        operationFieldValue.setField(SyhzUtil.setDate(objMap.get("field")));
+        operationFieldValue.setValue(SyhzUtil.setDate(objMap.get("value")));
+        fieldValueList.add(operationFieldValue);
+      }
+    }
+    return fieldValueList;
+  }
 
   public String getField() {
     return field;
