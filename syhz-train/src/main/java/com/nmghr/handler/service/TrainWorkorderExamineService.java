@@ -452,7 +452,7 @@ public class TrainWorkorderExamineService {
 		Map<String, Object> workHeaderDataMap = new HashMap<String, Object>();
 		workHeaderDataMap.put("auditStatus", SyhzUtil.setDate(AUDIT_STATUS_0));
 		workHeaderDataMap.put("currentAuditType", SyhzUtil.setDate(AUDIT_STATUS_0));
-		workHeaderDataMap.put("currentAuditNode", "0");
+		workHeaderDataMap.put("currentAuditNode", workNodedataMap.get("auditDeptNode"));
 		workHeaderDataMap.put("currentAuditAreaCode", workNodedataMap.get("auditAreaCode"));
 		workHeaderDataMap.put("currentAuditDepCode", workNodedataMap.get("auditDeptCode"));
 		workHeaderDataMap.put("lastId", workflowExamineEntityBo.getCreationId());
@@ -489,8 +489,6 @@ public class TrainWorkorderExamineService {
 			// 审核通过的文章 需要发起消息提醒
 			Map<String, Object> msgDataMap = new HashMap<String, Object>();
 			sendMsgSaveData(baseService, msgDataMap);
-			// 审核不通过记录 添加
-			folwLogSaveData(baseService, workflowExamineEntityBo, workNodeMap.get("auditDeptNode"), AUDIT_STATUS_3);
 		}
 	}
 

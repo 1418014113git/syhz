@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -33,6 +34,7 @@ public class BatchSaveHandler extends AbstractSaveHandler {
     if(list==null || list.size()==0){
       return -1;
     }
+    List<Map<String, Object>> result = new ArrayList<>(list.size());
     int subSize = 10;
     if(body.get("subSize")!=null && !"".equals(String.valueOf(body.get("subSize")).trim())){
       subSize = Integer.parseInt(String.valueOf(body.get("subSize")));
@@ -46,20 +48,24 @@ public class BatchSaveHandler extends AbstractSaveHandler {
           if (!batchSaveData(sub, alias, seqName)) {
             throw new GlobalErrorException("999651", "提交数据有误");
           }
+          result.addAll(sub);
           list.removeAll(sub);
         } else {
           if (!batchSaveData(list, alias,seqName)) {
             throw new GlobalErrorException("999652", "提交数据有误");
           }
+          result.addAll(list);
           list.clear();
         }
+
       } while (list.size() > 0);
     } else {
       if (!batchSaveData(list, alias,seqName)) {
         throw new GlobalErrorException("999653", "提交数据有误");
       }
+      result.addAll(list);
     }
-    return list.size();
+    return result;
   }
 
 

@@ -19,6 +19,7 @@
 		<dependency>
 			<groupId>com.nmghr.basic</groupId>
 			<artifactId>nmghr-basic-task</artifactId>
+			<version>0.2.7</version>
 		</dependency>
 
 		<dependency>

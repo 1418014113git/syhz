@@ -42,6 +42,7 @@ public class DirectDbajSaveHandler extends AbstractSaveHandler {
 		// 添加数据
 		int superviseLevel = SyhzUtil.setDateInt(requestBody.get("superviseLevel"));
 		int status = SyhzUtil.setDateInt(requestBody.get("status"));
+
 		LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, DBAJ);
 		Object obj = baseService.save(requestBody);
 		requestBody.put("superviseId", obj);
@@ -52,6 +53,7 @@ public class DirectDbajSaveHandler extends AbstractSaveHandler {
 				saveLog(recordId, requestBody, "申请案件督办");
 				saveLog(recordId, requestBody, "案件督办-审核成功");
 				createApprove(requestBody, recordId, true);
+				updateCaseSupervise(String.valueOf(recordId), 3);
 			} else {
 				saveLog(recordId, requestBody, "申请案件督办");
 				createApprove(requestBody, recordId, false);
@@ -59,6 +61,13 @@ public class DirectDbajSaveHandler extends AbstractSaveHandler {
 		}
 		// saveBusinessSign(String.valueOf(obj), requestBody);
 		return obj;
+	}
+
+	private void updateCaseSupervise(String id, int status) throws Exception {
+		Map<String, Object> noticeMap = new HashMap<>();
+		noticeMap.put("status", String.valueOf(status));
+		LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "CASESUPERVISERECORDSTATUS");
+		baseService.update(id, noticeMap);
 	}
 
 	// 添加审核
