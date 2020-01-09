@@ -4,7 +4,6 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.nmghr.basic.common.Constant;
 import com.nmghr.basic.common.Result;
-import com.nmghr.basic.common.exception.GlobalErrorEnum;
 import com.nmghr.basic.common.exception.GlobalErrorException;
 import com.nmghr.basic.core.common.LocalThreadStorage;
 import com.nmghr.basic.core.page.Paging;
@@ -13,10 +12,8 @@ import com.nmghr.basic.core.service.handler.ISaveHandler;
 import com.nmghr.basic.core.service.handler.IUpdateHandler;
 import com.nmghr.basic.core.util.SpringUtils;
 import com.nmghr.basic.core.util.ValidationUtils;
-import com.nmghr.common.GlobalConfig;
-import com.nmghr.handler.message.QueueConfig;
-import com.nmghr.handler.service.SendMessageService;
 import com.nmghr.service.DeptNameService;
+import com.nmghr.service.message.MessageSendService;
 import com.nmghr.util.DateUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,7 +35,7 @@ public class NoticeController {
   private DeptNameService deptNameService;
 
   @Autowired
-  private SendMessageService sendMessageService;
+  private MessageSendService messageSendService;
 
 
   @PutMapping("/save")
@@ -47,7 +44,9 @@ public class NoticeController {
     validParams(body);
     try {
       if ("true".equals(String.valueOf(body.get("checkFlag"))) && "1".equals(String.valueOf(body.get("messageStatus")))) {
-        body.put("depts", getDepts(String.valueOf(body.get("recipient"))));
+        List list = getDepts(String.valueOf(body.get("recipient")));
+        body.put("depts", list);
+        body.put("managers", getManagerReceive(list));
       }
       ISaveHandler saveHandler = SpringUtils.getBean("noticeSubmitSaveHandler", ISaveHandler.class);
       Object obj = saveHandler.save(body);
@@ -70,7 +69,9 @@ public class NoticeController {
     validParams(body);
     try {
       if ("true".equals(String.valueOf(body.get("checkFlag"))) && "1".equals(String.valueOf(body.get("messageStatus")))) {
-        body.put("depts", getDepts(String.valueOf(body.get("recipient"))));
+        List list = getDepts(String.valueOf(body.get("recipient")));
+        body.put("depts", list);
+        body.put("managers", getManagerReceive(list));
       }
       IUpdateHandler updateHandler = SpringUtils.getBean("noticeSubmitUpdateHandler", IUpdateHandler.class);
       Object obj = updateHandler.update(String.valueOf(body.get("id")), body);
@@ -308,7 +309,10 @@ public class NoticeController {
         return Result.fail("999667", "非审核状态不能操作！");
       }
       if ("3".equals(flowStatus)) {
-        body.put("depts", getDepts(String.valueOf(bean.get("recipient"))));
+        List list = getDepts(String.valueOf(bean.get("recipient")));
+        body.put("depts", list);
+        body.put("managers", getManagerReceive(list));
+        body.put("recipientUser",bean.get("recipientUser"));
       }
 
       body.put("creatorId", bean.get("creatorId"));
@@ -416,29 +420,10 @@ public class NoticeController {
       if (list == null || list.size() == 0) {
         return Result.fail("999667", "该部门未查询到管理人员");
       }
-      for (Map<String, Object> bean : list) {
-        if (bean != null && bean.containsKey("userId")) {
-          Map<String, Object> params = new HashMap<>();
-          params.put("bussionType", 4);
-          params.put("bussionTypeInfo", 405);
-          params.put("bussionId", -1);
-          params.put("title", body.get("title") + "签收提醒");
-          params.put("content", body.get("creatorName") + "与" + body.get("creatorDate") + "发布的" + body.get("title") + "通知您还未签收，请及时查阅并签收！");
-          params.put("status", 0);
-          params.put("creator", body.get("userId"));
-          params.put("creatorName", body.get("userName"));
-          params.put("deptCode", body.get("curDeptCode"));
-          params.put("deptName", body.get("curDeptName"));
-          params.put("acceptId", bean.get("userId"));
-          params.put("category", 1);//弹出信息
-          sendMessageService.sendMessage(params, QueueConfig.TIMELYMESSAGE);
-          sendMessageService.sendMessage(params, QueueConfig.SAVEMESSAGE);
-          params = new HashMap<>();
-          params.put("remindTime", DateUtil.dateFormart(new Date(), DateUtil.yyyyMMddHHmmss));
-          LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "BASEMESSAGESIGN");
-          baseService.update(String.valueOf(body.get("signId")), params);
-        }
-      }
+      //查询部门对应的接收人
+      List queryP = new ArrayList();
+      queryP.add(body.get("acceptDeptId"));
+      messageSendService.getUserList(queryP, list, body);
       return Result.ok(list.size());
     } catch (Exception e) {
     }
@@ -458,6 +443,33 @@ public class NoticeController {
     }
     return (List<Map<String, Object>>) obj;
   }
+
+  private Map<String, Object> getManagerReceive(List<Map<String, Object>> depts) throws Exception {
+    if(depts==null || depts.size()==0){
+      return new HashMap<>();
+    }
+    List<Object> deptIds = new ArrayList<>();
+    for (Map<String, Object> d:depts){
+      deptIds.add(d.get("receiverDeptId"));
+    }
+
+    // 查询所有部门管理员用户
+    Map<String, Object> result = new HashMap<>();
+    Map<String, Object> queryP = new HashMap<>();
+    queryP.put("queryType", "managerUserList");
+    queryP.put("deptIds", deptIds);
+    List<Map<String, Object>> users = (List<Map<String, Object>>) deptNameService.list(queryP);
+    if (users != null && users.size() > 0) {
+      for (Map<String, Object> m: users){
+        m.put("userId", m.get("id"));
+        result.put(String.valueOf(m.get("id")),m);
+      }
+      return result;
+    }
+    return new HashMap<>();
+  }
+
+
 
   private void validParams(Map<String, Object> body) {
     ValidationUtils.notNull(body.get("title"), "标题不能为空!");
