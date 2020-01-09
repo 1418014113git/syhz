@@ -23,7 +23,7 @@ spring:
   application:
     name: syhz-api
   profiles:
-    active: test
+    active: dev
   data:
     mongodb:
       uri: ${mongo.uri}
