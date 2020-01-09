@@ -96,6 +96,7 @@ public class CaseManageController {
             param.put("deptCategory", "1");
             param.put("deptCode", areaArr[areaArr.length - 1]);
           }
+          param.put("splitLen", areaArr.length == 3 ? 6 : 4);
         }
 //        if (areaArr.length == 2 && areaArr[1].equals("610403")) { // 杨凌
 //          param.put("deptCategory", "1");
