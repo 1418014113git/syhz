@@ -60,7 +60,6 @@ public class yqReportSaveHandler extends AbstractSaveHandler {
     if(category == null || "null".equals(category) || "".equals(category)){
       throw new GlobalErrorException(GlobalErrorEnum.PARAM_NOT_VALID.getCode(), "请选择报告类型");
     }
-
     if (attachment != null && !"".equals(attachment)) {
        JSONArray attachments = JSONArray.parseArray(attachment);
       for (int i = 0; i < attachments.size(); i++) {
@@ -70,7 +69,6 @@ public class yqReportSaveHandler extends AbstractSaveHandler {
 //        String name = String.valueOf(requestBody.get("name"));
 //        String category = String.valueOf(requestBody.get("category"));
         try {
-
           if (null != name) {
             SimpleDateFormat sdf = new SimpleDateFormat(dateStringFormat1);
             SimpleDateFormat sdf2 = new SimpleDateFormat(dateStringFormat2);
@@ -99,7 +97,6 @@ public class yqReportSaveHandler extends AbstractSaveHandler {
                 if(!isDate(time[0],false) || !isDate(time[1],false)){
                   throw new GlobalErrorException(GlobalErrorEnum.PARAM_NOT_VALID.getCode(), "报告保存失败，请确认文件名是否正确");
                 }
-
                 String startTime = time[0].substring(0, 8);
                 String endTime = time[1].substring(0, 8);
                 Date createTime = sdf4.parse(endTime);
@@ -139,10 +136,10 @@ public class yqReportSaveHandler extends AbstractSaveHandler {
             Map<String,Object> countMap = (Map<String, Object>) baseService.get(requestBody);
             if(countMap!=null && countMap.get("count")!=null){
               if(Integer.valueOf(String.valueOf(countMap.get("count")))>0){
-                throw new GlobalErrorException(GlobalErrorEnum.PARAM_NOT_VALID.getCode(), "报告标题重复，请确认后重新上传");
+                String title = String.valueOf(requestBody.get("title"));
+                throw new GlobalErrorException(GlobalErrorEnum.PARAM_NOT_VALID.getCode(), "["+title+"]已上传,请确认后再试!");
               }
             }
-
             requestBody.put("fileName", name);
             requestBody.put("attachment", jsonObject.toJSONString());
             LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "YQREPORT");

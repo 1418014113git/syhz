@@ -7,6 +7,7 @@ import com.nmghr.basic.core.service.IBaseService;
 import com.nmghr.basic.core.service.handler.impl.AbstractUpdateHandler;
 import com.nmghr.handler.message.QueueConfig;
 import com.nmghr.handler.service.SendMessageService;
+import com.nmghr.service.message.MessageSendService;
 import com.nmghr.util.DateUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,7 +21,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 审核业务
+ * 通知审核业务
  */
 @SuppressWarnings("unchecked")
 @Service("examineSubmitUpdateHandler")
@@ -30,6 +31,9 @@ public class ExamineSubmitUpdateHandler extends AbstractUpdateHandler {
 
   @Autowired
   private SendMessageService sendMessageService;
+
+  @Autowired
+  private MessageSendService messageSendService;
 
   public ExamineSubmitUpdateHandler(IBaseService baseService) {
     super(baseService);
@@ -86,7 +90,11 @@ public class ExamineSubmitUpdateHandler extends AbstractUpdateHandler {
     Map<String, Object> orderMap = new HashMap<String, Object>();
     orderMap.put("status", 3);//已结束
     LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "WORKORDER");
-    return baseService.update(String.valueOf(body.get("wdId")), orderMap);
+    Object o= baseService.update(String.valueOf(body.get("wdId")), orderMap);
+
+    //给管理员及接收人发送消息
+    messageSendService.getMARUserList(body);
+    return o;
   }
 
 
