@@ -6,6 +6,7 @@ import com.nmghr.basic.core.common.LocalThreadStorage;
 import com.nmghr.basic.core.service.IBaseService;
 import com.nmghr.basic.core.service.handler.impl.AbstractSaveHandler;
 import com.nmghr.hander.update.notice.ExamineSubmitUpdateHandler;
+import com.nmghr.service.message.MessageSendService;
 import com.nmghr.util.DateUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -32,6 +33,9 @@ public class NoticeSubmitSaveHandler extends AbstractSaveHandler {
   @Qualifier("examineSubmitUpdateHandler")
   private ExamineSubmitUpdateHandler examineSubmitUpdateHandler;
 
+  @Autowired
+  private MessageSendService messageSendService;
+
   @Override
   @Transactional
   public Object save(Map<String, Object> body) throws Exception {
@@ -44,6 +48,8 @@ public class NoticeSubmitSaveHandler extends AbstractSaveHandler {
         Object id = create(body);
         createApprove(body, id, true); // 直接审核通过
         examineSubmitUpdateHandler.batchSaveData((List<Map<String, Object>>) body.get("depts"), id);
+        //给管理员及接收人发送消息
+        messageSendService.getMARUserList(body);
         return id;
       }
       body.put("messageStatus", 1);
