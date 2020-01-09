@@ -20,8 +20,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -55,28 +53,22 @@ public class AjrlController {
 
       if (isXfzf(requestParam)) {
           LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "ajjbxxetlrl");
-          Paging paging = (Paging) baseService.page(requestParam,pageNum,pageSize);
-          //下发转发记录根据案件编号分组,取每一个案件最后一次下发记录
-          //存储案件的最新下发转发记录的list
-          List<Map<String,Object>> latestAjList = new ArrayList<>();
-          List<Map<String,Object>> xfzfList = paging.getList();
-
-          for (Map<String, Object> map : xfzfList) {
-              //查最新的下发转发记录,每个案件查到一条
-              Map<String,Object> param = new HashMap();
-              param.put("status",requestParam.get("status"));
-              param.put("noticeLx",requestParam.get("noticeLx"));
-              param.put("ajbh",String.valueOf(map.get("AJBH")));
-              if(requestParam.get("curDeptCode") != null)
-              param.put("noticeOrgCode",requestParam.get("curDeptCode"));
-              LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJXFZFLATEST");
-              Map<String,Object> latestAj = (Map<String, Object>) baseService.get(param);
-              if(!ajIsIn(String.valueOf(map.get("AJBH")),latestAjList)) {
-                  latestAjList.add(latestAj);
-              }
-          }
-
-          return new Paging(pageSize, pageNum, latestAjList.size(), latestAjList);
+          List<Map<String,Object>> ajlist = (List<Map<String, Object>>) baseService.list(requestParam);
+//          for (Map<String, Object> map : xfzfList) {
+//              //查最新的下发转发记录,每个案件查到一条
+//              Map<String,Object> param = new HashMap();
+//              param.put("status",requestParam.get("status"));
+//              param.put("noticeLx",requestParam.get("noticeLx"));
+//              param.put("ajbh",String.valueOf(map.get("AJBH")));
+//              if(requestParam.get("curDeptCode") != null)
+//              param.put("noticeOrgCode",requestParam.get("curDeptCode"));
+//              LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJXFZFLATEST");
+//              Map<String,Object> latestAj = (Map<String, Object>) baseService.get(param);
+//              if(!ajIsIn(String.valueOf(map.get("AJBH")),latestAjList)) {
+//                  latestAjList.add(latestAj);
+//              }
+//          }
+          return new Paging(pageSize, pageNum, ajlist.size(), ajlist);
       }
       if("".equals(requestParam.get("status")) || requestParam.get("status") == null){
           requestParam.put("statusStr","3,5,10");
@@ -94,27 +86,6 @@ public class AjrlController {
         }
       return false;
     }
-
-    // 案件认统计跳转到案件认领列表
-    @GetMapping("/pageTjList")
-    @ResponseBody
-    public Object getAjRlTjList(@RequestParam Map<String, Object> requestParam) throws Exception {
-        int pageNum = 1;
-        int pageSize = 15;
-        if (requestParam.get("pageNum") != null) {
-            pageNum = Integer.valueOf(String.valueOf(requestParam.get("pageNum")));
-        }
-        if (requestParam.get("pageSize") != null) {
-            pageSize = Integer.valueOf(String.valueOf(requestParam.get("pageSize")));
-        }
-        if("".equals(requestParam.get("status")) || requestParam.get("status") == null){
-            requestParam.put("statusStr","3,5,10");
-        }
-
-        LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJJBXXETLRLTJ");
-        return baseService.page(requestParam,pageNum,pageSize);
-    }
-
 
     private boolean isXfzf(@RequestParam Map<String, Object> requestParam) {
         return "9".equals(requestParam.get("status")) && ("1".equals(requestParam.get("noticeLx")) ||
