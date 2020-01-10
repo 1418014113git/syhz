@@ -15,6 +15,7 @@ import com.nmghr.basic.core.service.handler.impl.AbstractQueryHandler;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -36,9 +37,16 @@ public class ClueStatisticsByClassifyHandler extends AbstractQueryHandler {
         }
         LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "QBXXCLUESTATISTICSBYCLASSIFY");
         List<Map<String,Object>> queryList =  (List)baseService.list(requestMap);
+        List<Object> legendList = new ArrayList();
+        for (Map<String,Object> map : queryList){
+            legendList.add(map.get("name"));
+        }
         Map resultMap = new HashMap();
+        Object[] legendArray = legendList.toArray();
+        resultMap.put("legendData",legendArray);
         resultMap.put("total", 0);
         resultMap.put("seriesData", queryList);
+        System.out.println("结束时间:" + System.currentTimeMillis());
         return resultMap;
     }
 }
