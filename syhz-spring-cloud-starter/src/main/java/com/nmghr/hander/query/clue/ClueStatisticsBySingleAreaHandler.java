@@ -1,5 +1,5 @@
 /**
- * Created by wrx on 2020/1/7
+ * Created by wrx on 2020/1/10
  * <p/>
  * Copyright (c) 2015-2015
  * Apache License
@@ -21,12 +21,12 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 线索分类统计——按分类统计
+ * 线索区域统计——单一区域（环状图）
  */
-@Service("clueStatisticsByClassifyHandler")
-public class ClueStatisticsByClassifyHandler extends AbstractQueryHandler {
+@Service("clueStatisticsBySingleAreaHandler")
+public class ClueStatisticsBySingleAreaHandler extends AbstractQueryHandler {
 
-    public ClueStatisticsByClassifyHandler(IBaseService baseService) {
+    public ClueStatisticsBySingleAreaHandler(IBaseService baseService) {
         super(baseService);
     }
 
@@ -37,16 +37,13 @@ public class ClueStatisticsByClassifyHandler extends AbstractQueryHandler {
         }
         LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "QBXXCLUESTATISTICSBYCLASSIFY");
         List<Map<String,Object>> queryList =  (List)baseService.list(requestMap);
-        List<Object> legendList = new ArrayList();
-        for (Map<String,Object> map : queryList){
-            legendList.add(map.get("name"));
-        }
+        List seriesData = new ArrayList();
+        seriesData.add(queryList);
+        LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "QBXXCLUESTATISTICSBYSOURCE");
+        queryList =  (List)baseService.list(requestMap);
+        seriesData.add(queryList);
         Map resultMap = new HashMap();
-        Object[] legendArray = legendList.toArray();
-        resultMap.put("legendData",legendArray);
-        resultMap.put("total", 0);
-        resultMap.put("seriesData", queryList);
-        System.out.println("结束时间:" + System.currentTimeMillis());
+        resultMap.put("seriesData", seriesData);
         return resultMap;
     }
 }

@@ -43,13 +43,13 @@ public class ClueStatisticsBySourceAndDateHandler extends AbstractQueryHandler {
         } else if ("2".equals(requestMap.get("timeDimensionType").toString()) ||
                 "3".equals(requestMap.get("timeDimensionType").toString())){
             // 获取月份
-            DateList = ClueStatisticsByClassifyAndDateHandler.getMonthList(startTime, endTime,"yyyy-MM", Calendar.MONTH);
+            DateList = ClueStatisticsByClassifyAndDateHandler.getMonthList(startTime, endTime,"yyyy年MM月", Calendar.MONTH);
         } else if ("4".equals(requestMap.get("timeDimensionType").toString())){
             // 获取季度
             DateList = ClueStatisticsByClassifyAndDateHandler.getQuarterList(startTime, endTime);
         } else {
             // 获取年份
-            DateList = ClueStatisticsByClassifyAndDateHandler.getMonthList(startTime, endTime, "yyyy", Calendar.YEAR);
+            DateList = ClueStatisticsByClassifyAndDateHandler.getMonthList(startTime, endTime, "yyyy年", Calendar.YEAR);
         }
         requestMap.put("dateList", DateList);
 
@@ -58,8 +58,25 @@ public class ClueStatisticsBySourceAndDateHandler extends AbstractQueryHandler {
         LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "CODENAMEQUERY");
         List<Map<String, Object>> dictList = (List)baseService.list(rmap);
         List seriesDataList = new ArrayList();
-        for (Map dictMap : dictList){
-            requestMap.put("clueType",dictMap.get("code"));
+        List<Object> legendList = new ArrayList();
+        if (ObjectUtils.isEmpty(requestMap.get("clueSource"))){
+            for (Map dictMap : dictList){
+                requestMap.put("clueSource",dictMap.get("code"));
+                LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "QBXXCLUESTATISTICSBYCLASSIFYANDDATE");
+                // 查询结果数组
+                List<Map<String,Object>> queryList =  (List)baseService.list(requestMap);
+                Map seriesDateMap = new HashMap();
+                List result = new ArrayList<>();
+                for(Map qmap : queryList){
+                    result.add(qmap.get("countNum"));
+                }
+                seriesDateMap.put("type","line");
+                seriesDateMap.put("name",dictMap.get("code_name"));
+                seriesDateMap.put("data", result);
+                seriesDataList.add(seriesDateMap);
+                legendList.add(dictMap.get("code_name"));
+            }
+        }else {
             LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "QBXXCLUESTATISTICSBYCLASSIFYANDDATE");
             // 查询结果数组
             List<Map<String,Object>> queryList =  (List)baseService.list(requestMap);
@@ -68,10 +85,19 @@ public class ClueStatisticsBySourceAndDateHandler extends AbstractQueryHandler {
             for(Map qmap : queryList){
                 result.add(qmap.get("countNum"));
             }
-            seriesDateMap.put("name",dictMap.get("code_name"));
+            seriesDateMap.put("type","line");
+            for (Map dictMap : dictList){
+                if (dictMap.get("code").equals(requestMap.get("clueSource"))){
+                    seriesDateMap.put("name",dictMap.get("code_name"));
+                    legendList.add(dictMap.get("code_name"));
+                }
+            }
             seriesDateMap.put("data", result);
             seriesDataList.add(seriesDateMap);
         }
+        Object[] legendArray = legendList.toArray();
+        resultMap.put("legendData",legendArray);
+        resultMap.put("xData", DateList);
         resultMap.put("seriesData", seriesDataList);
         resultMap.put("total", 0);
         return resultMap;

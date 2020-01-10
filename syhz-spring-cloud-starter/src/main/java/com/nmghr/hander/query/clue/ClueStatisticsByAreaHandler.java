@@ -42,11 +42,13 @@ public class ClueStatisticsByAreaHandler extends AbstractQueryHandler {
         // 查询所有线索分类
         rmap.put("codelx", "xsfl");
         LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "CODENAMEQUERY");
+        List<Object> legendList = new ArrayList();
         dictList = (List)baseService.list(rmap);
         if (ObjectUtils.isEmpty(requestMap.get("clueType"))){
             // 查询所有分类统计
             for (Map dictMap : dictList){
                 areaList = assembly("clueType", requestMap, dictMap, seriesDataList);
+                legendList.add(dictMap.get("code_name"));
             }
             requestMap.remove("clueType");
         } else {
@@ -54,6 +56,7 @@ public class ClueStatisticsByAreaHandler extends AbstractQueryHandler {
             for (Map dictMap : dictList){
                 if (dictMap.get("code").equals(requestMap.get("clueType")+"")){
                     areaList = assembly("clueType", requestMap, dictMap, seriesDataList);
+                    legendList.add(dictMap.get("code_name"));
                 }
             }
         }
@@ -65,6 +68,7 @@ public class ClueStatisticsByAreaHandler extends AbstractQueryHandler {
             // 查询所有来源统计
             for (Map dictMap : dictList){
                 assembly("clueSource", requestMap, dictMap, seriesDataList);
+                legendList.add(dictMap.get("code_name"));
             }
             requestMap.remove("clueSource");
         } else {
@@ -72,11 +76,13 @@ public class ClueStatisticsByAreaHandler extends AbstractQueryHandler {
             for (Map dictMap : dictList){
                 if (dictMap.get("code").equals(requestMap.get("clueSource")+"") ){
                     assembly("clueSource", requestMap, dictMap, seriesDataList);
+                    legendList.add(dictMap.get("code_name"));
                 }
             }
         }
         Map resultMap = new HashMap();
         resultMap.put("XData", areaList);
+        resultMap.put("legendData",legendList);
         resultMap.put("seriesData", seriesDataList);
         return resultMap;
     }
@@ -104,6 +110,7 @@ public class ClueStatisticsByAreaHandler extends AbstractQueryHandler {
         seriesDateMap.put("name",dictMap.get("code_name"));
         seriesDateMap.put("data", result);
         seriesDateMap.put("stack", condition);
+        seriesDateMap.put("type","bar");
         seriesDataList.add(seriesDateMap);
         return areaList;
     }
