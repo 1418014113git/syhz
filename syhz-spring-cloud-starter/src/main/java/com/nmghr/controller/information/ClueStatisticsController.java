@@ -63,7 +63,7 @@ public class ClueStatisticsController {
 
 
     /**
-     * 线索分类统计——按分类和时间
+     * 线索来源统计——按来源和时间
      */
     @GetMapping("/bySourceAndDate")
     public Object statisticsBySourceAndDate(@RequestParam Map<String, Object> requestParam) throws Exception{
@@ -81,7 +81,7 @@ public class ClueStatisticsController {
     }
 
     /**
-     * 线索分类统计——按分类
+     * 线索来源统计——按来源
      */
     @GetMapping("/bySource")
     public Object statisticsBySource(@RequestParam Map<String, Object> requestParam) throws Exception{
@@ -98,19 +98,19 @@ public class ClueStatisticsController {
     /**
      * 线索区域统计——多区域
      */
-//    @GetMapping("/byArea")
-//    public Object statisticsByArea(@RequestParam Map<String, Object> requestParam) throws Exception{
-//        if(requestParam.get("collectionDateStart") == null){
-//            throw new GlobalErrorException("998001", "采集开始时间不能为空");
-//        }
-//        if(requestParam.get("collectionDateEnd") == null){
-//            throw new GlobalErrorException("998001", "采集结束时间不能为空");
-//        }
-//        if(requestParam.get("area") == null){
-//            throw new GlobalErrorException("998001", "区域集合不能为空");
-//        }
-//        IQueryHandler queryHandler = SpringUtils.getBean("clueStatisticsByAreaHandler", IQueryHandler.class);
-//        return queryHandler.list(requestParam);
-//    }
+    @RequestMapping("/byArea")
+    public Object statisticsByArea(@RequestBody Map<String, Object> requestParam) throws Exception{
+        if(requestParam.get("collectionDateStart") == null){
+            throw new GlobalErrorException("998001", "采集开始时间不能为空");
+        }
+        if(requestParam.get("collectionDateEnd") == null){
+            throw new GlobalErrorException("998001", "采集结束时间不能为空");
+        }
+        if(requestParam.get("area") == null){
+            throw new GlobalErrorException("998001", "区域集合不能为空");
+        }
+        IQueryHandler queryHandler = SpringUtils.getBean("clueStatisticsByAreaHandler", IQueryHandler.class);
+        return queryHandler.list(requestParam);
+    }
 
 }

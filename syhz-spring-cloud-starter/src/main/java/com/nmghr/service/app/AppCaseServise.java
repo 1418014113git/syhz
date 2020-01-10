@@ -109,6 +109,12 @@ public class AppCaseServise {
         if (areaArr.length > 1) {
           param.put("deptCategory", "1");
           param.put("deptCode", areaArr[areaArr.length - 1]);
+          if (areaArr.length <= 2) {
+            param.put("splitLen", "4");
+          } else if (areaArr.length == 3) {
+            param.put("splitLen", "6");
+
+          }
         }
       }
 
@@ -217,7 +223,7 @@ public class AppCaseServise {
       Map<String, Object> conditionMap, IBaseService baseService) throws Exception {
 
     // 查询
-    LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "TCPCODE");
+    LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "APPTCPCODE");
     List<Map<String, Object>> messageList = (List<Map<String, Object>>) baseService.list(conditionMap);
 
     QueryResult result = AppVerifyUtils.setQueryResult(queryRequestVo, messageList);
