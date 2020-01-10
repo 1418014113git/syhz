@@ -35,13 +35,63 @@ public class ClueStatisticsBySingleAreaHandler extends AbstractQueryHandler {
         if (ObjectUtils.isEmpty(requestMap.get("dataStatus"))) {
             requestMap.put("dataStatus", ClueQueryHandler.DATA_STATUS_YES);
         }
-        LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "QBXXCLUESTATISTICSBYCLASSIFY");
-        List<Map<String,Object>> queryList =  (List)baseService.list(requestMap);
+        List<Map<String, Object>> dictList = null;
+        Map<String, Object> rmap = new HashMap();
+        // 查询所有线索分类
+        rmap.put("codelx", "xsfl");
+        LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "CODENAMEQUERY");
+        List<Object> legendList = new ArrayList();
+        dictList = (List)baseService.list(rmap);
+        List<Map<String,Object>> queryList = null;
+        List<Map<String,Object>> clueTypeList = new ArrayList();;
         List seriesData = new ArrayList();
-        seriesData.add(queryList);
-        LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "QBXXCLUESTATISTICSBYSOURCE");
-        queryList =  (List)baseService.list(requestMap);
-        seriesData.add(queryList);
+        if (ObjectUtils.isEmpty(requestMap.get("clueType"))){
+            // 查询所有分类统计
+            for (Map dictMap : dictList){
+                requestMap.put("clueType",dictMap.get("code"));
+                LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "QBXXCLUESTATISTICSBYSINGLEAREAONE");
+                queryList =  (List)baseService.list(requestMap);
+                clueTypeList.add(queryList.get(0));
+            }
+            requestMap.remove("clueType");
+        } else {
+            // 查询指定分类统计
+            for (Map dictMap : dictList){
+                if (dictMap.get("code").equals(requestMap.get("clueType")+"")){
+                    requestMap.put("clueType",dictMap.get("code"));
+                    LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "QBXXCLUESTATISTICSBYSINGLEAREAONE");
+                    queryList =  (List)baseService.list(requestMap);
+                    clueTypeList.add(queryList.get(0));
+                }
+            }
+        }
+        seriesData.add(clueTypeList);
+        // 查询所有线索来源
+        rmap.put("codelx", "xsly");
+        LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "CODENAMEQUERY");
+        dictList = (List)baseService.list(rmap);
+        List<Map<String,Object>> clueSourceList = new ArrayList();
+        if (ObjectUtils.isEmpty(requestMap.get("clueSource"))){
+            // 查询所有来源统计
+            for (Map dictMap : dictList){
+                requestMap.put("clueSource",dictMap.get("code"));
+                LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "QBXXCLUESTATISTICSBYSINGLEAREATWO");
+                queryList =  (List)baseService.list(requestMap);
+                clueSourceList.add(queryList.get(0));
+            }
+            requestMap.remove("clueSource");
+        } else {
+            // 查询指定来源统计
+            for (Map dictMap : dictList){
+                if (dictMap.get("code").equals(requestMap.get("clueSource")+"") ){
+                    requestMap.put("clueSource",dictMap.get("code"));
+                    LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "QBXXCLUESTATISTICSBYSINGLEAREATWO");
+                    queryList =  (List)baseService.list(requestMap);
+                    clueSourceList.add(queryList.get(0));
+                }
+            }
+        }
+        seriesData.add(clueSourceList);
         Map resultMap = new HashMap();
         resultMap.put("seriesData", seriesData);
         return resultMap;
