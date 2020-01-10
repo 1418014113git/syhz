@@ -113,6 +113,24 @@ public class ClueStatisticsController {
     }
 
     /**
+     * 线索区域统计——单一区域
+     */
+    @RequestMapping("/bySingleArea")
+    public Object statisticsBySingleArea(@RequestParam Map<String, Object> requestParam) throws Exception{
+        if(requestParam.get("collectionDateStart") == null){
+            throw new GlobalErrorException("998001", "采集开始时间不能为空");
+        }
+        if(requestParam.get("collectionDateEnd") == null){
+            throw new GlobalErrorException("998001", "采集结束时间不能为空");
+        }
+        if(requestParam.get("collectionArea") == null){
+            throw new GlobalErrorException("998001", "采集区域不能为空");
+        }
+        IQueryHandler queryHandler = SpringUtils.getBean("clueStatisticsBySingleAreaHandler", IQueryHandler.class);
+        return queryHandler.list(requestParam);
+    }
+
+    /**
      * 查询总条数
      * @param requestParam
      * @return
