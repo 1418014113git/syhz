@@ -42,16 +42,26 @@ public class ClueStatisticsByClassifyAndDateHandler extends AbstractQueryHandler
         if ("1".equals(requestMap.get("timeDimensionType").toString())){
             // 获取日期
             DateList = getDaysList(startTime, endTime);
-        } else if ("2".equals(requestMap.get("timeDimensionType").toString()) ||
-                "3".equals(requestMap.get("timeDimensionType").toString())){
+        } else if ("2".equals(requestMap.get("timeDimensionType").toString())){
             // 获取月份
-            DateList = getMonthList(startTime, endTime,"yyyy年MM月", Calendar.MONTH);
-        } else if ("4".equals(requestMap.get("timeDimensionType").toString())){
+            DateList = getMonthList(startTime, endTime,"yyyy年MM月", Calendar.MONTH, null);
+        }else if("3".equals(requestMap.get("timeDimensionType").toString())){
+            // 获取统计月份
+            Map configMap = new HashMap();
+            configMap.put("configGroup","statisticsMonthEnd");
+            configMap.put("configKey","statisticsMonthEnd");
+            LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "SYSCONFIG");
+            List<Map<String, String>> confList = (List)baseService.list(configMap);
+            Integer statisticsMonthEnd = Integer.valueOf(confList.get(0).get("configValue"));
+            requestMap.put("statisticsMonthEnd", statisticsMonthEnd);
+            DateList = getMonthList(startTime, endTime,"yyyy年MM月", Calendar.MONTH, statisticsMonthEnd);
+        }
+        else if ("4".equals(requestMap.get("timeDimensionType").toString())){
             // 获取季度
             DateList = getQuarterList(startTime, endTime);
         } else {
             // 获取年份
-            DateList = getMonthList(startTime, endTime, "yyyy年", Calendar.YEAR);
+            DateList = getMonthList(startTime, endTime, "yyyy年", Calendar.YEAR, null);
         }
         requestMap.put("dateList", DateList);
 
@@ -139,16 +149,25 @@ public class ClueStatisticsByClassifyAndDateHandler extends AbstractQueryHandler
      * @param field
      * @return
      */
-    public static List<String> getMonthList(Long begintTime, Long endTime, String sdfStr, int field){
+    public static List<String> getMonthList(Long begintTime, Long endTime, String sdfStr, int field, Integer statisticsMonth){
         SimpleDateFormat sdf = new SimpleDateFormat(sdfStr);
         ArrayList<String> result = new ArrayList<String>();
         Calendar min = Calendar.getInstance();
         Calendar max = Calendar.getInstance();
-        min.setTime(new Date(begintTime));
-        min.set(min.get(Calendar.YEAR), min.get(Calendar.MONTH), 1);
-        max.setTime(new Date(endTime));
-        max.set(max.get(Calendar.YEAR), max.get(Calendar.MONTH), 2);
 
+        Date BeginDate = new Date(begintTime);
+        Date endDate = new Date(endTime);
+
+        min.setTime(BeginDate);
+        if(!ObjectUtils.isEmpty(statisticsMonth) && BeginDate.getDate() > statisticsMonth) {
+            min.add(field, 1);
+        }
+        min.set(min.get(Calendar.YEAR), min.get(Calendar.MONTH), 1);
+        max.setTime(endDate);
+        if(!ObjectUtils.isEmpty(statisticsMonth) && endDate.getDate() > statisticsMonth) {
+            max.add(field, 1);
+        }
+        max.set(max.get(Calendar.YEAR), max.get(Calendar.MONTH), 2);
         Calendar curr = min;
         while (curr.before(max)) {
             result.add(sdf.format(curr.getTime()));
