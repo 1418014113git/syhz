@@ -47,6 +47,7 @@ public class caseAnalyzeFeatureController {
   @PostMapping("/ajlbTotal")
   @ResponseBody
   public Object ajlbTotal(@RequestBody Map<String, Object> requestBody) throws Exception {
+    putPage(requestBody);
     LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "CASEANALYZEFEATUREONE");
     List<Map<String, Object>> totalList = (List<Map<String, Object>>) baseService.list(requestBody);
     return totalList;
@@ -66,6 +67,7 @@ public class caseAnalyzeFeatureController {
   @PostMapping("/ajzmTotal")
   @ResponseBody
   public Object ajzmTotal(@RequestBody Map<String, Object> requestBody) throws Exception {
+    putPage(requestBody);
     LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "CASEANALYZEFEATURETWO");
     List<Map<String, Object>> totalList = (List<Map<String, Object>>) baseService.list(requestBody);
     return totalList;
@@ -85,6 +87,7 @@ public class caseAnalyzeFeatureController {
   @PostMapping("/ajlyTotal")
   @ResponseBody
   public Object ajlyTotal(@RequestBody Map<String, Object> requestBody) throws Exception {
+    putPage(requestBody);
     LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "CASEANALYZEFEATURETHREE");
     List<Map<String, Object>> totalList = (List<Map<String, Object>>) baseService.list(requestBody);
     return totalList;
@@ -115,6 +118,18 @@ public class caseAnalyzeFeatureController {
         }
       }
     }
+  }
+
+  // 添加统计显示列数
+  private void putPage(Map<String, Object> requestBody) throws Exception {
+    Map<String, Object> map = new HashMap<String, Object>();
+    LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "SYSCONFIGBYKEY");
+    Map<String, Object> config = (Map<String, Object>) baseService.get("caseAnalyzeFeaturePageSize");
+    int page = 12;
+    if (config != null && config.containsKey("configValue")) {
+      page = SyhzUtil.setDateInt(config.get("configValue"));
+    }
+    requestBody.put("page", page);
   }
 
   @GetMapping(value = "/exporFile")
