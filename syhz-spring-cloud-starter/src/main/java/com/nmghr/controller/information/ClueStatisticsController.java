@@ -16,7 +16,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -110,6 +109,24 @@ public class ClueStatisticsController {
             throw new GlobalErrorException("998001", "区域集合不能为空");
         }
         IQueryHandler queryHandler = SpringUtils.getBean("clueStatisticsByAreaHandler", IQueryHandler.class);
+        return queryHandler.list(requestParam);
+    }
+
+    /**
+     * 查询总条数
+     * @param requestParam
+     * @return
+     * @throws Exception
+     */
+    @GetMapping("/total")
+    public Object statisticsByTotal(@RequestParam Map<String, Object> requestParam) throws Exception{
+        if(requestParam.get("collectionDateStart") == null){
+            throw new GlobalErrorException("998001", "采集开始时间不能为空");
+        }
+        if(requestParam.get("collectionDateEnd") == null){
+            throw new GlobalErrorException("998001", "采集结束时间不能为空");
+        }
+        IQueryHandler queryHandler = SpringUtils.getBean("ClueStatisticsByTotalHandler", IQueryHandler.class);
         return queryHandler.list(requestParam);
     }
 
