@@ -45,13 +45,13 @@ public class ClueStatisticsByClassifyAndDateHandler extends AbstractQueryHandler
         } else if ("2".equals(requestMap.get("timeDimensionType").toString()) ||
                 "3".equals(requestMap.get("timeDimensionType").toString())){
             // 获取月份
-            DateList = getMonthList(startTime, endTime,"yyyy-MM", Calendar.MONTH);
+            DateList = getMonthList(startTime, endTime,"yyyy年MM月", Calendar.MONTH);
         } else if ("4".equals(requestMap.get("timeDimensionType").toString())){
             // 获取季度
             DateList = getQuarterList(startTime, endTime);
         } else {
             // 获取年份
-            DateList = getMonthList(startTime, endTime, "yyyy", Calendar.YEAR);
+            DateList = getMonthList(startTime, endTime, "yyyy年", Calendar.YEAR);
         }
         requestMap.put("dateList", DateList);
 
@@ -112,7 +112,7 @@ public class ClueStatisticsByClassifyAndDateHandler extends AbstractQueryHandler
      * @return
      */
     public static List<String> getDaysList(Long begintTime, Long endTime) {
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy年MM月dd日");
         Date dBegin = new Date(begintTime);
         Date dEnd = new Date(endTime);
         List<String> daysStrList = new ArrayList<String>();
@@ -179,7 +179,7 @@ public class ClueStatisticsByClassifyAndDateHandler extends AbstractQueryHandler
         dd.setTime(begin_date);//设置日期起始时间
         while(!dd.getTime().after(end_date)){//判断是否到结束日期
             numStr=  sdf.format(dd.getTime()).split("-",0);
-            Q = numStr[0].toString()+"-" + getQuarter(Integer.valueOf(numStr[1]));
+            Q = numStr[0].toString()+"年" + getQuarter(Integer.valueOf(numStr[1]))+"季度";
             if(!last.equals(Q)) {
                 rangeSet.add(Q);
                 last = Q;
