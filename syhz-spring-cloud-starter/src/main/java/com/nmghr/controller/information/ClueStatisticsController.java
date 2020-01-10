@@ -124,7 +124,7 @@ public class ClueStatisticsController {
             throw new GlobalErrorException("998001", "采集结束时间不能为空");
         }
         if(requestParam.get("collectionArea") == null){
-            throw new GlobalErrorException("998001", "区域集合不能为空");
+            throw new GlobalErrorException("998001", "采集区域不能为空");
         }
         IQueryHandler queryHandler = SpringUtils.getBean("clueStatisticsBySingleAreaHandler", IQueryHandler.class);
         return queryHandler.list(requestParam);
