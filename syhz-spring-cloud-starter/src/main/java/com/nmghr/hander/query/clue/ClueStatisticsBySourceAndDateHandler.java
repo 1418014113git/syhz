@@ -43,13 +43,13 @@ public class ClueStatisticsBySourceAndDateHandler extends AbstractQueryHandler {
         } else if ("2".equals(requestMap.get("timeDimensionType").toString()) ||
                 "3".equals(requestMap.get("timeDimensionType").toString())){
             // 获取月份
-            DateList = ClueStatisticsByClassifyAndDateHandler.getMonthList(startTime, endTime,"yyyy-MM", Calendar.MONTH);
+            DateList = ClueStatisticsByClassifyAndDateHandler.getMonthList(startTime, endTime,"yyyy年MM月", Calendar.MONTH);
         } else if ("4".equals(requestMap.get("timeDimensionType").toString())){
             // 获取季度
             DateList = ClueStatisticsByClassifyAndDateHandler.getQuarterList(startTime, endTime);
         } else {
             // 获取年份
-            DateList = ClueStatisticsByClassifyAndDateHandler.getMonthList(startTime, endTime, "yyyy", Calendar.YEAR);
+            DateList = ClueStatisticsByClassifyAndDateHandler.getMonthList(startTime, endTime, "yyyy年", Calendar.YEAR);
         }
         requestMap.put("dateList", DateList);
 
