@@ -40,16 +40,25 @@ public class ClueStatisticsBySourceAndDateHandler extends AbstractQueryHandler {
         if ("1".equals(requestMap.get("timeDimensionType").toString())){
             // 获取日期
             DateList = ClueStatisticsByClassifyAndDateHandler.getDaysList(startTime, endTime);
-        } else if ("2".equals(requestMap.get("timeDimensionType").toString()) ||
-                "3".equals(requestMap.get("timeDimensionType").toString())){
+        } else if ("2".equals(requestMap.get("timeDimensionType").toString())){
             // 获取月份
-            DateList = ClueStatisticsByClassifyAndDateHandler.getMonthList(startTime, endTime,"yyyy年MM月", Calendar.MONTH);
+            DateList = ClueStatisticsByClassifyAndDateHandler.getMonthList(startTime, endTime,"yyyy年MM月", Calendar.MONTH, null);
+        }else if("3".equals(requestMap.get("timeDimensionType").toString())){
+            // 获取统计月份
+            Map configMap = new HashMap();
+            configMap.put("configGroup","statisticsMonthEnd");
+            configMap.put("configKey","statisticsMonthEnd");
+            LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "SYSCONFIG");
+            List<Map<String, Integer>> confList = (List)baseService.list(configMap);
+            Integer statisticsMonthEnd = Integer.valueOf(confList.get(0).get("configValue"));
+            DateList = ClueStatisticsByClassifyAndDateHandler.getMonthList(startTime, endTime,"yyyy年MM月", Calendar.MONTH, statisticsMonthEnd);
+            requestMap.put("statisticsMonthEnd", statisticsMonthEnd);
         } else if ("4".equals(requestMap.get("timeDimensionType").toString())){
             // 获取季度
             DateList = ClueStatisticsByClassifyAndDateHandler.getQuarterList(startTime, endTime);
         } else {
             // 获取年份
-            DateList = ClueStatisticsByClassifyAndDateHandler.getMonthList(startTime, endTime, "yyyy年", Calendar.YEAR);
+            DateList = ClueStatisticsByClassifyAndDateHandler.getMonthList(startTime, endTime, "yyyy年", Calendar.YEAR, null);
         }
         requestMap.put("dateList", DateList);
 
