@@ -81,7 +81,7 @@ public class ClueStatisticsByAreaHandler extends AbstractQueryHandler {
             }
         }
         Map resultMap = new HashMap();
-        resultMap.put("XData", areaList);
+        resultMap.put("xData", areaList);
         resultMap.put("legendData",legendList);
         resultMap.put("seriesData", seriesDataList);
         return resultMap;
