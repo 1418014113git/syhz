@@ -106,12 +106,10 @@ public class AJAnalysisController {
       map.put("linqu", obj.get("linqu"));
       map.put("deptType", obj.get("deptType"));
       map.put("other", obj.get("other"));
-      
-      
-      count = Integer.valueOf(obj.get("chengqu")+"") +Integer.valueOf(obj.get("jiaoqu")+"") + 
-              Integer.valueOf(obj.get("zheng")+"")+Integer.valueOf(obj.get("chengqu")+"") + 
-              Integer.valueOf(obj.get("xiangcun")+"")+Integer.valueOf(obj.get("linqu")+"")+
-              Integer.valueOf(obj.get("other")+"");
+
+      count += Integer.valueOf(obj.get("chengqu")+"") +Integer.valueOf(obj.get("jiaoqu")+"") + 
+              Integer.valueOf(obj.get("zheng")+"") + Integer.valueOf(obj.get("xiangcun")+"")+
+              Integer.valueOf(obj.get("linqu")+"")+Integer.valueOf(obj.get("other")+"");
     }else {
       map.put("chengqu", 0);
       map.put("jiaoqu", 0);
