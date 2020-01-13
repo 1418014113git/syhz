@@ -65,7 +65,7 @@ public class CaseSuperviseRecordUpdateHandler extends AbstractUpdateHandler {
 		approve.setWdType(WorkOrder.caseSupervision.getType());
 		approve.setWdStatus(checkFlag ? 3 : 1);
 		approve.setUserId(params.get("applyPersonId"));
-		approve.setUserName(params.get("applyPerson"));
+    approve.setUserName(params.get("applyPersonName"));
 		approve.setCurDeptId(params.get("applyDeptId"));
 		approve.setCurDeptName(params.get("applyDeptName"));
 		approve.setWdTable(WorkOrder.caseSupervision.getTable());
