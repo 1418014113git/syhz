@@ -46,7 +46,6 @@ public class ClueStatisticsByClassifyHandler extends AbstractQueryHandler {
         resultMap.put("legendData",legendArray);
         resultMap.put("total", 0);
         resultMap.put("seriesData", queryList);
-        System.out.println("结束时间:" + System.currentTimeMillis());
         return resultMap;
     }
 }
