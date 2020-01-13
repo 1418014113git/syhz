@@ -188,6 +188,15 @@ public class CaseMergeController {
     LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "MERGEDETAILCASE");
     baseService.update(requestBody, requestBody);
     setMap(requestBody);
+    LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "CASEMERGEDETAILNUM");
+    Map<String, Object> map = (Map<String, Object>) baseService.get(requestBody);// 查询合并剩余案件数量
+    if (map != null && map.containsKey("num")) {
+      int num = SyhzUtil.setDateInt(map.get("num"));
+      if (num <= 1) {// 只剩一条时修改状态为不合并
+        LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "MERGESTATUS");
+        baseService.update("", requestBody);// 修改状态为不合并
+      }
+    }
     return Result.ok("");
   }
 
