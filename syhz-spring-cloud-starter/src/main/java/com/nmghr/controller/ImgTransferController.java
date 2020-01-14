@@ -29,7 +29,7 @@ import java.util.Map;
 
 
 /**
- * <功能描述/> 附件的上传和下载(MongoDB存储和读取)
+ * <功能描述/> 转换base64编码为图片
  *
  * @author brook
  * @date 2018年6月29日 下午1:47:05
