@@ -753,7 +753,7 @@ public class AjglQbxsService {
       count.put("hcl", "-");
     }
 
-    if ("1".equals(requestMap.get("deptType")) || "2".equals(requestMap.get("deptType"))) {
+    if (!StringUtils.isEmpty(requestMap.get("curDeptCode")) && ("1".equals(requestMap.get("deptType")) || "2".equals(requestMap.get("deptType")))) {
       //厅或者支队查看所有支队，这里查询所有的支队在和数据封装
       LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "1".equals(type) ? "AJASSISTTJZDFKXX" : "AJCLUSTERTJZDFKXX");
       List<Map<String, Object>> deptRes = (List<Map<String, Object>>) baseService.list(requestMap);
