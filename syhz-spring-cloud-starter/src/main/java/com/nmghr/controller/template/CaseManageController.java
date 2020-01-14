@@ -70,9 +70,9 @@ public class CaseManageController {
     return Result.ok(null);
   }
 
-  @GetMapping("/caseList")
+  @PostMapping("/caseList")
   @ResponseBody
-  public Object queryCaseList(@RequestParam Map<String, Object> param) {
+  public Object queryCaseList(@RequestBody Map<String, Object> param) {
     ValidationUtils.notNull(param.get("curDeptCode"), "当前登录部门Code不能为空");
     ValidationUtils.notNull(param.get("templateId"), "模板ID不能为空");
     try {
