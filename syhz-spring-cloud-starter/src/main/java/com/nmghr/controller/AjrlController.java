@@ -14,12 +14,14 @@ import com.nmghr.basic.common.Constant;
 import com.nmghr.basic.core.common.LocalThreadStorage;
 import com.nmghr.basic.core.page.Paging;
 import com.nmghr.basic.core.service.IBaseService;
+import com.nmghr.util.ListPageUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -68,7 +70,15 @@ public class AjrlController {
 //                  latestAjList.add(latestAj);
 //              }
 //          }
-          return new Paging(pageSize, pageNum, ajlist.size(), ajlist);
+          //return new Paging(pageSize, pageNum, ajlist.size(), ajlist);
+          if(ajlist !=null && ajlist.size() > 0) {
+              ListPageUtil listPageUtil = new ListPageUtil(ajlist, pageNum, pageSize);
+              List pagedList = listPageUtil.getPagedList();
+              return new Paging<>(pageSize, pageNum, ajlist.size(), pagedList);
+          }else{
+              return new ArrayList<>();
+          }
+
       }
       if("".equals(requestParam.get("status")) || requestParam.get("status") == null){
           requestParam.put("statusStr","3,5,10");
