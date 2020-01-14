@@ -17,7 +17,7 @@ import java.util.Map;
 public class ClueQueryHandler extends AbstractQueryHandler {
 
     /** 是否启用-启用 **/
-    private static final String DATA_STATUS_YES = "1";
+    public static final String DATA_STATUS_YES = "1";
     /** 是否启用-禁用 **/
     private static final String DATA_STATUS_NO = "0";
 
