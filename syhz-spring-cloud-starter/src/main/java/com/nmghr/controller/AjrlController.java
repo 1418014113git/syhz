@@ -56,21 +56,6 @@ public class AjrlController {
       if (isXfzf(requestParam)) {
           LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "ajjbxxetlrl");
           List<Map<String,Object>> ajlist = (List<Map<String, Object>>) baseService.list(requestParam);
-//          for (Map<String, Object> map : xfzfList) {
-//              //查最新的下发转发记录,每个案件查到一条
-//              Map<String,Object> param = new HashMap();
-//              param.put("status",requestParam.get("status"));
-//              param.put("noticeLx",requestParam.get("noticeLx"));
-//              param.put("ajbh",String.valueOf(map.get("AJBH")));
-//              if(requestParam.get("curDeptCode") != null)
-//              param.put("noticeOrgCode",requestParam.get("curDeptCode"));
-//              LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJXFZFLATEST");
-//              Map<String,Object> latestAj = (Map<String, Object>) baseService.get(param);
-//              if(!ajIsIn(String.valueOf(map.get("AJBH")),latestAjList)) {
-//                  latestAjList.add(latestAj);
-//              }
-//          }
-          //return new Paging(pageSize, pageNum, ajlist.size(), ajlist);
           if(ajlist !=null && ajlist.size() > 0) {
               ListPageUtil listPageUtil = new ListPageUtil(ajlist, pageNum, pageSize);
               List pagedList = listPageUtil.getPagedList();
