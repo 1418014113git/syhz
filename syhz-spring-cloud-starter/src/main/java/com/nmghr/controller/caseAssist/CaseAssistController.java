@@ -119,10 +119,17 @@ public class CaseAssistController {
             } else {
               bean.put("sCount", Integer.parseInt(String.valueOf(m.get("sApp"))));
             }
+            if (bean.containsKey("sTotal")) {
+              bean.put("sTotal", Integer.parseInt(String.valueOf(bean.get("sTotal"))) + Integer.parseInt(String.valueOf(m.get("sAppSum"))));
+            } else {
+              bean.put("sTotal", Integer.parseInt(String.valueOf(m.get("sAppSum"))));
+            }
             if (bean.containsKey("cityCount")) {
               bean.put("cityCount", Integer.parseInt(String.valueOf(bean.get("cityCount"))) + 1);
+              bean.put("tTotal", Integer.parseInt(String.valueOf(bean.get("tTotal"))) + 1);
             } else {
               bean.put("cityCount", 1);
+              bean.put("tTotal", 1);
             }
             m.put("deptName", getCity(String.valueOf(m.get("deptName"))));
             if (bean.containsKey("deptList")) {
@@ -440,6 +447,7 @@ public class CaseAssistController {
     ValidationUtils.notNull(body.get("userId"), "userId不能为空!");
     ValidationUtils.notNull(body.get("userName"), "userName不能为空!");
     ValidationUtils.notNull(body.get("deptCode"), "deptCode不能为空!");
+//    ValidationUtils.notNull(body.get("deptName"), "deptName不能为空!");
     ValidationUtils.notNull(body.get("assistId"), "status不能为空!");
     ValidationUtils.notNull(body.get("signId"), "status不能为空!");
     try {
