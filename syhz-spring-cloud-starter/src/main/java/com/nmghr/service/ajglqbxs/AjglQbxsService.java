@@ -1,9 +1,5 @@
 package com.nmghr.service.ajglqbxs;
 
-import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
-import com.github.pagehelper.Page;
-import com.github.pagehelper.PageHelper;
 import com.nmghr.basic.common.Constant;
 import com.nmghr.basic.common.exception.GlobalErrorException;
 import com.nmghr.basic.core.common.LocalThreadStorage;
@@ -13,7 +9,6 @@ import com.nmghr.hander.save.ajglqbxs.QbxsSignSaveHandler;
 import com.nmghr.hander.save.cluster.CaseAssistSubmitSaveHandler;
 import com.nmghr.hander.save.cluster.DeptMapperSaveHandler;
 import com.nmghr.hander.save.common.BatchSaveHandler;
-import org.apache.commons.collections.IteratorUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -80,7 +75,7 @@ public class AjglQbxsService {
     }
     //修改base表为已分发
     Map<String, Object> baseP = new HashMap<>();
-    baseP.put("ids", ids);
+    baseP.put("ids", Arrays.asList(ids.split(",")));
     baseP.put("qbxsDistribute", 2);
     baseP.put("qbxsResult", 1);
     LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJGLQBXSBASEBATCHUPDATE");
@@ -88,7 +83,7 @@ public class AjglQbxsService {
 
     //删除线索部门关系信息
     Map<String, Object> param = new HashMap<>();
-    param.put("qbxsIds", ids);
+    param.put("qbxsIds", Arrays.asList(ids.split(",")));
     param.put("assistId", body.get("assistId"));
     param.put("type", "1".equals(type) ? 1 : 2);
     LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJGLQBXSDEPTDEL");
@@ -134,7 +129,7 @@ public class AjglQbxsService {
     }
     //修改base表为已分发
     Map<String, Object> baseP = new HashMap<>();
-    baseP.put("ids", ids);
+    baseP.put("ids", Arrays.asList(ids.split(",")));
     baseP.put("qbxsDistribute", 2);
     baseP.put("qbxsResult", 1);
     LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJGLQBXSBASEBATCHUPDATE");
@@ -317,7 +312,7 @@ public class AjglQbxsService {
     Map<String, Object> map = (Map<String, Object>) baseService.get(String.valueOf(body.get("qbxsDeptId")));
     //删线索部门关系信息及签收反馈信息
     Map<String, Object> baseP = new HashMap<>();
-    baseP.put("qbxsIds", body.get("qbxsId"));
+    baseP.put("qbxsIds", Arrays.asList(String.valueOf(body.get("qbxsId")).split(",")));
     baseP.put("qbxsDeptIds", body.get("qbxsDeptId"));
     baseP.put("assistId", body.get("assistId"));
     baseP.put("assistType", "1".equals(String.valueOf(body.get("assistType"))) ? 1 : 2);
@@ -355,7 +350,7 @@ public class AjglQbxsService {
     }
     //处理线索状态
     Map<String, Object> baseP = new HashMap<>();
-    baseP.put("ids", qbxsId);
+    baseP.put("ids", Arrays.asList(String.valueOf(qbxsId).split(",")));
     baseP.put("qbxsDistribute", 1);
     baseP.put("qbxsResult", 1);
     LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJGLQBXSBASEBATCHUPDATE");
@@ -758,7 +753,7 @@ public class AjglQbxsService {
       count.put("hcl", "-");
     }
 
-    if ("1".equals(requestMap.get("curDeptType")) || "2".equals(requestMap.get("curDeptType"))) {
+    if (!StringUtils.isEmpty(requestMap.get("curDeptCode")) && ("1".equals(requestMap.get("deptType")) || "2".equals(requestMap.get("deptType")))) {
       //厅或者支队查看所有支队，这里查询所有的支队在和数据封装
       LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "1".equals(type) ? "AJASSISTTJZDFKXX" : "AJCLUSTERTJZDFKXX");
       List<Map<String, Object>> deptRes = (List<Map<String, Object>>) baseService.list(requestMap);
