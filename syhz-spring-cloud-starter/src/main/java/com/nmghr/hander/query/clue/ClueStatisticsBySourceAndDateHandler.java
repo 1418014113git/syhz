@@ -49,7 +49,7 @@ public class ClueStatisticsBySourceAndDateHandler extends AbstractQueryHandler {
             configMap.put("configGroup","statisticsMonthEnd");
             configMap.put("configKey","statisticsMonthEnd");
             LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "SYSCONFIG");
-            List<Map<String, Integer>> confList = (List)baseService.list(configMap);
+            List<Map<String, String>> confList = (List)baseService.list(configMap);
             Integer statisticsMonthEnd = Integer.valueOf(confList.get(0).get("configValue"));
             DateList = ClueStatisticsByClassifyAndDateHandler.getMonthList(startTime, endTime,"yyyy年MM月", Calendar.MONTH, statisticsMonthEnd);
             requestMap.put("statisticsMonthEnd", statisticsMonthEnd);

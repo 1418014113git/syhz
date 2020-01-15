@@ -320,7 +320,6 @@ public class CaseAssistClueController {
     ValidationUtils.notNull(body.get("fbId"), "反馈id不能为空!");
     ValidationUtils.notNull(body.get("assistId"), "assistId不能为空!");
     ValidationUtils.notNull(body.get("qbxsResult"), "协查情况不能为空!");
-//    ValidationUtils.notNull(body.get("handleResult"), "处理方式不能为空!");
     ValidationUtils.notNull(body.get("backResult"), "反馈内容不能为空!");
     try {
       return Result.ok(ajglQbxsFeedBackService.feedBack(body));

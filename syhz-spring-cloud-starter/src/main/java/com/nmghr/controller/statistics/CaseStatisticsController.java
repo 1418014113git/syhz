@@ -47,9 +47,6 @@ public class CaseStatisticsController {
       params.remove("ajzt");
     }
     String ALIAS = "AJANALYSISTIMELA";
-    if ("1".equals(String.valueOf(params.get("dateType")))) {
-      ALIAS = "AJANALYSISTIMELA";
-    }
     if ("2".equals(String.valueOf(params.get("dateType")))) {
       ALIAS = "AJANALYSISTIMEPA";
     }
@@ -91,9 +88,6 @@ public class CaseStatisticsController {
     }
     String oType = String.valueOf(params.get("type"));
     String ALIAS = "AJANALYSISTIMELA";
-    if ("1".equals(String.valueOf(params.get("dateType")))) {
-      ALIAS = "AJANALYSISTIMELA";
-    }
     if ("2".equals(String.valueOf(params.get("dateType")))) {
       ALIAS = "AJANALYSISTIMEPA";
     }
