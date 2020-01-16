@@ -546,7 +546,7 @@ public class CaseClusterController {
       return Result.fail("999881", "部门信息异常");
     }
     try {
-      return Result.ok(caseAssistService.number(dept, 1));
+      return Result.ok(caseAssistService.number(dept, 2));
     } catch (Exception e) {
       if (e instanceof GlobalErrorException) {
         GlobalErrorException ge = (GlobalErrorException) e;
@@ -571,8 +571,10 @@ public class CaseClusterController {
       if (dept.length() < 6) {
         return Result.fail("999881", "部门信息异常");
       }
+      String key = caseAssistService.getKey(dept,2);
       Map<String, Object> params = new HashMap<>();
-      params.put("deptCode", dept);
+      params.put("key", key);
+      params.put("keyLen", key.length());
       params.put("number", numStr);
       params.put("id", id);
       LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJCLUSTERNUMBERCHECK");

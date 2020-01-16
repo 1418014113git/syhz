@@ -15,6 +15,7 @@ import com.nmghr.service.ajglqbxs.AjglQbxsService;
 import com.nmghr.service.ajglqbxs.AjglSignService;
 import com.nmghr.service.ajglqbxs.CaseAssistService;
 import com.nmghr.util.Sms4Util;
+import org.apache.commons.collections.map.HashedMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -537,7 +538,7 @@ public class CaseAssistController {
       return Result.fail("999881", "部门信息异常");
     }
     try {
-      return Result.ok(caseAssistService.number(dept, 2));
+      return Result.ok(caseAssistService.number(dept, 1));
     } catch (Exception e) {
       if (e instanceof GlobalErrorException) {
         GlobalErrorException ge = (GlobalErrorException) e;
@@ -562,8 +563,10 @@ public class CaseAssistController {
       if (dept.length() < 6) {
         return Result.fail("999881", "部门信息异常");
       }
+      String key = caseAssistService.getKey(dept,1);
       Map<String, Object> params = new HashMap<>();
-      params.put("deptCode", dept);
+      params.put("key", key);
+      params.put("keyLen", key.length());
       params.put("number", numStr);
       LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJASSISTNUMBERCHECK");
       List<Map<String, Object>> list = (List<Map<String, Object>>) baseService.list(params);
