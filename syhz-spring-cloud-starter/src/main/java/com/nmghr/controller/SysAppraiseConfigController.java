@@ -60,11 +60,11 @@ public class SysAppraiseConfigController {
       List<Map<String, Object>> hjConfigDate = getConfig(category);
       log.info("getConfigData return data list {}",hjConfigDate);
       if (category == 1) {
-        totalList.put("hj", hjConfigDate);
-      } else if (category == 2) {
         totalList.put("sp", hjConfigDate);
-      } else if (category == 3) {
+      } else if (category == 2) {
         totalList.put("yp", hjConfigDate);
+      } else if (category == 3) {
+        totalList.put("hj", hjConfigDate);
       }
     } else {
       List<Map<String, Object>> hjConfigDate = getConfig(1);
