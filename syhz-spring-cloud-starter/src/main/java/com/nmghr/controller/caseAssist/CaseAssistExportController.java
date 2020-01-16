@@ -9,20 +9,19 @@ import com.nmghr.basic.core.service.IBaseService;
 import com.nmghr.basic.core.util.ValidationUtils;
 import com.nmghr.service.ajglqbxs.AjglQbxsService;
 import com.nmghr.util.DateUtil;
+import com.sargeraswang.util.ExcelUtil.ExcelUtil;
 import org.apache.poi.ss.usermodel.BorderStyle;
 import org.apache.poi.ss.usermodel.HorizontalAlignment;
 import org.apache.poi.ss.usermodel.VerticalAlignment;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.ss.util.RegionUtil;
+import org.apache.poi.xssf.streaming.SXSSFSheet;
 import org.apache.poi.xssf.usermodel.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.StringUtils;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletResponse;
@@ -117,7 +116,7 @@ public class CaseAssistExportController {
     try {
       // excel模板路径
       wb = setSheets(curDeptName, realName, curUserPhone, list, json);
-      String fileName = "涉案线索协查参与地战果反馈表";
+      String fileName = "集群战役-协查战果反馈表";
       ByteArrayOutputStream os = new ByteArrayOutputStream();
       wb.write(os);
       byte[] content = os.toByteArray();
@@ -245,7 +244,7 @@ public class CaseAssistExportController {
     try {
       // excel模板路径
       wb = setSheets(curDeptName, realName, curUserPhone, list, json);
-      String fileName = "涉案线索协查参与地战果反馈表";
+      String fileName = "案件协查-协查战果反馈表";
       ByteArrayOutputStream os = new ByteArrayOutputStream();
       wb.write(os);
       byte[] content = os.toByteArray();
@@ -509,4 +508,197 @@ public class CaseAssistExportController {
     }
     return new ArrayList<>();
   }
+
+
+  /**
+   * 集群战役线索导出
+   *
+   * @param req
+   * @param response
+   * @throws Exception
+   */
+  @RequestMapping(value = "/cluster/export/clue")
+  public void clusterClueExport(@RequestParam Map<String, Object> req, HttpServletResponse response) throws Exception {
+    ValidationUtils.notNull(req.get("clusterId"), "clusterId不能为空!");
+    ValidationUtils.notNull(req.get("deptType"), "deptType不能为空!");
+    ValidationUtils.notNull(req.get("deptCode"), "deptCode不能为空!");
+    if ("2".equals(String.valueOf(req.get("deptType")))) {
+      ValidationUtils.notNull(req.get("category"), "category不能为空!");
+    }
+    List<Object> heads = getTitle(req.get("clusterId"), 2);
+    if (heads.size() > 0) {
+      Map<String, Object> datas = getCluesList(req.get("clusterId"), 2, Integer.parseInt(String.valueOf(req.get("deptType"))),
+          req.get("category"), String.valueOf(req.get("deptCode")));
+      outPutData(response, heads, datas);
+    }
+  }
+
+  /**
+   * 案件协查线索导出
+   *
+   * @param req
+   * @param response
+   * @throws Exception
+   */
+  @RequestMapping(value = "/assist/clue/export")
+  public void assistClueExport(@RequestParam Map<String, Object> req, HttpServletResponse response) throws Exception {
+    ValidationUtils.notNull(req.get("assistId"), "assistId不能为空!");
+    ValidationUtils.notNull(req.get("deptType"), "deptType不能为空!");
+    ValidationUtils.notNull(req.get("deptCode"), "deptCode不能为空!");
+    if ("2".equals(String.valueOf(req.get("deptType")))) {
+      ValidationUtils.notNull(req.get("category"), "category不能为空!");
+    }
+    List<Object> heads = getTitle(req.get("assistId"), 1);
+    if (heads.size() > 0) {
+      Map<String, Object> datas = getCluesList(req.get("assistId"), 1, Integer.parseInt(String.valueOf(req.get("deptType"))),
+          req.get("category"), String.valueOf(req.get("deptCode")));
+      outPutData(response, heads, datas);
+    }
+  }
+
+  private void outPutData(HttpServletResponse response, List<Object> heads, Map<String, Object> datas) {
+    XSSFWorkbook wb = null;
+    try {
+      // excel模板路径
+      wb = setCluesSheets(heads, datas);
+      String fileName = "案件协查-协查战果反馈表";
+      ByteArrayOutputStream os = new ByteArrayOutputStream();
+      wb.write(os);
+      byte[] content = os.toByteArray();
+      InputStream is = new ByteArrayInputStream(content);
+      // 设置response参数，可以打开下载页面
+      response.reset();
+      response.setContentType("application/vnd.ms-excel;charset=utf-8");
+      response.setHeader("Content-Disposition", "attachment;filename=" + new String((fileName + ".xlsx").getBytes(), "iso-8859-1"));
+      ServletOutputStream sout = response.getOutputStream();
+      BufferedInputStream bis = null;
+      BufferedOutputStream bos = null;
+      try {
+        bis = new BufferedInputStream(is);
+        bos = new BufferedOutputStream(sout);
+        byte[] buff = new byte[2048];
+        int bytesRead;
+        while (-1 != (bytesRead = bis.read(buff, 0, buff.length))) {
+          bos.write(buff, 0, bytesRead);
+        }
+      } catch (Exception e) {
+        log.error("导出excel出现异常:", e);
+      } finally {
+        if (bis != null)
+          bis.close();
+        if (bos != null)
+          bos.close();
+      }
+    } catch (Exception e) {
+      log.error("导出excel出现异常:", e);
+    }
+  }
+
+
+  private List<Object> getTitle(Object id, int assistType) throws Exception {
+    Map<String, Object> params = new HashMap<>();
+    params.put("assistType", assistType);
+    params.put("assistId", id);
+    //查询标题
+    LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJGLQBXSBYASSIST");
+    List<Map<String, Object>> titles = (List<Map<String, Object>>) baseService.list(params);
+    if (titles == null || titles.size() == 0) {
+      return new ArrayList();
+    }
+    List<Object> heads = new ArrayList<>();
+    for (Map<String, Object> map : titles) {
+      heads.add(map.get("title"));
+    }
+    return heads;
+  }
+
+  private Map<String, Object> getCluesList(Object id, int assistType, int deptType, Object category, String deptCode) throws Exception {
+    Map<String, Object> result = new LinkedHashMap<>();
+    Map<String, Object> params = new HashMap<>();
+    params.put("id", id);
+    params.put("assistType", assistType);
+    params.put("deptType", deptType);
+    if (category != null && !StringUtils.isEmpty(String.valueOf(category))) {
+      params.put("category", Integer.parseInt(String.valueOf(category)));
+    }
+    params.put("deptCode", deptCode);
+    LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJGLQBXSINFOEXPORT");
+    List<Map<String, Object>> list = (List<Map<String, Object>>) baseService.list(params);
+    if (list == null || list.size() == 0) {
+      return result;
+    }
+
+    for (Map<String, Object> map : list) {
+      String key = String.valueOf(map.get("columnIndex"));
+      if (result.containsKey(key)) {
+        List<Object> m = (List<Object>) result.get(key);
+        m.add(map.get("value"));
+        result.put(key, m);
+      } else {
+        List<Object> m = new ArrayList<>();
+        m.add(map.get("value"));
+        result.put(key, m);
+      }
+    }
+    return result;
+  }
+
+  private XSSFWorkbook setCluesSheets(List<Object> heads, Map<String, Object> datas) {
+    XSSFWorkbook wb = new XSSFWorkbook();
+    // 读取excel模板
+    // 读取了模板内所有sheet内容
+    XSSFSheet sheet = wb.createSheet("线索列表");
+    // 在相应的单元格进行赋值
+    XSSFCellStyle cStyle = wb.createCellStyle();
+    cStyle.setBorderBottom(BorderStyle.THIN);
+    cStyle.setBorderLeft(BorderStyle.THIN);
+    cStyle.setBorderRight(BorderStyle.THIN);
+    cStyle.setBorderTop(BorderStyle.THIN);
+
+    XSSFRow head = sheet.createRow(0);
+    for (int i = 0; i < heads.size(); i++) {
+      XSSFCell c = head.createCell(i);
+      c.setCellValue(String.valueOf(heads.get(i)));
+      c.setCellStyle(cStyle);
+    }
+    if (datas.size() > 0) {
+      int rowIndex = 1;
+      for (String key : datas.keySet()) {
+        XSSFRow row = sheet.createRow(rowIndex);
+        List<Object> list = (List<Object>) datas.get(key);
+        for (int j = 0; j < list.size(); j++) {
+          XSSFCell c1 = row.createCell(j);
+          c1.setCellValue(String.valueOf(list.get(j)));// 线索总数
+          c1.setCellStyle(cStyle);
+        }
+        rowIndex++;
+      }
+      setSizeColumn(sheet, heads.size());
+    }
+    return wb;
+  }
+  private void setSizeColumn(XSSFSheet sheet, int size) {
+    for (int columnNum = 0; columnNum <= size; columnNum++) {
+      int columnWidth = sheet.getColumnWidth(columnNum) / 256;
+      for (int rowNum = 0; rowNum < sheet.getLastRowNum(); rowNum++) {
+        XSSFRow currentRow;
+        //当前行未被使用过
+        if (sheet.getRow(rowNum) == null) {
+          currentRow = sheet.createRow(rowNum);
+        } else {
+          currentRow = sheet.getRow(rowNum);
+        }
+
+        if (currentRow.getCell(columnNum) != null) {
+          XSSFCell currentCell = currentRow.getCell(columnNum);
+          int length = currentCell.getStringCellValue().getBytes().length;
+          if (columnWidth < length) {
+            columnWidth = length;
+          }
+        }
+      }
+      sheet.setColumnWidth(columnNum, columnWidth * 256);
+    }
+  }
+
 }
