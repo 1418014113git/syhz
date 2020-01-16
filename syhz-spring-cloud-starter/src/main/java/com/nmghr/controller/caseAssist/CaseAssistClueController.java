@@ -10,7 +10,6 @@ import com.nmghr.basic.core.service.IBaseService;
 import com.nmghr.basic.core.service.handler.ISaveHandler;
 import com.nmghr.basic.core.util.SpringUtils;
 import com.nmghr.basic.core.util.ValidationUtils;
-import com.nmghr.common.WorkOrder;
 import com.nmghr.service.ajglqbxs.AjglQbxsFeedBackService;
 import com.nmghr.service.ajglqbxs.AjglQbxsService;
 import com.sargeraswang.util.ExcelUtil.ExcelUtil;
@@ -87,7 +86,8 @@ public class CaseAssistClueController {
             }
           }
           // 获取模板标题对比
-          if (checkTitle(type, assistId, keys)) {
+          String checkRes = checkTitle(type, assistId, keys);
+          if ("error".equals(checkRes)) {
             return Result.fail("999669", "导入线索列标题必须相同，请修改后重新上传。");
           }
           Map<String, Object> data = new HashMap<>();
@@ -100,6 +100,7 @@ public class CaseAssistClueController {
           data.put("assistId", assistId);
           data.put("xfType", xfType);
           data.put("list", params);
+          data.put("checkResult", checkRes);
           ISaveHandler saveHandler = SpringUtils.getBean("qbxsSaveHandler", ISaveHandler.class);
           Object obj = saveHandler.save(data);
           return Result.ok(obj);
@@ -123,7 +124,7 @@ public class CaseAssistClueController {
     return Result.fail("999669", "保存失败");
   }
 
-  private Boolean checkTitle(Object type, Object assistId, List<String> keys) throws Exception {
+  private String checkTitle(Object type, Object assistId, List<String> keys) throws Exception {
     Map<String, Object> titleP = new HashMap<>();
     titleP.put("assistType", type);
     titleP.put("assistId", assistId);
@@ -136,9 +137,9 @@ public class CaseAssistClueController {
           flag++;
         }
       }
-      return keys.size() != flag;
+      return keys.size() == flag?"success":"error";
     }
-    return false;
+    return "noData";
   }
 
   /**
@@ -454,6 +455,56 @@ public class CaseAssistClueController {
       }
     }
     return Result.fail("999887", "请求异常");
+  }
+  /**
+   * 案件协查集群战役待反馈
+   *
+   * @return
+   */
+  @GetMapping("/ajglQbxsRecord")
+  @ResponseBody
+  public Object ajglQbxsRecord(@RequestParam Map<String, Object> param) {
+    ValidationUtils.notNull(param.get("assistType"), "assistType不能为空!");
+    ValidationUtils.notNull(param.get("assistId"), "assistId不能为空!");
+    ValidationUtils.notNull(param.get("qbxsId"), "qbxsId不能为空!");
+    try {
+      LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJGLQBXSRECORD");
+      return baseService.list(param);
+    } catch (Exception e) {
+      if (e instanceof GlobalErrorException) {
+        GlobalErrorException ge = (GlobalErrorException) e;
+        if (String.valueOf(ge.getCode()).contains("999")) {
+          return Result.fail("999667", ge.getMessage());
+        }
+      }
+    }
+    return Result.fail("999887", "请求异常");
+  }
+
+  /**
+   * 协查线索取消分发
+   *
+   * @return
+   */
+  @PostMapping("/qbxsReturn")
+  @ResponseBody
+  public Object qbxsReturn(@RequestBody Map<String, Object> body) {
+    ValidationUtils.notNull(body.get("assistId"), "assistId不能为空!");
+    ValidationUtils.notNull(body.get("qbxsId"), "qbxsId不能为空!");
+
+    try {
+      // 修改关联表关系
+      Object obj = ajglQbxsService.qbxsReturn(body);
+      return Result.ok(obj);
+    } catch (Exception e) {
+      if (e instanceof GlobalErrorException) {
+        GlobalErrorException ge = (GlobalErrorException) e;
+        if (String.valueOf(ge.getCode()).contains("999")) {
+          return Result.fail("999667", ge.getMessage());
+        }
+      }
+    }
+    return Result.fail("999668", "提交失败");
   }
 
 

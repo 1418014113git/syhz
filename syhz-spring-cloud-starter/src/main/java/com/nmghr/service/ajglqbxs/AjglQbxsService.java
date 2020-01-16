@@ -9,6 +9,8 @@ import com.nmghr.hander.save.ajglqbxs.QbxsSignSaveHandler;
 import com.nmghr.hander.save.cluster.CaseAssistSubmitSaveHandler;
 import com.nmghr.hander.save.cluster.DeptMapperSaveHandler;
 import com.nmghr.hander.save.common.BatchSaveHandler;
+import com.nmghr.handler.message.QueueConfig;
+import com.nmghr.handler.service.SendMessageService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,6 +38,8 @@ public class AjglQbxsService {
 
   @Autowired
   private BatchSaveHandler batchSaveHandler;
+  @Autowired
+  private SendMessageService sendMessageService;
 
   /**
    * 线索分发 创建部门分发线索
@@ -103,10 +107,8 @@ public class AjglQbxsService {
    */
   @Transactional
   public Object issue(Map<String, Object> body) throws Exception {
-    // 查询未分配的线索 ids
-    //增加部门表数据  assistId deptcode name cluecount
-    //修改线索状态  qbxs_base
-    String ids = String.valueOf(body.get("ids"));
+    String ids = String.valueOf(body.get("ids"));//线索ids
+    List<Object> qbxsIds = Arrays.asList(ids.split(","));
     // 分配部门
     String type = "";
     if (body.containsKey("type") && !StringUtils.isEmpty(body.get("type"))) {
@@ -129,7 +131,7 @@ public class AjglQbxsService {
     }
     //修改base表为已分发
     Map<String, Object> baseP = new HashMap<>();
-    baseP.put("ids", Arrays.asList(ids.split(",")));
+    baseP.put("ids", qbxsIds);
     baseP.put("qbxsDistribute", 2);
     baseP.put("qbxsResult", 1);
     LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJGLQBXSBASEBATCHUPDATE");
@@ -137,7 +139,7 @@ public class AjglQbxsService {
 
     //修改关联表为已下发
     Map<String, Object> p = new HashMap<>();
-    p.put("qbxsIds", ids);
+    p.put("qbxsIds", qbxsIds);
     p.put("deptCode", body.get("curDeptCode"));
     p.put("assistId", body.get("assistId"));
     p.put("type", "1".equals(type) ? 1 : 2);
@@ -153,10 +155,33 @@ public class AjglQbxsService {
 
     // 如果是支队需要增加签收信息
     if (body.get("curDeptType") != null && "2".equals(String.valueOf(body.get("curDeptType")))) {
-      String[] arrs = ids.split(",");
-      createSignInfo(body, arrs.length);
+      createSignInfo(body, qbxsIds.size());
+      saveRecords(body, qbxsIds);
     }
     return getClueTotal(String.valueOf(body.get("assistId")));
+  }
+
+  private void saveRecords(Map<String, Object> body, List<Object> qbxsIds) {
+    List<Map<String, Object>> datas = new ArrayList<>();
+    //下发线索增加流转记录
+    for(int i=0;i<qbxsIds.size();i++){
+      Map<String, Object> map = new HashMap<>();
+      map.put("qbxsId", qbxsIds.get(i));
+      map.put("assistType", body.get("assistType"));
+      map.put("assistId", body.get("assistId"));
+      map.put("receiveCode", body.get("acceptDeptCode"));
+      map.put("receiveName", body.get("acceptDeptName"));
+      map.put("createName", body.get("curDeptName"));
+      map.put("createCode", body.get("curDeptCode"));
+      map.put("creatorId", body.get("userId"));
+      map.put("creatorName", body.get("userName"));
+      map.put("optCategory", 3);
+      datas.add(map);
+    }
+    Map<String, Object> param = new HashMap<>();
+    param.put("type", "batch");
+    param.put("list", datas);
+    sendMessageService.sendMessage(param, QueueConfig.AJGLQBXSRECORD);
   }
 
   /**
@@ -206,7 +231,7 @@ public class AjglQbxsService {
     LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJGLQBXSDEPT");
     List<Map<String, Object>> clueDeptList = (List<Map<String, Object>>) baseService.list(delP);
     delP.put("signDelFlag", "nodel"); // 删除签收
-    if (clueDeptList == null || clueDeptList.size() < 2) {
+    if (clueDeptList == null || clueDeptList.size() < 1) {
       delP.put("signDelFlag", "del"); // 删除签收
     }
     delP.put("codes", codes);
@@ -302,7 +327,24 @@ public class AjglQbxsService {
     baseService.remove(delMap);
     if (body.get("qbxsDeptId") != null) {
       delAndCancel(body);
-
+    }
+    if("addRecord".equals(body.get("opt"))){
+      //增加记录
+      Map<String, Object> map = new HashMap<>();
+      map.put("qbxsId", body.get("qbxsId"));
+      map.put("assistType", body.get("assistType"));
+      map.put("assistId", assistId);
+      map.put("createName", body.get("curDeptName"));
+      map.put("createCode", body.get("curDeptCode"));
+      map.put("creatorId", body.get("userId"));
+      map.put("creatorName", body.get("userName"));
+      map.put("optCategory", 7);
+      List<Map<String, Object>> datas = new ArrayList<>();
+      datas.add(map);
+      Map<String, Object> param = new HashMap<>();
+      param.put("type", "batch");
+      param.put("list", datas);
+      sendMessageService.sendMessage(param, QueueConfig.AJGLQBXSRECORD);
     }
     return getClueTotal(String.valueOf(assistId));
   }
@@ -318,19 +360,19 @@ public class AjglQbxsService {
     baseP.put("assistType", "1".equals(String.valueOf(body.get("assistType"))) ? 1 : 2);
     LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJGLQBXSDEPTDEL");
     baseService.update("", baseP);
-
     if (map != null) {
       delSignDept(map.get("deptId"), body.get("assistId"), body.get("receiveCode"), "1".equals(String.valueOf(body.get("assistType"))) ? 1 : 2);
     }
   }
 
   /**
-   * 根据业务id 获取线索的总数和已分配的数量
+   * 取消分发
    *
    * @return
    * @throws Exception
    */
   public Map<String, Object> cancelDistribute(Map<String, Object> body) throws Exception {
+    long s = System.currentTimeMillis();
     Object assistId = body.get("assistId");
     Object qbxsId = body.get("qbxsId");
     Map<String, Object> delMap = new HashMap<>();
@@ -359,8 +401,119 @@ public class AjglQbxsService {
     if (body.get("qbxsDeptId") != null) {
       delAndCancel(body);
     }
+    System.out.println("AAA"+(System.currentTimeMillis()-s));
+    s = System.currentTimeMillis();
+    if("addRecord".equals(body.get("opt"))){
+      //增加记录
+      Map<String, Object> map = new HashMap<>();
+      map.put("qbxsId", qbxsId);
+      map.put("assistType", body.get("assistType"));
+      map.put("assistId", assistId);
+//      map.put("receiveCode", body.get("acceptDeptCode"));
+//      map.put("receiveName", body.get("acceptDeptName"));
+      map.put("createName", body.get("curDeptName"));
+      map.put("createCode", body.get("curDeptCode"));
+      map.put("creatorId", body.get("userId"));
+      map.put("creatorName", body.get("userName"));
+      map.put("optCategory", 5);
+      List<Map<String, Object>> datas = new ArrayList<>();
+      datas.add(map);
+      Map<String, Object> param = new HashMap<>();
+      param.put("type", "batch");
+      param.put("list", datas);
+      sendMessageService.sendMessage(param, QueueConfig.AJGLQBXSRECORD);
+    }
+    System.out.println("BBB"+(System.currentTimeMillis()-s));
     return getClueTotal(String.valueOf(assistId));
   }
+
+  /**
+   * 转回线索
+   *
+   * @return
+   * @throws Exception
+   */
+  public Map<String, Object> qbxsReturn(Map<String, Object> body) throws Exception {
+    long s = System.currentTimeMillis();
+    Object assistId = body.get("assistId");
+    Object qbxsId = body.get("qbxsId");
+    Map<String, Object> delMap = new HashMap<>();
+    delMap.put("assistId", assistId);
+    delMap.put("qbxsId", qbxsId);
+    delMap.put("assistType", "1".equals(String.valueOf(body.get("assistType"))) ? 1 : 2);
+    LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJGLQBXSBASE");
+    //处理线索状态
+    Map<String, Object> baseP = new HashMap<>();
+    baseP.put("ids", Arrays.asList(String.valueOf(qbxsId).split(",")));
+    baseP.put("qbxsDistribute", 1);
+    baseP.put("qbxsResult", 1);
+    LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJGLQBXSBASEBATCHUPDATE");
+    baseService.update("", baseP);
+    //处理关联
+    if (body.get("qbxsDeptId") != null) {
+      delAndCancel(body);
+    }
+    //如果是只给总队增加部门关联
+
+    System.out.println("AAA"+(System.currentTimeMillis()-s));
+    s = System.currentTimeMillis();
+    if("addRecord".equals(body.get("opt"))){
+      //增加记录
+      Map<String, Object> map = new HashMap<>();
+      map.put("qbxsId", qbxsId);
+      map.put("assistType", body.get("assistType"));
+      map.put("assistId", assistId);
+      map.put("receiveCode", body.get("acceptDeptCode"));
+      map.put("receiveName", body.get("acceptDeptName"));
+      map.put("createName", body.get("curDeptName"));
+      map.put("createCode", body.get("curDeptCode"));
+      map.put("creatorId", body.get("userId"));
+      map.put("creatorName", body.get("userName"));
+      map.put("optCategory", 4);
+      List<Map<String, Object>> datas = new ArrayList<>();
+      datas.add(map);
+      Map<String, Object> param = new HashMap<>();
+      param.put("type", "batch");
+      param.put("list", datas);
+      sendMessageService.sendMessage(param, QueueConfig.AJGLQBXSRECORD);
+    }
+    System.out.println("BBB"+(System.currentTimeMillis()-s));
+    return getClueTotal(String.valueOf(assistId));
+  }
+
+//  private void reBackMaster(Map<String, Object> body) throws Exception {
+//    String qbxsId = String.valueOf(body.get("qbxsId"));//线索ids
+//    List<Object> qbxsIds = Arrays.asList(qbxsId.split(","));
+//    // 分配部门
+//    String assistType = String.valueOf(body.get("assistType"));
+//    //增加协查分配的部门信息
+//    Map<String, Object> deptP = new HashMap<>();
+//    deptP.put("deptCode", body.get("receiveDept"));
+//    deptP.put("deptName", body.get("receiveDeptName"));
+//    Object id = "";
+//    if ("2".equals(assistType)) { // 集群战役
+//      deptP.put("clusterId", body.get("assistId"));
+//      id = deptMapperSaveHandler.save(deptP);
+//    }
+//    if ("1".equals(assistType)) { // 案件协查
+//      deptP.put("assistId", body.get("assistId"));
+//      id = caseAssistSubmitSaveHandler.saveDept(deptP);
+//    }
+//    //修改base表为未分发
+//    Map<String, Object> baseP = new HashMap<>();
+//    baseP.put("ids", qbxsIds);
+//    baseP.put("qbxsDistribute", 1);
+//    baseP.put("qbxsResult", 1);
+//    LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJGLQBXSBASEBATCHUPDATE");
+//    baseService.update("", baseP);
+//
+//    //删除当前单位以外要修改的线索部门关系信息
+//    reIssue(body, qbxsId, assistType);
+//
+//    //增加新的关联信息
+//    saveMapper(qbxsId, id, body.get("assistType"));
+//  }
+
 
   /**
    * 线索反馈列表

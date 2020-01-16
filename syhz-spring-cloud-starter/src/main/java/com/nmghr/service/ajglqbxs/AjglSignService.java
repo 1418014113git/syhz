@@ -6,6 +6,8 @@ import com.nmghr.basic.core.common.LocalThreadStorage;
 import com.nmghr.basic.core.service.IBaseService;
 import com.nmghr.hander.save.cluster.DeptMapperSaveHandler;
 import com.nmghr.hander.save.common.BatchSaveHandler;
+import com.nmghr.handler.message.QueueConfig;
+import com.nmghr.handler.service.SendMessageService;
 import com.nmghr.util.DateUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -23,6 +25,9 @@ public class AjglSignService {
 
   @Autowired
   private BatchSaveHandler batchSaveHandler;
+
+  @Autowired
+  private SendMessageService sendMessageService;
 
   /**
    * 线索分配
@@ -51,13 +56,10 @@ public class AjglSignService {
     p.put("deptCode", body.get("deptCode"));
     p.put("qbxSign", 1);
 
-    String assistType = "";
-    if (body.containsKey("assistType") && !StringUtils.isEmpty(body.get("assistType"))) {
-      assistType = String.valueOf(body.get("assistType"));
-    }
+    String assistType = String.valueOf(body.get("assistType"));
     String alias = "";
     if ("".equals(assistType) || "2".equals(assistType)) {
-      LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJGLQBXSSIGNLIST");
+        LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJGLQBXSSIGNLIST");
       alias = "AJCLUSTERFEEDBACK";
     }else if ("1".equals(assistType)) {
       LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJASSISTGLQBXSSIGNLIST");
@@ -76,10 +78,29 @@ public class AjglSignService {
           baseService.save(map);
         }
       }
+      saveRecords(body, list, assistType);
     }
     return list.size();
   }
 
+
+  private void saveRecords(Map<String, Object> body, List<Map<String, Object>> list, Object assistType) {
+    List<Map<String, Object>> datas = new ArrayList<>();
+//      qbxsId , assistType , assistId , receiveCode , receiveName ,
+    for (Map<String, Object> map : list) {
+      map.put("assistType", assistType);
+      map.put("createName", body.get("deptName"));
+      map.put("createCode", body.get("deptCode"));
+      map.put("creatorId", body.get("userId"));
+      map.put("creatorName", body.get("userName"));
+      map.put("optCategory", 2);
+      datas.add(map);
+    }
+    Map<String, Object> param = new HashMap<>();
+    param.put("type", "batch");
+    param.put("list", datas);
+    sendMessageService.sendMessage(param, QueueConfig.AJGLQBXSRECORD);
+  }
 
 
 }
