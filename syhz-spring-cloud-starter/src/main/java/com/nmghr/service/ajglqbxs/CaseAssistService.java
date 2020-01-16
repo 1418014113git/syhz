@@ -114,7 +114,9 @@ public class CaseAssistService {
         throw new GlobalErrorException("999887", "案件协查编号重复");
       }
     }
-
+    if("SX".equals(number.substring(0,2))){
+      return true;
+    }
     dept = dept.substring(0, 4) + "00";
     if (!DeptAssist.containsKey(dept)) {
       throw new GlobalErrorException("999887", "部门编号不正确");
