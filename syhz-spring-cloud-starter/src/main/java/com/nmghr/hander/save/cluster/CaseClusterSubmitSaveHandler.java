@@ -12,6 +12,8 @@ import com.nmghr.hander.save.ajglqbxs.QbxsSignSaveHandler;
 import com.nmghr.hander.save.examine.ExamineSaveHandler;
 import com.nmghr.hander.update.examine.ExamineUpdateHandler;
 import com.nmghr.hander.update.notice.ExamineSubmitUpdateHandler;
+import com.nmghr.handler.message.QueueConfig;
+import com.nmghr.handler.service.SendMessageService;
 import com.nmghr.service.ajglqbxs.CaseAssistService;
 import com.nmghr.util.DateUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,6 +43,8 @@ public class CaseClusterSubmitSaveHandler extends AbstractSaveHandler {
 
   @Autowired
   private CaseAssistService caseAssistService;
+  @Autowired
+  private SendMessageService sendMessageService;
 
   @Override
   @Transactional
@@ -79,6 +83,16 @@ public class CaseClusterSubmitSaveHandler extends AbstractSaveHandler {
           throw new GlobalErrorException("999667", "未导入线索，请导入线索后再提交！");
         }
         createSignInfo(body.get("userId"), body.get("userName"), body.get("curDeptCode"), body.get("curDeptName"), id);
+        //增加线索流转记录
+        Map<String, Object> p = new HashMap<>();
+        p.put("assistType", 2);
+        p.put("type", "all");
+        p.put("id", id);
+        p.put("userId", body.get("userId"));
+        p.put("userName", body.get("userName"));
+        p.put("curDeptCode", body.get("curDeptCode"));
+        p.put("curDeptName", body.get("curDeptName"));
+        sendMessageService.sendMessage(p, QueueConfig.AJGLQBXSRECORD);
       }
       return id;
     }

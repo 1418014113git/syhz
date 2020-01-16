@@ -6,6 +6,8 @@ import com.nmghr.basic.core.service.IBaseService;
 import com.nmghr.basic.core.service.handler.impl.AbstractUpdateHandler;
 import com.nmghr.hander.save.ajglqbxs.QbxsSignSaveHandler;
 import com.nmghr.hander.update.examine.ExamineUpdateHandler;
+import com.nmghr.handler.message.QueueConfig;
+import com.nmghr.handler.service.SendMessageService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,6 +32,8 @@ public class AssistExamineUpdateHandler extends AbstractUpdateHandler {
   private QbxsSignSaveHandler qbxsSignSaveHandler;
   @Autowired
   private ExamineUpdateHandler examineUpdateHandler;
+  @Autowired
+  private SendMessageService sendMessageService;
 
   @Override
   @Transactional
@@ -49,6 +53,16 @@ public class AssistExamineUpdateHandler extends AbstractUpdateHandler {
       examineUpdateHandler.update(flowId, body);
       // 增加待办信息
       createSignInfo(body.get("userId"), body.get("userName"), body.get("curDeptCode"), body.get("curDeptName"), body.get("bsId"));
+      //增加线索流转记录
+      Map<String, Object> param = new HashMap<>();
+      param.put("assistType", 1);
+      param.put("type", "all");
+      param.put("id", body.get("bsId"));
+      param.put("userId", body.get("userId"));
+      param.put("userName", body.get("userName"));
+      param.put("curDeptCode", body.get("curDeptCode"));
+      param.put("curDeptName", body.get("curDeptName"));
+      sendMessageService.sendMessage(param, QueueConfig.AJGLQBXSRECORD);
       return bsId;
     }
     if ("4".equals(flowStatus)) {
