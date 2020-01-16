@@ -533,6 +533,29 @@ public class CaseAssistExportController {
     }
   }
 
+  /**
+   * 案件协查线索导出
+   *
+   * @param req
+   * @param response
+   * @throws Exception
+   */
+  @RequestMapping(value = "/assist/clue/export")
+  public void assistClueExport(@RequestParam Map<String, Object> req, HttpServletResponse response) throws Exception {
+    ValidationUtils.notNull(req.get("assistId"), "assistId不能为空!");
+    ValidationUtils.notNull(req.get("deptType"), "deptType不能为空!");
+    ValidationUtils.notNull(req.get("deptCode"), "deptCode不能为空!");
+    if ("2".equals(String.valueOf(req.get("deptType")))) {
+      ValidationUtils.notNull(req.get("category"), "category不能为空!");
+    }
+    List<Object> heads = getTitle(req.get("assistId"), 1);
+    if (heads.size() > 0) {
+      Map<String, Object> datas = getCluesList(req.get("assistId"), 1, Integer.parseInt(String.valueOf(req.get("deptType"))),
+          req.get("category"), String.valueOf(req.get("deptCode")));
+      outPutData(response, heads, datas);
+    }
+  }
+
   private void outPutData(HttpServletResponse response, List<Object> heads, Map<String, Object> datas) {
     XSSFWorkbook wb = null;
     try {
@@ -568,29 +591,6 @@ public class CaseAssistExportController {
       }
     } catch (Exception e) {
       log.error("导出excel出现异常:", e);
-    }
-  }
-
-  /**
-   * 案件协查线索导出
-   *
-   * @param req
-   * @param response
-   * @throws Exception
-   */
-  @RequestMapping(value = "/assist/clue/export")
-  public void assistClueExport(@RequestParam Map<String, Object> req, HttpServletResponse response) throws Exception {
-    ValidationUtils.notNull(req.get("assistId"), "assistId不能为空!");
-    ValidationUtils.notNull(req.get("deptType"), "deptType不能为空!");
-    ValidationUtils.notNull(req.get("deptCode"), "deptCode不能为空!");
-    if ("2".equals(String.valueOf(req.get("deptType")))) {
-      ValidationUtils.notNull(req.get("category"), "category不能为空!");
-    }
-    List<Object> heads = getTitle(req.get("assistId"), 2);
-    if (heads.size() > 0) {
-      Map<String, Object> datas = getCluesList(req.get("assistId"), 2, Integer.parseInt(String.valueOf(req.get("deptType"))),
-          req.get("category"), String.valueOf(req.get("deptCode")));
-      outPutData(response, heads, datas);
     }
   }
 
