@@ -9,6 +9,8 @@ import com.nmghr.basic.core.service.handler.impl.AbstractSaveHandler;
 import com.nmghr.hander.save.cluster.CaseAssistSubmitSaveHandler;
 import com.nmghr.hander.save.cluster.DeptMapperSaveHandler;
 import com.nmghr.hander.save.common.BatchSaveHandler;
+import com.nmghr.handler.message.QueueConfig;
+import com.nmghr.handler.service.SendMessageService;
 import com.nmghr.service.ajglqbxs.AjglQbxsService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,6 +41,9 @@ public class QbxsSaveHandler extends AbstractSaveHandler {
   @Autowired
   private AjglQbxsService ajglQbxsService;
 
+  @Autowired
+  private SendMessageService sendMessageService;
+
   /**
    * 批量导入数据增加方法
    */
@@ -58,38 +63,92 @@ public class QbxsSaveHandler extends AbstractSaveHandler {
     Object curDeptCode = body.get("curDeptCode");
     Object curDeptName = body.get("curDeptName");
     Object assistId = body.get("assistId");
-    LinkedHashMap<String, Object> bean = list.get(0);
-    saveHeads(type, creator, curDeptCode, curDeptName, assistId, bean);
+    System.out.println("checkResult info :" + body.get("checkResult"));
+    if ("noData".equals(body.get("checkResult"))) {
+      saveHeads(type, creator, curDeptCode, curDeptName, assistId, list.get(0));
+    }
+    long s = System.currentTimeMillis();
+    List<LinkedHashMap<String, Object>> addDatas = new ArrayList<>();
+    List<LinkedHashMap<String, Object>> updDatas = new ArrayList<>();
+    //检查编号并修改 分析需要新增的线索
+    Map<String, Object> bhMap = new HashMap<>();
+    Map<String, Object> addrMap = new HashMap<>();
+    Map<String, Object> bhP = new HashMap<>();
+    bhP.put("id", assistId);
+    bhP.put("type", type);
+    LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJGLQBXSINFOBHLIST");
+    List<Map<String, Object>> bhList = (List<Map<String, Object>>) baseService.list(bhP);
+    for (Map<String, Object> map : bhList) {
+      bhMap.put(String.valueOf(map.get("number")), map.get("qbxsId"));
+      addrMap.put(String.valueOf(map.get("address") + "_" + map.get("number")), map.get("qbxsId"));
+    }
+    Map<String, Object> idxMap = new HashMap<>();
+    LinkedHashMap<String, Object> keyMap = list.get(0);
+    int idx=0;
+    for (String key : keyMap.keySet()) {
+      idxMap.put(key,idx);
+      idx++;
+    }
 
-    List<Map<String, Object>> resets =
-        (List<Map<String, Object>>) saveBaseAndDept(type, category, assistId, list, String.valueOf(body.get("xfType")), String.valueOf(curDeptCode));
-
-    List<Map<String, Object>> paramValues = new ArrayList<>(list.size());
-
-    int size = list.size();
-    for (int i = 0; i < size; i++) {
-      Map<String, Object> values = list.get(i);
-      Map<String, Object> base = resets.get(i);
-      int vIdx = 0;
-      for (Object str : values.values()) {
-        Map<String, Object> p = new HashMap<>();
-        p.put("assistId", assistId);
-        p.put("qbxsId", base.get("id"));
-        p.put("rowIndex", vIdx);
-        p.put("columnIndex", i);
-        p.put("value", str);
-        p.put("qbxsCategory", category);
-        p.put("creator", creator);
-        paramValues.add(p);
-        vIdx++;
+    List<Object> updQxIds = new ArrayList<>();
+    Map<String, Object> updAddrMap = new HashMap<>();
+    for (LinkedHashMap<String, Object> map : list) {
+      String num = String.valueOf(map.get("序号"));
+      if (bhMap.containsKey(num)) {
+        map.put("qbxsId", bhMap.get(num));
+        updDatas.add(map);
+        updQxIds.add(bhMap.get(num));
+        if (!addrMap.containsKey(String.valueOf(map.get("地址")) + "_" + num)) {
+          updAddrMap.put(String.valueOf(bhMap.get(num)), String.valueOf(map.get("地址")));
+        }
+      } else {
+        addDatas.add(map);
       }
     }
-    Map<String, Object> params2 = new HashMap<>();
-    params2.put("list", paramValues);
-    params2.put("alias", "AJGLQBXSINFOBATCH");
-    params2.put("seqName", "AJGLQBXSINFO");
-    params2.put("subSize", 50);
-    batchSaveHandler.save(params2);
+    if (updDatas.size() > 0) {
+      Map<String, Object> msgP = new HashMap<>();
+      msgP.put("assistType", type);
+      msgP.put("id", assistId);
+      msgP.put("updDatas", updDatas);
+      msgP.put("updQxIds", updQxIds);
+      msgP.put("updAddrMap", updAddrMap);
+      msgP.put("category", category);
+      msgP.put("creator", creator);
+      msgP.put("idxMap", idxMap);
+      sendMessageService.sendMessage(msgP, QueueConfig.AJGLQBXSINFO);
+      System.out.println("qbxsinfo message:" + (System.currentTimeMillis() - s));
+    }
+
+    if (addDatas.size() > 0) {
+      List<Map<String, Object>> resets =
+          (List<Map<String, Object>>) saveBaseAndDept(type, category, assistId, addDatas, String.valueOf(body.get("xfType")), String.valueOf(curDeptCode));
+
+      List<Map<String, Object>> paramValues = new ArrayList<>(addDatas.size());
+      int size = addDatas.size();
+      for (int i = 0; i < size; i++) {
+        Map<String, Object> values = addDatas.get(i);
+        Map<String, Object> base = resets.get(i);
+        int vIdx = 0;
+        for (Object str : values.values()) {
+          Map<String, Object> p = new HashMap<>();
+          p.put("assistId", assistId);
+          p.put("qbxsId", base.get("id"));
+          p.put("rowIndex", vIdx);
+          p.put("columnIndex", i);
+          p.put("value", str);
+          p.put("qbxsCategory", category);
+          p.put("creator", creator);
+          paramValues.add(p);
+          vIdx++;
+        }
+      }
+      Map<String, Object> params2 = new HashMap<>();
+      params2.put("list", paramValues);
+      params2.put("alias", "AJGLQBXSINFOBATCH");
+      params2.put("seqName", "AJGLQBXSINFO");
+      params2.put("subSize", 50);
+      batchSaveHandler.save(params2);
+    }
     return ajglQbxsService.getClueTotal(String.valueOf(assistId));
   }
 
