@@ -22,6 +22,17 @@
         }]]>
     </property>
 
+    <property name="setHsyzFieldAlias">
+        <![CDATA[{
+            "properties": {
+                "publishTime": {
+                    "type": "alias",
+                    "path": "ctime"
+                }
+            }
+        }]]>
+    </property>
+
     ## 一键搜索
     <property name="oneTouchSearch">
         <![CDATA[{
