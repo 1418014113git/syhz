@@ -615,9 +615,6 @@ public class CaseClusterController {
       ValidationUtils.notNull(body.get("clusterCitys"), "clusterCitys不能为空!");
       ValidationUtils.notNull(body.get("status"), "status!");
       String status = String.valueOf(body.get("status"));
-      if (!"0".equals(status) && !"1".equals(status) && !"5".equals(status)) {
-        throw new GlobalErrorException("999667", "status状态异常");
-      }
       if ("1".equals(status)) {
         ValidationUtils.notNull(body.get("acceptDeptId"), "上级单位不能为空!");
         ValidationUtils.notNull(body.get("acceptDept"), "上级单位不能为空!");
