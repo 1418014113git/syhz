@@ -59,7 +59,7 @@ public class CaseAssistClueController {
                            @RequestParam("category") Object category,
                            @RequestParam("curDeptCode") Object curDeptCode,
                            @RequestParam("curDeptName") Object curDeptName,
-                           @RequestParam("assistId") Object assistId, String xfType) {
+                           @RequestParam("assistId") Object assistId, String xfType, String opt) {
     try {
       if (null != mulFile) {
         Collection<LinkedHashMap> list = ExcelUtil.importExcel(LinkedHashMap.class, mulFile.getInputStream(), 0);
@@ -101,6 +101,7 @@ public class CaseAssistClueController {
           data.put("xfType", xfType);
           data.put("list", params);
           data.put("checkResult", checkRes);
+          data.put("opt", opt);
           ISaveHandler saveHandler = SpringUtils.getBean("qbxsSaveHandler", ISaveHandler.class);
           Object obj = saveHandler.save(data);
           return Result.ok(obj);
@@ -439,12 +440,15 @@ public class CaseAssistClueController {
         map.putAll(obj);
       }
       result.add(map);
-//      LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJCLUSTERNEEDFEEDBACK");
-//      baseService.get(dept);
-      map = new HashMap<>();
-      map.put("assistType", 1);
-      map.put("num", 0);
-      result.add(map);
+      Map<String, Object> assistMap = new HashMap<>();
+      assistMap.put("num", 0);
+      LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJASSISTNEEDFEEDBACK");
+      Map<String, Object> assist = (Map<String, Object>) baseService.get(String.valueOf(param.get("deptCode")));
+      if (assist != null && assist.containsKey("num")) {
+        assistMap.putAll(assist);
+      }
+      assistMap.put("assistType", 1);
+      result.add(assistMap);
       return result;
     } catch (Exception e) {
       if (e instanceof GlobalErrorException) {

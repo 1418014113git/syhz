@@ -119,7 +119,6 @@ public class AssistStatisticsController {
             temp.put("ajbhs","");
           }
           temp.putAll(res);
-          System.out.println(JSON.toJSONString(temp));
         }
       }
       //整理页面数据
