@@ -18,14 +18,12 @@ import com.nmghr.basic.core.page.Paging;
 import com.nmghr.basic.core.service.IBaseService;
 import com.nmghr.basic.core.service.handler.impl.AbstractQueryHandler;
 import com.nmghr.service.EsOneTouchSearchService;
+import com.nmghr.util.ListSortUtil;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * 一键搜索
@@ -41,9 +39,6 @@ public class OneTouchSearchQueryHandler extends AbstractQueryHandler{
 
     @Autowired
     private EsOneTouchSearchService esService;
-
-    @Value("${elasticsearch.hostNames}")
-    private String ES_HOSTNAME;
 
     /** ES使用的XML文件名 */
     private static final String ES_ONE_TOUCH_SEARCH_XML_NAME = "onetouchsearch";
@@ -107,9 +102,10 @@ public class OneTouchSearchQueryHandler extends AbstractQueryHandler{
                         && esService.addAlias(ES_INDEX_INTERNAL_RES, ES_INDEX_ALL)
                         ) {
                     retMap = oneTouchSearchEs(ES_ONE_TOUCH_SEARCH_XML_NAME, ES_INDEX_ALL, requestMap, "oneTouchSearch", resource);
-//                    List<Map<String, Object>> data = (List<Map<String, Object>>) retMap.get("list");
-//                    // 相同时间情况下根据资源类型排序
-//                    retMap.put("data", resultSortByType(data));
+                    List<Map<String, Object>> data = (List<Map<String, Object>>) retMap.get("list");
+                    // 相同时间情况下根据资源类型排序
+                    List<Map<String, Object>> newData = resultSortByType(data);
+                    retMap.put("list", newData);
                 }
                 break;
             case RESOURCE_TYPE_KNOWLEDGE:
@@ -165,7 +161,6 @@ public class OneTouchSearchQueryHandler extends AbstractQueryHandler{
     private Map<String, Object> oneTouchSearchEs(String xmlName, String index, Map<String, Object> map, String DSL, Map<String, Object> indexCode) throws Exception {
         try {
             Map<String, Object> esCaseInfoMap = esService.query(xmlName, index, map, DSL, indexCode);
-            List<Map<String, Object>> dataList = (List<Map<String, Object>>) esCaseInfoMap.get("data");
             Map<String, Object> resultMap = new HashMap<String, Object>(2);
             resultMap.put("list", esCaseInfoMap.get("data"));
             resultMap.put("totalCount", esCaseInfoMap.get("totalCount"));
@@ -247,25 +242,24 @@ public class OneTouchSearchQueryHandler extends AbstractQueryHandler{
         return map;
     }
 
-//    private List<Map<String, Object>> resultSortByType(List<Map<String, Object>> list) {
-//        Map<String, List<Map<String, Object>>> map = new TreeMap<>();
-//        for (Map<String, Object> testBean : list) {
-//            String key = testBean.get("publishTime").toString();
-//            if (map.containsKey(key)) {
-//                map.get(key).add(testBean);
-//            } else {
-//                List<Map<String, Object>> listTemp = new ArrayList<>();
-//                listTemp.add(testBean);
-//                map.put(key, listTemp);
-//            }
-//        }
-//
-//        List<Map<String, Object>> newBeanList = new ArrayList<>();
-//        for (List<Map<String, Object>> testBeans : map.values()) {
-//            newBeanList.addAll(ListSortUtil.sort(testBeans,"type",ListSortUtil.SORT_ASC));
-//        }
-//        return newBeanList;
-//    }
-
+    private List<Map<String, Object>> resultSortByType(List<Map<String, Object>> list) {
+        ListSortUtil.resultOrder(list, "publishTime", -1);
+        Map<String, List<Map<String, Object>>> map = new TreeMap<>(Comparator.reverseOrder());
+        for (Map<String, Object> map1 : list) {
+            String key = map1.get("publishTime").toString();
+            if (map.containsKey(key)) {
+                map.get(key).add(map1);
+            } else {
+                List<Map<String, Object>> listTemp = new ArrayList<>();
+                listTemp.add(map1);
+                map.put(key, listTemp);
+            }
+        }
+        List<Map<String, Object>> newMapList = new ArrayList<>();
+        for (List<Map<String, Object>> testBeans : map.values()) {
+            newMapList.addAll(ListSortUtil.resultOrder(testBeans, "type", 1));
+        }
+        return newMapList;
+    }
 
 }

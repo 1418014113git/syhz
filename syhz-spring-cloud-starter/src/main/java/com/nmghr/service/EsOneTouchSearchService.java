@@ -33,6 +33,9 @@ import java.util.regex.Pattern;
 @Service
 public class EsOneTouchSearchService {
 
+    // 最大返回数量
+    private static final int ES_RETURN_TOTALCOUNT = 1000;
+
     @Autowired
     private BBossESStarter bbossESStarter;
 
@@ -54,11 +57,6 @@ public class EsOneTouchSearchService {
         Map<String, Object> reposneMap = new HashMap<String, Object>(8);
         try {
             ClientInterface clientUtil = bbossESStarter.getConfigRestClient("esmapper/" + xmlName + ".xml");
-            // ESDatas包含当前检索的记录集合，最多1000条记录，由dsl中的size属性指定
-            // demo为索引表，_search为检索操作action
-            // esmapper/demo.xml中定义的dsl语句
-            // map 变量参数
-            // ESDatas<Map> esDatas = clientUtil.searchList(index + "/_search", DSL, map, Map.class)
             long totalSize = 0;
             List<Object> dataList = new ArrayList<Object>();
             MapRestResponse esMap = clientUtil.search(index + "/_search", DSL, map);
@@ -85,8 +83,12 @@ public class EsOneTouchSearchService {
                 processingData(sourceMap);
                 dataList.add(sourceMap);
             }
-            totalSize = Long.valueOf(((LinkedHashMap)esMap.getSearchHits().getTotal()).get("value").toString());
-
+            if (!ObjectUtils.isEmpty(((LinkedHashMap)esMap.getSearchHits().getTotal()).get("value"))) {
+                totalSize = Long.valueOf(((LinkedHashMap)esMap.getSearchHits().getTotal()).get("value").toString());
+                if (totalSize > ES_RETURN_TOTALCOUNT) {
+                    totalSize = ES_RETURN_TOTALCOUNT;
+                }
+            }
             reposneMap.put("data", dataList);
             reposneMap.put("pageSize", pageSize);
             reposneMap.put("pageNum", pageNum);
