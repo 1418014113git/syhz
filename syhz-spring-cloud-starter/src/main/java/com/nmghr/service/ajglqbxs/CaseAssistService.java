@@ -52,8 +52,10 @@ public class CaseAssistService {
     DeptAssist.put("616200", "XX");
   }
 
-
   public Boolean checkNumber(String dept, String number, Object id, String category) throws Exception {
+    if ("1".equals(category)) {
+      return true;
+    }
     String key = getKey(dept,2);
     Map<String, Object> params = new HashMap<>();
     params.put("key", key);
@@ -66,9 +68,6 @@ public class CaseAssistService {
     List<Map<String, Object>> list = (List<Map<String, Object>>) baseService.list(params);
     if (list != null && list.size() > 0) {
       throw new GlobalErrorException("999887", "集群战役编号重复");
-    }
-    if ("1".equals(category)) {
-      return true;
     }
     dept = dept.substring(0, 6);
     if (!DeptJP.containsKey(dept)) {
