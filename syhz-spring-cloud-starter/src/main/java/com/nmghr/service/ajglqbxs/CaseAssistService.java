@@ -56,6 +56,9 @@ public class CaseAssistService {
     if ("1".equals(category)) {
       return true;
     }
+    if("SX".equals(number.substring(0,2))){
+      return true;
+    }
     String key = getKey(dept,2);
     Map<String, Object> params = new HashMap<>();
     params.put("key", key);

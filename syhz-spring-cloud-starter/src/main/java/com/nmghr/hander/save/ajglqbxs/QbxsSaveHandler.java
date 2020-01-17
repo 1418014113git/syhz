@@ -41,6 +41,8 @@ public class QbxsSaveHandler extends AbstractSaveHandler {
   private CaseAssistSubmitSaveHandler caseAssistSubmitSaveHandler;
   @Autowired
   private AjglQbxsService ajglQbxsService;
+  @Autowired
+  private QbxsSignSaveHandler qbxsSignSaveHandler;
 
   @Autowired
   private SendMessageService sendMessageService;
@@ -64,11 +66,9 @@ public class QbxsSaveHandler extends AbstractSaveHandler {
     Object curDeptCode = body.get("curDeptCode");
     Object curDeptName = body.get("curDeptName");
     Object assistId = body.get("assistId");
-    System.out.println("checkResult info :" + body.get("checkResult"));
     if ("noData".equals(body.get("checkResult"))) {
       saveHeads(type, creator, curDeptCode, curDeptName, assistId, list.get(0));
     }
-    long s = System.currentTimeMillis();
     List<LinkedHashMap<String, Object>> addDatas = new ArrayList<>();
     List<LinkedHashMap<String, Object>> updDatas = new ArrayList<>();
     //检查编号并修改 分析需要新增的线索
@@ -85,12 +85,11 @@ public class QbxsSaveHandler extends AbstractSaveHandler {
     }
     Map<String, Object> idxMap = new HashMap<>();
     LinkedHashMap<String, Object> keyMap = list.get(0);
-    int idx=0;
+    int idx = 0;
     for (String key : keyMap.keySet()) {
-      idxMap.put(key,idx);
+      idxMap.put(key, idx);
       idx++;
     }
-
     List<Object> updQxIds = new ArrayList<>();
     Map<String, Object> updAddrMap = new HashMap<>();
     for (LinkedHashMap<String, Object> map : list) {
@@ -117,7 +116,6 @@ public class QbxsSaveHandler extends AbstractSaveHandler {
       msgP.put("creator", creator);
       msgP.put("idxMap", idxMap);
       sendMessageService.sendMessage(msgP, QueueConfig.AJGLQBXSINFO);
-      System.out.println("qbxsinfo message:" + (System.currentTimeMillis() - s));
     }
 
     if (addDatas.size() > 0) {
@@ -151,10 +149,11 @@ public class QbxsSaveHandler extends AbstractSaveHandler {
       batchSaveHandler.save(params2);
 
       if ("addRecord".equals(body.get("opt"))) {
+        Map<String, Object> signData = new HashMap<>();
         //增加记录
         List<Map<String, Object>> datas = new ArrayList<>();
         for (Map<String, Object> m : resets) {
-          if(!StringUtils.isEmpty(m.get("receiveCode"))){
+          if (!StringUtils.isEmpty(m.get("receiveCode"))) {
             Map<String, Object> map = new HashMap<>();
             map.put("qbxsId", m.get("id"));
             map.put("assistType", type);
@@ -167,16 +166,39 @@ public class QbxsSaveHandler extends AbstractSaveHandler {
             map.put("creatorName", body.get("userName"));
             map.put("optCategory", 1);
             datas.add(map);
+            //组装签收数据
+            packageSignData(body, type, assistId, signData, m.get("receiveCode"),m.get("receiveName"));
           }
         }
+        //增加签收收据
+        createSignInfo(new ArrayList(signData.values()));
+
         Map<String, Object> param = new HashMap<>();
         param.put("type", "batch");
         param.put("list", datas);
         sendMessageService.sendMessage(param, QueueConfig.AJGLQBXSRECORD);
       }
-
     }
     return ajglQbxsService.getClueTotal(String.valueOf(assistId));
+  }
+
+  private void packageSignData(Map<String, Object> body, Object type, Object assistId, Map<String, Object> signData, Object receiveCode, Object receiveName) {
+    if (signData.get(String.valueOf(receiveCode)) != null) {
+      Map<String, Object> sign = (Map<String, Object>) signData.get(String.valueOf(receiveCode));
+      sign.put("clueNum", Integer.parseInt(String.valueOf(sign.get("clueNum"))) + 1);
+    } else {
+      Map<String, Object> sign = new HashMap<>();
+      sign.put("userId", body.get("userId"));
+      sign.put("userName", body.get("userName"));
+      sign.put("deptCode", body.get("curDeptCode"));
+      sign.put("deptName", body.get("curDeptName"));
+      sign.put("receiveDeptCode", receiveCode);
+      sign.put("receiveDeptName", receiveName);
+      sign.put("assistId", assistId);
+      sign.put("clueNum", 1);
+      sign.put("assistType", type);
+      signData.put(String.valueOf(receiveCode), sign);
+    }
   }
 
 
@@ -361,5 +383,18 @@ public class QbxsSaveHandler extends AbstractSaveHandler {
     }
     return result;
   }
+
+
+  /**
+   * 生成签收记录
+   *
+   * @throws Exception
+   */
+  private void createSignInfo(List<Map<String, Object>> signs) throws Exception {
+    Map<String, Object> signParam = new HashMap<>();
+    signParam.put("list", signs);
+    qbxsSignSaveHandler.save(signParam);
+  }
+
 
 }
