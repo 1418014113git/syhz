@@ -54,8 +54,10 @@ public class CaseAssistService {
 
 
   public Boolean checkNumber(String dept, String number, Object id, String category) throws Exception {
+    String key = getKey(dept,2);
     Map<String, Object> params = new HashMap<>();
-    params.put("deptCode", dept);
+    params.put("key", key);
+    params.put("keyLen", key.length());
     params.put("number", number);
     if (!StringUtils.isEmpty(id)) {
       params.put("id", id);
@@ -99,8 +101,13 @@ public class CaseAssistService {
    * @throws Exception
    */
   public Boolean checkAssistNumber(String dept, String number, String assistId) throws Exception {
+    if("SX".equals(number.substring(0,2))){
+      return true;
+    }
+    String key = getKey(dept,2);
     Map<String, Object> params = new HashMap<>();
-    params.put("deptCode", dept);
+    params.put("key", key);
+    params.put("keyLen", key.length());
     params.put("number", number);
     LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJASSISTNUMBERCHECK");
     List<Map<String, Object>> list = (List<Map<String, Object>>) baseService.list(params);
@@ -114,9 +121,7 @@ public class CaseAssistService {
         throw new GlobalErrorException("999887", "案件协查编号重复");
       }
     }
-    if("SX".equals(number.substring(0,2))){
-      return true;
-    }
+
     dept = dept.substring(0, 4) + "00";
     if (!DeptAssist.containsKey(dept)) {
       throw new GlobalErrorException("999887", "部门编号不正确");
@@ -147,14 +152,16 @@ public class CaseAssistService {
    * @throws Exception
    */
   public Object number(String dept, int type) throws Exception {
+    String key = getKey(dept, type);
     Map<String, Object> param = new HashedMap();
-    param.put("deptCode", dept);
-    LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, type == 1 ? "AJCLUSTERNUMBER" : "AJASSISTNUMBER");
+    param.put("key", key);
+    param.put("keyLen", key.length());
+    LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, type == 1 ? "AJASSISTNUMBER" : "AJCLUSTERNUMBER");
     Map<String, Object> rs = (Map<String, Object>) baseService.get(param);
     if (rs == null) {
       return initNumber(dept.substring(0, 4) + "00");
     }
-    String number = type == 1 ? String.valueOf(rs.get("clusterNumber")) : String.valueOf(rs.get("assistNumber"));
+    String number = type == 1 ? String.valueOf(rs.get("assistNumber")) : String.valueOf(rs.get("clusterNumber"));
     return getNumber(dept.substring(0, 4) + "00", number);
   }
 
@@ -208,5 +215,13 @@ public class CaseAssistService {
     return jp + Calendar.getInstance().get(Calendar.YEAR) + String.format("%03d", 1);
   }
 
+  public String getKey(String dept,int type) {
+    if(1==type){
+      return DeptAssist.get(dept.substring(0, 4) + "00");
+    } else {
+      return DeptJP.get(dept.substring(0, 4) + "00");
+    }
+
+  }
 
 }

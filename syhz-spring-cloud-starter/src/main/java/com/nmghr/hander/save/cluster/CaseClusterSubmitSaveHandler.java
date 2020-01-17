@@ -147,7 +147,7 @@ public class CaseClusterSubmitSaveHandler extends AbstractSaveHandler {
   private Object create(Map<String, Object> params) throws Exception {
     if(StringUtils.isEmpty(params.get("clusterNumber"))){
       //自动生成编号
-      params.put("clusterNumber", caseAssistService.number(String.valueOf(params.get("curDeptCode")), 1));
+      params.put("clusterNumber", caseAssistService.number(String.valueOf(params.get("curDeptCode")), 2));
     }
     if(!StringUtils.isEmpty(params.get("acceptDept"))){
       params.put("checkDeptCode", params.get("acceptDept"));
