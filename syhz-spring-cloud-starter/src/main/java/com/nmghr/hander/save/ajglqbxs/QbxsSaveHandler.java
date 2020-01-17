@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.util.*;
 import java.util.regex.Matcher;
@@ -148,6 +149,32 @@ public class QbxsSaveHandler extends AbstractSaveHandler {
       params2.put("seqName", "AJGLQBXSINFO");
       params2.put("subSize", 50);
       batchSaveHandler.save(params2);
+
+      if ("addRecord".equals(body.get("opt"))) {
+        //增加记录
+        List<Map<String, Object>> datas = new ArrayList<>();
+        for (Map<String, Object> m : resets) {
+          if(!StringUtils.isEmpty(m.get("receiveCode"))){
+            Map<String, Object> map = new HashMap<>();
+            map.put("qbxsId", m.get("id"));
+            map.put("assistType", type);
+            map.put("assistId", assistId);
+            map.put("receiveName", m.get("receiveName"));
+            map.put("receiveCode", m.get("receiveCode"));
+            map.put("createName", body.get("curDeptName"));
+            map.put("createCode", body.get("curDeptCode"));
+            map.put("creatorId", body.get("userId"));
+            map.put("creatorName", body.get("userName"));
+            map.put("optCategory", 1);
+            datas.add(map);
+          }
+        }
+        Map<String, Object> param = new HashMap<>();
+        param.put("type", "batch");
+        param.put("list", datas);
+        sendMessageService.sendMessage(param, QueueConfig.AJGLQBXSRECORD);
+      }
+
     }
     return ajglQbxsService.getClueTotal(String.valueOf(assistId));
   }
