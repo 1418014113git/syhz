@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -45,7 +46,7 @@ import com.nmghr.basic.core.util.ValidationUtils;
 @RequestMapping("/khpb")
 public class SysAppraiseConfigController {
   
-  private static final Logger log = LoggerFactory.getLogger(AjrlController.class);
+  private static final Logger log = LoggerFactory.getLogger(SysAppraiseConfigController.class);
   @Autowired
   @Qualifier("baseService")
   private IBaseService baseService;
@@ -69,33 +70,37 @@ public class SysAppraiseConfigController {
     } else {
       List<Map<String, Object>> hjConfigDate = getConfig(1);
       log.info("getConfigData return hj list {}",hjConfigDate);
-      totalList.put("hj", hjConfigDate);
+      totalList.put("sp", hjConfigDate);
       List<Map<String, Object>> spConfigDate = getConfig(2);
       log.info("getConfigData return sp list {}",spConfigDate);
-      totalList.put("sp", spConfigDate);
+      totalList.put("yp", spConfigDate);
       List<Map<String, Object>> ypConfigDate = getConfig(3);
       log.info("getConfigData return yp list {}",ypConfigDate);
-      totalList.put("yp", ypConfigDate);
+      totalList.put("hj", ypConfigDate);
     }
     return Result.ok(totalList);
   }
   @PostMapping("/updateDatas")
   @ResponseBody
-  public Object updateData(@RequestBody Map<String, Object> requestMap) throws Exception {
-    if(CollectionUtils.isEmpty(requestMap) && CollectionUtils.isEmpty((List<Map<String, Object>>) requestMap.get("dataList"))) {
+  public Object updateData(@RequestBody List<Map<String, Object>> list) throws Exception {
+    if(CollectionUtils.isEmpty(list)) {
       throw new GlobalErrorException("888888", "保存数据不能为空!");
     }else {
-      String categoryType = requestMap.get("categoryType") +"";
-      if(null != categoryType && !"".equals(categoryType)) {
-         if("1".equals(categoryType)) {
-           requestMap.put("category", 1);
-         }else if ("2".equals(categoryType)) {
-           requestMap.put("category", 2);
-         }else if ("3".equals(categoryType)) {
-           requestMap.put("category", 3);
-         }
-         LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "SYSAPPRAISECONFIG");
-         baseService.update("-1", requestMap);
+      for (Map<String, Object> requestMap : list) {
+        String categoryType = requestMap.get("categoryType") +"";
+        if(null != categoryType && !"".equals(categoryType)) {
+           if("1".equals(categoryType)) {
+             requestMap.put("category", 1);
+             
+           }else if ("2".equals(categoryType)) {
+             requestMap.put("category", 2);
+           }else if ("3".equals(categoryType)) {
+             requestMap.put("category", 3);
+           }
+           LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "SYSAPPRAISECONFIG");
+           baseService.update("-1", requestMap);
+      }
+      
       }
     }
     return Result.ok(null);
@@ -108,18 +113,63 @@ public class SysAppraiseConfigController {
    * **/
   @PostMapping("/saveCategoryMaping")
   @ResponseBody
-  public Object saveCategoryMaping(@RequestBody Map<String, Object> requestMap) throws Exception {
+  public Object saveCategoryMaping(@RequestBody List<Map<String, Object>> requestMap) throws Exception {
      validParams(requestMap);
-     LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "SYSAPPRAISECONFIGBYUSER");
-     baseService.save(requestMap);
+     for (Map<String, Object> map : requestMap) {
+       LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "SYSAPPRAISECONFIGBYUSER");
+       baseService.save(map);
+    }
+    
     return Result.ok(null);
   }
+
+  @PostMapping("/configDataListByUser")
+  @ResponseBody
+  public Object getConfigDataByUser(@RequestBody Map<String, Object> requestMap) throws Exception {
+    Map<String, Object> totalList = new HashMap<String, Object>();
+    log.info("getConfigDataByUser param{}",requestMap);
+    String category = requestMap.get("category")+"";
+    String userId = requestMap.get("userId")+"";
+    if (null != category && !"0".equals(category)) {
+      List<Map<String, Object>> hjConfigDate = getConfigByUser(category,userId);
+      log.info("getConfigDataByUser return data list {}",hjConfigDate);
+      if (category.equals("1")) {
+        totalList.put("sp", hjConfigDate);
+      } else if (category.equals("2")) {
+        totalList.put("yp", hjConfigDate);
+      } else if (category.equals("3")) {
+        totalList.put("hj", hjConfigDate);
+      }
+    } else {
+      List<Map<String, Object>> hjConfigDate = getConfigByUser("1",userId);
+      log.info("getConfigDataByUser return hj list {}",hjConfigDate);
+      totalList.put("sp", hjConfigDate);
+      List<Map<String, Object>> spConfigDate = getConfigByUser("2",userId);
+      log.info("getConfigDataByUser return sp list {}",spConfigDate);
+      totalList.put("yp", spConfigDate);
+      List<Map<String, Object>> ypConfigDate = getConfigByUser("3",userId);
+      log.info("getConfigDataByUser return yp list {}",ypConfigDate);
+      totalList.put("hj", ypConfigDate);
+    }
+    return Result.ok(totalList);
+  }
+  
   
   @SuppressWarnings("unchecked")
   public List<Map<String, Object>> getConfig(int category) throws Exception {
     Map<String, Object> requestMap = new HashMap<String, Object>();
     requestMap.put("category", category);
     LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "SYSAPPRAISECONFIG");
+    List<Map<String, Object>> dateList = (List<Map<String, Object>>) baseService.list(requestMap);
+    return dateList;
+  }
+  
+  @SuppressWarnings("unchecked")
+  public List<Map<String, Object>> getConfigByUser(String category,String userId) throws Exception {
+    Map<String, Object> requestMap = new HashMap<String, Object>();
+    requestMap.put("category", category);
+    requestMap.put("userId", userId);
+    LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "SYSAPPRAISECONFIGBYUSER");
     List<Map<String, Object>> dateList = (List<Map<String, Object>>) baseService.list(requestMap);
     return dateList;
   }
@@ -131,9 +181,21 @@ public class SysAppraiseConfigController {
    * @param requestBody
    */
   @SuppressWarnings("unchecked")
-  private void validParams(Map<String, Object> requestBody) {
-    ValidationUtils.notNull(requestBody.get("userId"), "创建人ID不能为空!");
-    ValidationUtils.notNull(requestBody.get("userName"), "创建人不能为空!");
-    ValidationUtils.notNull(requestBody.get("categoryList"), "配置项不能为空!"); 
+  private void validParams(List<Map<String, Object>> list) {
+    if (CollectionUtils.isEmpty(list)) {
+      throw new GlobalErrorException("888888", "保存数据不能为空!");
+    }
+
+    for (Map<String, Object> map : list) {
+      try {
+        ValidationUtils.notNull(map.get("userId"), "创建人ID不能为空!");
+        ValidationUtils.notNull(map.get("userName"), "创建人不能为空!");
+        ValidationUtils.notNull(map.get("categoryList"), "配置项不能为空!");
+      } catch (Exception e) {
+        // TODO: handle exception
+        e.getStackTrace();
+      }
+
+    }
   }
 }

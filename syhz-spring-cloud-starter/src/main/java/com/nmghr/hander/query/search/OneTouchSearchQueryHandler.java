@@ -18,14 +18,12 @@ import com.nmghr.basic.core.page.Paging;
 import com.nmghr.basic.core.service.IBaseService;
 import com.nmghr.basic.core.service.handler.impl.AbstractQueryHandler;
 import com.nmghr.service.EsOneTouchSearchService;
+import com.nmghr.util.ListSortUtil;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
 
-import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.regex.Pattern;
 
 /**
  * 一键搜索
@@ -42,8 +40,8 @@ public class OneTouchSearchQueryHandler extends AbstractQueryHandler{
     @Autowired
     private EsOneTouchSearchService esService;
 
-    @Value("${elasticsearch.hostNames}")
-    private String ES_HOSTNAME;
+    /** ES使用的XML文件名 */
+    private static final String ES_ONE_TOUCH_SEARCH_XML_NAME = "onetouchsearch";
 
     /** 全部 */
     private static final int RESOURCE_TYPE_ALL = 0;
@@ -72,43 +70,69 @@ public class OneTouchSearchQueryHandler extends AbstractQueryHandler{
     private static final int RESOURCE_TYPE_EXTERNAL_RES = 7;
     private static final String ES_INDEX_EXTERNAL_RES = "";
 
+    /** 知识库索引（别名） */
+    private static final String ES_INDEX_KNOWLEDGE_ALIAS = "onetouchsearchknowledge";
+    /** 全部（别名） */
+    private static final String ES_INDEX_ALL = "onetouchsearchall";
+
     private static final String CODE_ENABLED_YES = "1";
 
     @Override
     public Object page(Map<String, Object> requestMap, int currentPage, int pageSize) throws Exception {
         Map<String, Object> retMap = null;
         // 从码表取出资源类型code和排序
-        Map<Integer, Integer> resource = getResourceType("yjss");
+        Map<String, Object> resource = getResourceType("yjss");
         int resourceType = Integer.valueOf(requestMap.get("resourceType").toString());
-
         switch (resourceType) {
             case RESOURCE_TYPE_ALL:
+                // 给hsyz ctime字段添加别名
+                if (!esService.existFieldAlias("hsyz", "publishTime")) {
+                    if (!esService.addFieldAlias(ES_ONE_TOUCH_SEARCH_XML_NAME, "hsyz", "setHsyzFieldAlias")) {
+                        return Result.fail("999989", "设置字段别名失败");
+                    }
+                }
+                if (esService.addAlias(ES_INDEX_KNOWLEDGE_CASEINFO, ES_INDEX_ALL)
+                        && esService.addAlias(ES_INDEX_KNOWLEDGE_LAWINFO, ES_INDEX_ALL)
+                        && esService.addAlias(ES_INDEX_KNOWLEDGE_INDUSTRYINFO, ES_INDEX_ALL)
+                        && esService.addAlias(ES_INDEX_KNOWLEDGE_STANDARDINFO, ES_INDEX_ALL)
+                        && esService.addAlias(ES_INDEX_TRAIN, ES_INDEX_ALL)
+                        && esService.addAlias(ES_INDEX_CASE, ES_INDEX_ALL)
+                        && esService.addAlias(ES_INDEX_CLUE, ES_INDEX_ALL)
+                        && esService.addAlias(ES_INDEX_PUBLIC_OPINION, ES_INDEX_ALL)
+                        && esService.addAlias(ES_INDEX_INTERNAL_RES, ES_INDEX_ALL)
+                        ) {
+                    retMap = oneTouchSearchEs(ES_ONE_TOUCH_SEARCH_XML_NAME, ES_INDEX_ALL, requestMap, "oneTouchSearch", resource);
+                    List<Map<String, Object>> data = (List<Map<String, Object>>) retMap.get("list");
+                    // 相同时间情况下根据资源类型排序
+                    List<Map<String, Object>> newData = resultSortByType(data);
+                    retMap.put("list", newData);
+                }
                 break;
             case RESOURCE_TYPE_KNOWLEDGE:
                 // 设置别名
-                if (esService.addAlias("caseinfo", "onetouchsearchknowledge")
-                        && esService.addAlias("lawinfo", "onetouchsearchknowledge")
-                        && esService.addAlias("industryinfo", "onetouchsearchknowledge")
-                        && esService.addAlias("standardinfo", "onetouchsearchknowledge")) {
-                    retMap = oneTouchSearchEs("onetouchsearch", "onetouchsearchknowledge", requestMap, "oneTouchSearch");
+                if (esService.addAlias(ES_INDEX_KNOWLEDGE_CASEINFO, ES_INDEX_KNOWLEDGE_ALIAS)
+                        && esService.addAlias(ES_INDEX_KNOWLEDGE_LAWINFO, ES_INDEX_KNOWLEDGE_ALIAS)
+                        && esService.addAlias(ES_INDEX_KNOWLEDGE_INDUSTRYINFO, ES_INDEX_KNOWLEDGE_ALIAS)
+                        && esService.addAlias(ES_INDEX_KNOWLEDGE_STANDARDINFO, ES_INDEX_KNOWLEDGE_ALIAS)) {
+                    retMap = oneTouchSearchEs(ES_ONE_TOUCH_SEARCH_XML_NAME, ES_INDEX_KNOWLEDGE_ALIAS, requestMap, "oneTouchSearch", resource);
                 } else {
-                    throw new GlobalErrorException("999989", "设置别名失败");
+                    return Result.fail("999989", "设置别名失败");
                 }
                 break;
             case RESOURCE_TYPE_TRAIN:
-                retMap = oneTouchSearchEs("onetouchsearch", "traincourse", requestMap, "oneTouchSearch");
+                retMap = oneTouchSearchEs(ES_ONE_TOUCH_SEARCH_XML_NAME, ES_INDEX_TRAIN, requestMap, "oneTouchSearch", resource);
                 break;
             case RESOURCE_TYPE_CASE:
-                retMap = oneTouchSearchEs("onetouchsearch", "case", requestMap, "oneTouchSearch");
+                retMap = oneTouchSearchEs(ES_ONE_TOUCH_SEARCH_XML_NAME, ES_INDEX_CASE, requestMap, "oneTouchSearch", resource);
                 break;
             case RESOURCE_TYPE_CLUE:
-                retMap = oneTouchSearchEs("onetouchsearch", "clue", requestMap, "oneTouchSearch");
+                retMap = oneTouchSearchEs(ES_ONE_TOUCH_SEARCH_XML_NAME, ES_INDEX_CLUE, requestMap, "oneTouchSearch", resource);
                 break;
             case RESOURCE_TYPE_PUBLIC_OPINION:
-                retMap = oneTouchSearchEs("onetouchsearch", "hsyz", requestMap, "oneTouchSearchHsyz");
+                retMap = oneTouchSearchEs(ES_ONE_TOUCH_SEARCH_XML_NAME, ES_INDEX_PUBLIC_OPINION, requestMap, "oneTouchSearchHsyz", resource);
                 break;
             case RESOURCE_TYPE_INTERNAL_RES:
-                retMap = oneTouchSearchEs("onetouchsearch", "reptile", requestMap, "oneTouchSearch");
+                retMap = oneTouchSearchEs(ES_ONE_TOUCH_SEARCH_XML_NAME, ES_INDEX_INTERNAL_RES, requestMap, "oneTouchSearch", resource);
                 break;
             case RESOURCE_TYPE_EXTERNAL_RES:
                 break;
@@ -126,26 +150,6 @@ public class OneTouchSearchQueryHandler extends AbstractQueryHandler{
     }
 
     /**
-     * 根据currentPage，pageSize信息获取分页数据
-     * @param list
-     * @param currentPage
-     * @param pageSize
-     * @return
-     * @throws Exception
-     */
-    private List<Map<String, Object>> getPageList(List<Map<String, Object>> list, int currentPage, int pageSize) throws Exception {
-        int startIndex = currentPage > 1 ? ((currentPage - 1) * pageSize) : 0;
-        int endIndex = currentPage == 0 ? pageSize : currentPage * pageSize;
-        List<Map<String, Object>> retNewList = null;
-        if (list.size() < endIndex) {
-            retNewList = list.subList(startIndex, list.size());
-        } else {
-            retNewList = list.subList(startIndex, endIndex);
-        }
-        return retNewList;
-    }
-
-    /**
      * 一键搜索ES
      * @param xmlName
      * @param index
@@ -154,35 +158,15 @@ public class OneTouchSearchQueryHandler extends AbstractQueryHandler{
      * @return
      * @throws Exception
      */
-    private Map<String, Object> oneTouchSearchEs(String xmlName, String index, Map<String, Object> map, String DSL) throws Exception {
+    private Map<String, Object> oneTouchSearchEs(String xmlName, String index, Map<String, Object> map, String DSL, Map<String, Object> indexCode) throws Exception {
         try {
-            Map<String, Object> esCaseInfoMap = esService.query(xmlName, index, map, DSL);
-            List<Map<String, Object>> dataList = (List<Map<String, Object>>) esCaseInfoMap.get("data");
-            for (int i = 0; i < dataList.size(); i++) {
-                Map<String, Object> item = dataList.get(i);
-                // 时间字符串转时间戳
-                if (!ObjectUtils.isEmpty(item.get("publishTime"))) {
-                    if (!isInteger(item.get("publishTime").toString())) {
-                        long timeStamp = timeStr2Timestamp(item.get("publishTime").toString());
-                        item.put("publishTime", timeStamp);
-                    }
-                }
-                if (!ObjectUtils.isEmpty(item.get("ctime"))) {
-                    if (!isInteger(item.get("ctime").toString())) {
-                        long timeStamp = timeStr2Timestamp(item.get("ctime").toString());
-                        item.put("publishTime", timeStamp);
-                    } else {
-                        item.put("publishTime", item.get("ctime"));
-                    }
-                    item.remove("ctime");
-                }
-            }
+            Map<String, Object> esCaseInfoMap = esService.query(xmlName, index, map, DSL, indexCode);
             Map<String, Object> resultMap = new HashMap<String, Object>(2);
             resultMap.put("list", esCaseInfoMap.get("data"));
             resultMap.put("totalCount", esCaseInfoMap.get("totalCount"));
             return resultMap;
         } catch (Exception e) {
-            return null;
+            throw new GlobalErrorException("999989", "查询失败");
         }
     }
 
@@ -192,7 +176,7 @@ public class OneTouchSearchQueryHandler extends AbstractQueryHandler{
      * @return
      * @throws Exception
      */
-    private Map<Integer, Integer> getResourceType(String codeLx) throws Exception {
+    private Map<String, Object> getResourceType(String codeLx) throws Exception {
         Map<String, Object> searchMap = new HashMap<>(4);
         searchMap.put("codeLx", codeLx);
         LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "TCODE");
@@ -200,7 +184,7 @@ public class OneTouchSearchQueryHandler extends AbstractQueryHandler{
         if (ObjectUtils.isEmpty(retList)) {
             throw new GlobalErrorException("999989", "查询资源类型失败");
         }
-        Map<Integer, Integer> retMap = new HashMap<>(16);
+        Map<String, Object> retMap = new HashMap<>(16);
         for(Map<String, Object> item : retList) {
             if (ObjectUtils.isEmpty(item.get("code"))) {
                 throw new GlobalErrorException("999989", "Id为" + item.get("id").toString() + "的code字段不能为空");
@@ -215,110 +199,67 @@ public class OneTouchSearchQueryHandler extends AbstractQueryHandler{
             if (CODE_ENABLED_YES.equals(codeNameJson.get("enabled"))) {
                 int code = Integer.valueOf(item.get("code").toString());
                 int sort = Integer.valueOf(item.get("code_sorted").toString());
-                retMap.put(code, sort);
+                switch (code) {
+                    case RESOURCE_TYPE_KNOWLEDGE:
+                        retMap.put(ES_INDEX_KNOWLEDGE_CASEINFO, setIndexCodeInfo(code, sort, 4));
+                        retMap.put(ES_INDEX_KNOWLEDGE_LAWINFO, setIndexCodeInfo(code, sort, 1));
+                        retMap.put(ES_INDEX_KNOWLEDGE_INDUSTRYINFO, setIndexCodeInfo(code, sort, 2));
+                        retMap.put(ES_INDEX_KNOWLEDGE_STANDARDINFO, setIndexCodeInfo(code, sort, 3));
+                        break;
+                    case RESOURCE_TYPE_TRAIN:
+                        retMap.put(ES_INDEX_TRAIN, setIndexCodeInfo(code, sort, -1));
+                        break;
+                    case RESOURCE_TYPE_CASE:
+                        retMap.put(ES_INDEX_CASE, setIndexCodeInfo(code, sort, -1));
+                        break;
+                    case RESOURCE_TYPE_CLUE:
+                        retMap.put(ES_INDEX_CLUE, setIndexCodeInfo(code, sort, -1));
+                        break;
+                    case RESOURCE_TYPE_PUBLIC_OPINION:
+                        retMap.put(ES_INDEX_PUBLIC_OPINION, setIndexCodeInfo(code, sort, -1));
+                        break;
+                    case RESOURCE_TYPE_INTERNAL_RES:
+                        retMap.put(ES_INDEX_INTERNAL_RES, setIndexCodeInfo(code, sort, -1));
+                        break;
+                    case RESOURCE_TYPE_EXTERNAL_RES:
+//                        retMap.put(ES_INDEX_EXTERNAL_RES, map);
+                        break;
+                    default:
+                        break;
+                }
             }
         }
         return retMap;
     }
 
-
-    /**
-     * 构造ES请求路径
-     * @param resourceType
-     * @return
-     * @throws Exception
-     */
-    private String getRequestUrlES(int resourceType) throws Exception {
-        String esPostUrl = null;
-        String esIndexs = null;
-        switch (resourceType) {
-            case RESOURCE_TYPE_ALL:
-                esIndexs = ES_INDEX_KNOWLEDGE_CASEINFO + ","
-                        + ES_INDEX_KNOWLEDGE_LAWINFO + ","
-                        + ES_INDEX_KNOWLEDGE_INDUSTRYINFO + ","
-                        + ES_INDEX_KNOWLEDGE_STANDARDINFO + ","
-                        + ES_INDEX_TRAIN + ","
-                        + ES_INDEX_CASE + ","
-                        + ES_INDEX_CLUE + ","
-                        + ES_INDEX_PUBLIC_OPINION + ","
-                        + ES_INDEX_INTERNAL_RES + ","
-                        + ES_INDEX_EXTERNAL_RES;
-                break;
-            case RESOURCE_TYPE_KNOWLEDGE:
-                esIndexs = ES_INDEX_KNOWLEDGE_CASEINFO + "," + ES_INDEX_KNOWLEDGE_LAWINFO + "," + ES_INDEX_KNOWLEDGE_INDUSTRYINFO + "," + ES_INDEX_KNOWLEDGE_STANDARDINFO;
-                break;
-            case RESOURCE_TYPE_TRAIN:
-                esIndexs = ES_INDEX_TRAIN;
-                break;
-            case RESOURCE_TYPE_CASE:
-                esIndexs = ES_INDEX_CASE;
-                break;
-            case RESOURCE_TYPE_CLUE:
-                esIndexs = ES_INDEX_CLUE;
-                break;
-            case RESOURCE_TYPE_PUBLIC_OPINION:
-                esIndexs = ES_INDEX_PUBLIC_OPINION;
-                break;
-            case RESOURCE_TYPE_INTERNAL_RES:
-                esIndexs = ES_INDEX_INTERNAL_RES;
-                break;
-            case RESOURCE_TYPE_EXTERNAL_RES:
-                esIndexs = ES_INDEX_EXTERNAL_RES;
-                break;
-            default:
-                return null;
+    private Map<String, Object> setIndexCodeInfo(int code, int sort, int active ) {
+        Map<String, Object> map = new HashMap<>(4);
+        map.put("code", code);
+        map.put("sort", sort);
+        if (active > 0) {
+            map.put("active", active);
         }
-        esPostUrl ="http://" + ES_HOSTNAME + "/" + esIndexs + "/_search";
-        return esPostUrl;
+        return map;
     }
 
-
-    private JSONObject getRequestBodyES(Object search, int from, int size) throws Exception {
-        Map<String, Object> requestBodyMap = new HashMap<>(8);
-        Map<String, Object> queryMap = new HashMap<>(8);
-        Map<String, Object> multiMatchMap = new HashMap<>(8);
-        List<String> fieldsList = new ArrayList<String>();
-        fieldsList.add("content");
-        fieldsList.add("title");
-        fieldsList.add("attachment");
-        multiMatchMap.put("query", search);
-        multiMatchMap.put("fields", fieldsList);
-        queryMap.put("multi_match", multiMatchMap);
-        Map<String, Object> sortMap = new HashMap<>(8);
-        List<Map<String, Object>> sortList = new ArrayList<Map<String, Object>>();
-        Map<String, Object> publishTimeMap = new HashMap<>(8);
-        Map<String, Object> orderMap = new HashMap<>(8);
-        orderMap.put("order", "desc");
-        publishTimeMap.put("publishTime", orderMap);
-        sortList.add(publishTimeMap);
-        requestBodyMap.put("query", queryMap);
-        requestBodyMap.put("sort", sortList);
-        requestBodyMap.put("from", from);
-        requestBodyMap.put("size", size);
-        return new JSONObject(requestBodyMap);
-    }
-
-    /**
-     * 判断是否为整数
-     * @param str
-     * @return 整数返回true
-     */
-    public static boolean isInteger(String str) {
-        String reg = "^[-\\+]?[\\d]*$";
-        Pattern pattern = Pattern.compile(reg);
-        return pattern.matcher(str).matches();
-    }
-
-    /**
-     * 字符串时间转时间戳
-     * @param timeStr
-     * @return
-     * @throws Exception
-     */
-    private long timeStr2Timestamp(String timeStr) throws Exception {
-        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        Date date = simpleDateFormat.parse(timeStr);
-        return date.getTime();
+    private List<Map<String, Object>> resultSortByType(List<Map<String, Object>> list) {
+        ListSortUtil.resultOrder(list, "publishTime", -1);
+        Map<String, List<Map<String, Object>>> map = new TreeMap<>(Comparator.reverseOrder());
+        for (Map<String, Object> map1 : list) {
+            String key = map1.get("publishTime").toString();
+            if (map.containsKey(key)) {
+                map.get(key).add(map1);
+            } else {
+                List<Map<String, Object>> listTemp = new ArrayList<>();
+                listTemp.add(map1);
+                map.put(key, listTemp);
+            }
+        }
+        List<Map<String, Object>> newMapList = new ArrayList<>();
+        for (List<Map<String, Object>> testBeans : map.values()) {
+            newMapList.addAll(ListSortUtil.resultOrder(testBeans, "type", 1));
+        }
+        return newMapList;
     }
 
 }

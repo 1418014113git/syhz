@@ -50,7 +50,7 @@ public class CaseAssistSubmitSaveHandler extends AbstractSaveHandler {
     if (!validName(String.valueOf(body.get("curDeptCode")), String.valueOf(body.get("title")), body.get("id"))) {
       throw new GlobalErrorException("999667", "案件协查标题已存在，请确认后重新输入！");
     }
-    if(!StringUtils.isEmpty(body.get("assistNumber")) && !"1".equals(String.valueOf(body.get("category")))){
+    if(!StringUtils.isEmpty(body.get("id")) && !StringUtils.isEmpty(body.get("assistNumber")) && !"1".equals(String.valueOf(body.get("category")))){
       String assistId = "";
       if (body.containsKey("id") && !StringUtils.isEmpty(body.get("id"))) {
         assistId = String.valueOf(body.get("id"));
