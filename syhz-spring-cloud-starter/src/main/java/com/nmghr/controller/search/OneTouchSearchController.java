@@ -32,9 +32,9 @@ public class OneTouchSearchController {
 
     @GetMapping(value = "/query")
     public Object query(@RequestParam Map<String, Object> params) throws Exception {
-//        if (ObjectUtils.isEmpty(params.get("search"))) {
-//            return Result.fail("999989", "关键字不能为空");
-//        }
+        if (ObjectUtils.isEmpty(params.get("search"))) {
+            return Result.fail("999989", "关键字不能为空");
+        }
         if (ObjectUtils.isEmpty(params.get("resourceType"))) {
             return Result.fail("999989", "资源类型不能为空");
         }
