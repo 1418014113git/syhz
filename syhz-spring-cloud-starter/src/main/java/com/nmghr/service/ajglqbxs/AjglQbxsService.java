@@ -444,7 +444,7 @@ public class AjglQbxsService {
     //处理线索状态
     Map<String, Object> baseP = new HashMap<>();
     baseP.put("ids", Arrays.asList(String.valueOf(qbxsId).split(",")));
-    baseP.put("qbxsDistribute", 1);
+    baseP.put("qbxsDistribute", 2);
     baseP.put("qbxsResult", 1);
     LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJGLQBXSBASEBATCHUPDATE");
     baseService.update("", baseP);
@@ -452,10 +452,14 @@ public class AjglQbxsService {
     if (body.get("qbxsDeptId") != null) {
       delAndCancel(body);
     }
-    //给支队增加返回信息
+    //给支队增加签收信息返回信息
     createSign(Integer.parseInt(String.valueOf(body.get("receiveDeptType"))), assistId, body.get("receiveDept"), String.valueOf(body.get("assistType")), qbxsId);
+    if("1".equals(String.valueOf(body.get("receiveDeptType")))){
+      //增加总队信息
+      reBackMaster(body);
+    }
 
-    //如果是只给总队增加部门关联
+
     if ("addRecord".equals(body.get("opt"))) {
       //增加记录
       Map<String, Object> map = new HashMap<>();
@@ -480,8 +484,78 @@ public class AjglQbxsService {
     return getClueTotal(String.valueOf(assistId));
   }
 
+  public void reBackMaster(Map<String, Object> body) throws Exception {
+    String qbxsId = String.valueOf(body.get("qbxsId"));//线索ids
+    List<Object> qbxsIds = Arrays.asList(qbxsId.split(","));
+    String assistId = String.valueOf(body.get("assistId"));
+
+    // 分配部门
+    String assistType = String.valueOf(body.get("assistType"));
+    //增加协查分配的部门信息
+    Map<String, Object> deptP = new HashMap<>();
+    deptP.put("deptCode", body.get("receiveDept"));
+    deptP.put("deptName", body.get("receiveDeptName"));
+    Object id = "";
+    if ("2".equals(assistType)) { // 集群战役
+      deptP.put("clusterId", assistId);
+      id = deptMapperSaveHandler.save(deptP);
+    }
+    if ("1".equals(assistType)) { // 案件协查
+      deptP.put("assistId", assistId);
+      id = caseAssistSubmitSaveHandler.saveDept(deptP);
+    }
+    //修改base表为已分发
+    Map<String, Object> baseP = new HashMap<>();
+    baseP.put("ids", qbxsIds);
+    baseP.put("qbxsDistribute", 1);
+    baseP.put("qbxsResult", 1);
+    LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJGLQBXSBASEBATCHUPDATE");
+    baseService.update("", baseP);
+
+    //    //增加新的关联信息
+    saveMapper(qbxsId, id, body.get("assistType"));
+
+//    //修改关联表为已下发
+//    Map<String, Object> p = new HashMap<>();
+//    p.put("qbxsIds", qbxsIds);
+//    p.put("deptCode", body.get("curDeptCode"));
+//    p.put("assistId", body.get("assistId"));
+//    p.put("type", "1".equals(String.valueOf(body.get("assistType"))) ? 1 : 2);
+//    p.put("transferred", 2);
+//    LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJGLQBXSDEPTISSUE");
+//    baseService.update("", p);//修改关联表为已下发
+
+//    //删除当前单位以外要修改的线索部门关系信息
+//    reIssue(body, qbxsId, assistType);
+
+
+//    if ("addRecord".equals(body.get("opt"))) {
+//      //增加记录
+//      Map<String, Object> map = new HashMap<>();
+//      map.put("qbxsId", qbxsId);
+//      map.put("assistType", body.get("assistType"));
+//      map.put("assistId", assistId);
+//      map.put("receiveCode", body.get("receiveDept"));
+//      map.put("receiveName", body.get("receiveDeptName"));
+//      map.put("createName", body.get("curDeptName"));
+//      map.put("createCode", body.get("curDeptCode"));
+//      map.put("creatorId", body.get("userId"));
+//      map.put("creatorName", body.get("userName"));
+//      map.put("remark", body.get("remark"));
+//      map.put("optCategory", 4);
+//      List<Map<String, Object>> datas = new ArrayList<>();
+//      datas.add(map);
+//      Map<String, Object> param = new HashMap<>();
+//      param.put("type", "batch");
+//      param.put("list", datas);
+//      sendMessageService.sendMessage(param, QueueConfig.AJGLQBXSRECORD);
+//    }
+//    return getClueTotal(String.valueOf(assistId));
+  }
+
+
   private void createSign(int deptType, Object assistId, Object deptCode, String assistType, Object qbxsId) throws Exception {
-    if(deptType==2){
+    if (deptType == 2) {
       Map<String, Object> params = new HashMap<>();
       params.put("assistId", assistId);
       params.put("deptCode", deptCode);
@@ -803,11 +877,11 @@ public class AjglQbxsService {
     //查询1.案件协查  2.集群战役
     int type = Integer.parseInt(String.valueOf(requestMap.get("type")));
     int deptType = Integer.parseInt(String.valueOf(requestMap.get("deptType")));
-    Map<String, Object> zdWffMap = new HashMap<>();
-    int zdWffNum = 0;
-    if (1 == deptType) {
-      zdWffNum = getZdWffNum(type, zdWffMap, zdWffNum, requestMap.get("assistId"));
-    }
+//    Map<String, Object> zdWffMap = new HashMap<>();
+//    int zdWffNum = 0;
+//    if (1 == deptType) {
+//      zdWffNum = getZdWffNum(type, zdWffMap, zdWffNum, requestMap.get("assistId"));
+//    }
 
     LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, 1 == type ? "AJASSISTTJFKXX" : "AJCLUSTERTJFKXX");
     List<Map<String, Object>> list = (List<Map<String, Object>>) baseService.list(requestMap);
@@ -879,9 +953,6 @@ public class AjglQbxsService {
     Map<String, Object> count = new HashMap<>();
     count.put("deptName", "-");
     count.put("deptCode", "-");
-    if (1 == deptType && zdWffNum > 0) {
-      xsNumSum += zdWffNum;
-    }
     count.put("xsNum", xsNumSum);
     count.put("cf", cfSum);
     count.put("cs", csSum);
@@ -925,49 +996,49 @@ public class AjglQbxsService {
         }
       }
       result.add(count);
-      if (1 == deptType && result.size() > 0 && zdWffNum > 0) {
-        result.add(0, zdWffMap);
-      }
+//      if (1 == deptType && result.size() > 0 && zdWffNum > 0) {
+//        result.add(0, zdWffMap);
+//      }
       return result;
     }
     list.add(count);
-    if (1 == deptType && list.size() > 0 && zdWffNum > 0) {
-      list.add(0, zdWffMap);
-    }
+//    if (1 == deptType && list.size() > 0 && zdWffNum > 0) {
+//      list.add(0, zdWffMap);
+//    }
     return list;
   }
 
-  private int getZdWffNum(int type, Map<String, Object> zdWffMap, int zdWffNum, Object assistId) throws Exception {
-    //查询总队未分发
-    Map<String, Object> zdP = new LinkedHashMap<>();
-    zdP.put("assistId", assistId);
-    zdP.put("assistType", 1 == type ? 1 : 2);
-    LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJGLQBXSBASEZTNONELIST");
-    List<Map<String, Object>> wff = (List<Map<String, Object>>) baseService.list(zdP);
-    if (wff != null && wff.size() > 0) {
-      Map<String, Object> m = wff.get(0);
-      if (m.get("num") != null) {
-        zdWffNum = Integer.parseInt(String.valueOf(m.get("num")));
-        zdWffMap.put("deptName", "公安厅环食药总队");
-        zdWffMap.put("deptCode", "610000530000");
-        zdWffMap.put("xsNum", zdWffNum);
-        zdWffMap.put("cf", "-");
-        zdWffMap.put("cs", "-");
-        zdWffMap.put("whc", "-");
-        zdWffMap.put("larqCount", "-");
-        zdWffMap.put("parqCount", "-");
-        zdWffMap.put("dhwd", "-");
-        zdWffMap.put("pzdb", "-");
-        zdWffMap.put("zhrys", "-");
-        zdWffMap.put("yjss", "-");
-        zdWffMap.put("xsjl", "-");
-        zdWffMap.put("sajz", "-");
-        zdWffMap.put("ysxz", "-");
-        zdWffMap.put("hcl", "-");
-      }
-    }
-    return zdWffNum;
-  }
+//  private int getZdWffNum(int type, Map<String, Object> zdWffMap, int zdWffNum, Object assistId) throws Exception {
+//    //查询总队未分发
+//    Map<String, Object> zdP = new LinkedHashMap<>();
+//    zdP.put("assistId", assistId);
+//    zdP.put("assistType", 1 == type ? 1 : 2);
+//    LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJGLQBXSBASEZTNONELIST");
+//    List<Map<String, Object>> wff = (List<Map<String, Object>>) baseService.list(zdP);
+//    if (wff != null && wff.size() > 0) {
+//      Map<String, Object> m = wff.get(0);
+//      if (m.get("num") != null) {
+//        zdWffNum = Integer.parseInt(String.valueOf(m.get("num")));
+//        zdWffMap.put("deptName", "公安厅环食药总队");
+//        zdWffMap.put("deptCode", "610000530000");
+//        zdWffMap.put("xsNum", zdWffNum);
+//        zdWffMap.put("cf", "-");
+//        zdWffMap.put("cs", "-");
+//        zdWffMap.put("whc", "-");
+//        zdWffMap.put("larqCount", "-");
+//        zdWffMap.put("parqCount", "-");
+//        zdWffMap.put("dhwd", "-");
+//        zdWffMap.put("pzdb", "-");
+//        zdWffMap.put("zhrys", "-");
+//        zdWffMap.put("yjss", "-");
+//        zdWffMap.put("xsjl", "-");
+//        zdWffMap.put("sajz", "-");
+//        zdWffMap.put("ysxz", "-");
+//        zdWffMap.put("hcl", "-");
+//      }
+//    }
+//    return zdWffNum;
+//  }
 
   private int getDeptType(String deptCode) {
     if (StringUtils.isEmpty(deptCode)) {
