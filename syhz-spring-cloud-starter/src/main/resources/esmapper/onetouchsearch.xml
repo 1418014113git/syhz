@@ -1,0 +1,78 @@
+<properties>
+    <property name="setAliasToKnowledge">
+        <![CDATA[{
+            "actions": {
+                "add": {
+                    "index": "caseinfo",
+                    "alias": "mxdTest"
+                },
+                "add": {
+                    "index": "lawinfo",
+                    "alias": "mxdTest"
+                },
+                "add": {
+                    "index": "industryinfo",
+                    "alias": "mxdTest"
+                },
+                "add": {
+                    "index": "standardinfo",
+                    "alias": "mxdTest"
+                }
+            }
+        }]]>
+    </property>
+
+    <property name="setHsyzFieldAlias">
+        <![CDATA[{
+            "properties": {
+                "publishTime": {
+                    "type": "alias",
+                    "path": "ctime"
+                }
+            }
+        }]]>
+    </property>
+
+    ## 一键搜索
+    <property name="oneTouchSearch">
+        <![CDATA[{
+            "query": {
+                "multi_match": {
+                    "query": #[search],
+                    "fields": ["content", "title", "attachment"]
+                }
+            },
+            "sort": [{
+                "publishTime": {
+                    "order": "desc"
+                }
+            }],
+            ## 分页起点
+            "from":#[num],
+            ## 最多返回size条记录
+            "size":#[pageSize]
+        }]]>
+    </property>
+
+    ## 一键搜索-舆情
+    <property name="oneTouchSearchHsyz">
+        <![CDATA[{
+            "query": {
+                "multi_match": {
+                    "query": #[search],
+                    "fields": ["content", "title", "attachment"]
+                }
+            },
+            "sort": [{
+                "ctime": {
+                    "order": "desc"
+                }
+            }],
+            ## 分页起点
+            "from":#[num],
+            ## 最多返回size条记录
+            "size":#[pageSize]
+        }]]>
+    </property>
+
+</properties>

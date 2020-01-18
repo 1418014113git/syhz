@@ -4,6 +4,8 @@ import com.nmghr.basic.common.Constant;
 import com.nmghr.basic.common.exception.GlobalErrorException;
 import com.nmghr.basic.core.common.LocalThreadStorage;
 import com.nmghr.basic.core.service.IBaseService;
+import com.nmghr.handler.message.QueueConfig;
+import com.nmghr.handler.service.SendMessageService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,6 +20,8 @@ public class AjglQbxsFeedBackService {
 
   @Autowired
   private IBaseService baseService;
+  @Autowired
+  private SendMessageService sendMessageService;
 
   /**
    * 线索反馈
@@ -65,6 +69,33 @@ public class AjglQbxsFeedBackService {
     String feedBack_alias = "1".equals(assistType)?"AJASSISTFEEDBACK":"AJCLUSTERFEEDBACK";// 1案件协查,2集群战役
     LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, feedBack_alias);
     baseService.update(reqParam,param);
+
+    saveRecords(body,Arrays.asList(qbxsId.split(",")));
+
     return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date());
   }
+
+  private void saveRecords(Map<String, Object> body, List<Object> qbxsIds) {
+    List<Map<String, Object>> datas = new ArrayList<>();
+    //下发线索增加流转记录
+    for (Object qbxsId : qbxsIds) {
+      Map<String, Object> map = new HashMap<>();
+      map.put("qbxsId", qbxsId);
+      map.put("assistType", body.get("assistType"));
+      map.put("assistId", body.get("assistId"));
+//      map.put("receiveCode", body.get("acceptDeptCode"));
+//      map.put("receiveName", body.get("acceptDeptName"));
+      map.put("createName", body.get("curDeptName"));
+      map.put("createCode", body.get("curDeptCode"));
+      map.put("creatorId", body.get("userId"));
+      map.put("creatorName", body.get("userName"));
+      map.put("optCategory", 6);
+      datas.add(map);
+    }
+    Map<String, Object> param = new HashMap<>();
+    param.put("type", "batch");
+    param.put("list", datas);
+    sendMessageService.sendMessage(param, QueueConfig.AJGLQBXSRECORD);
+  }
+
 }

@@ -1,5 +1,6 @@
 package com.nmghr.controller.caseAssist;
 
+import com.alibaba.fastjson.JSON;
 import com.nmghr.basic.common.Constant;
 import com.nmghr.basic.core.common.LocalThreadStorage;
 import com.nmghr.basic.core.service.IBaseService;
@@ -109,8 +110,14 @@ public class AssistStatisticsController {
         //组装信息
         for (String key : deptAjbhs.keySet()) {
           List<String> ajbhs = (List<String>) deptAjbhs.get(key);
+          ajbhs = ajbhCheck(ajbhs);
           Map<String, Object> res = ajglQbxsService.getAjInfoCountData(ajbhs, p.get("fllb"));
           Map<String, Object> temp = (Map<String, Object>) deptCodeMap.get(key);
+          if(ajbhs.size()>0){
+            temp.put("ajbhs",org.apache.commons.lang3.StringUtils.join(ajbhs,","));
+          } else {
+            temp.put("ajbhs","");
+          }
           temp.putAll(res);
         }
       }
@@ -237,8 +244,14 @@ public class AssistStatisticsController {
         //组装信息
         for (String key : deptAjbhs.keySet()) {
           List<String> ajbhs = (List<String>) deptAjbhs.get(key);
+          ajbhs = ajbhCheck(ajbhs);
           Map<String, Object> res = ajglQbxsService.getAjInfoData(ajbhs);
           Map<String, Object> temp = (Map<String, Object>) deptCodeMap.get(key);
+          if(ajbhs.size()>0){
+            temp.put("ajbhs",org.apache.commons.lang3.StringUtils.join(ajbhs,","));
+          } else {
+            temp.put("ajbhs","");
+          }
           temp.putAll(res);
         }
       }
@@ -273,6 +286,9 @@ public class AssistStatisticsController {
         c.put("hjnum", Integer.parseInt(String.valueOf(c.get("hjnum"))) + Integer.parseInt(String.valueOf(m.get("hjnum"))));
         c.put("fllbnum", Integer.parseInt(String.valueOf(c.get("fllbnum"))) + Integer.parseInt(String.valueOf(m.get("fllbnum"))));
         c.put("xsjl", Integer.parseInt(String.valueOf(c.get("xsjl"))) + Integer.parseInt(String.valueOf(m.get("xsjl"))));
+        if(!StringUtils.isEmpty(m.get("ajbhs"))){
+          c.put("ajbhs", String.valueOf(c.get("ajbhs")) +","+ String.valueOf(m.get("ajbhs")));
+        }
         List<Map<String, Object>> dArray = (List<Map<String, Object>>) c.get("list");
         Map<String, Object> cn = new HashMap<>();
         cn.putAll(m);
@@ -320,6 +336,9 @@ public class AssistStatisticsController {
         c.put("cs", Integer.parseInt(String.valueOf(c.get("cs"))) + Integer.parseInt(String.valueOf(m.get("cs"))));
         c.put("cf", Integer.parseInt(String.valueOf(c.get("cf"))) + Integer.parseInt(String.valueOf(m.get("cf"))));
         c.put("qbxsNum", Integer.parseInt(String.valueOf(c.get("qbxsNum"))) + Integer.parseInt(String.valueOf(m.get("qbxsNum"))));
+        if(!StringUtils.isEmpty(m.get("ajbhs"))){
+          c.put("ajbhs", String.valueOf(c.get("ajbhs")) +","+ String.valueOf(m.get("ajbhs")));
+        }
 
         BigDecimal cQbxsNum = new BigDecimal(String.valueOf(c.get("qbxsNum")));
         if (cQbxsNum.compareTo(BigDecimal.ZERO) > 0) {
@@ -349,5 +368,20 @@ public class AssistStatisticsController {
   }
 
   private BigDecimal oneHundred = new BigDecimal("100");
+
+  /**
+   * 案件编号去重
+   *
+   * @return
+   */
+  private List<String> ajbhCheck(List<String> ajbhs) {
+    Map<String, Object> map = new HashMap<>();
+    for (String s : ajbhs) {
+      if (!StringUtils.isEmpty(s)) {
+        map.put(s, s);
+      }
+    }
+    return new ArrayList(map.values());
+  }
 
 }
