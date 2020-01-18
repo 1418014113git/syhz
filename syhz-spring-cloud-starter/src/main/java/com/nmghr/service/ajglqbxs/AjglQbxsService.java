@@ -399,12 +399,7 @@ public class AjglQbxsService {
     //处理线索状态
     Map<String, Object> baseP = new HashMap<>();
     baseP.put("ids", Arrays.asList(String.valueOf(qbxsId).split(",")));
-    if("2".equals(String.valueOf(body.get("receiveDeptType")))){
-      baseP.put("qbxsDistribute", 2);
-    } else {
-      baseP.put("qbxsDistribute", 1);
-    }
-
+    baseP.put("qbxsDistribute", 1);
     baseP.put("qbxsResult", 1);
     LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJGLQBXSBASEBATCHUPDATE");
     baseService.update("", baseP);
