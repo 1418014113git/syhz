@@ -227,8 +227,10 @@ public class AjglQbxsService {
   }
 
   private void delSignDept(Object assistDeptId, Object assistId, Object code, int type) throws Exception {
-    List<Object> codes = new ArrayList<>();
-    codes.add(code);
+    if(StringUtils.isEmpty(code)){
+      return ;
+    }
+    List<Object> codes = Arrays.asList(String.valueOf(code).split(","));
     Map<String, Object> delP = new HashMap<>();
     delP.put("assistDeptId", assistDeptId);
     delP.put("assistType", type);
@@ -330,7 +332,7 @@ public class AjglQbxsService {
     LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJGLQBXSBASEDEL");
     baseService.remove(delMap);
     if (body.get("qbxsDeptId") != null) {
-      delAndCancel(body);
+      delAndCancel(body, "del");
     }
     if ("addRecord".equals(body.get("opt"))) {
       //增加记录
@@ -353,7 +355,7 @@ public class AjglQbxsService {
     return getClueTotal(String.valueOf(assistId));
   }
 
-  private void delAndCancel(Map<String, Object> body) throws Exception {
+  private void delAndCancel(Map<String, Object> body, String type) throws Exception {
     LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJGLQBXSDEPTONE");
     Map<String, Object> map = (Map<String, Object>) baseService.get(String.valueOf(body.get("qbxsDeptId")));
     //删线索部门关系信息及签收反馈信息
@@ -362,6 +364,7 @@ public class AjglQbxsService {
     baseP.put("qbxsDeptIds", body.get("qbxsDeptId"));
     baseP.put("assistId", body.get("assistId"));
     baseP.put("assistType", "1".equals(String.valueOf(body.get("assistType"))) ? 1 : 2);
+    baseP.put("optType", type);
     LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJGLQBXSDEPTDEL");
     baseService.update("", baseP);
     if (map != null) {
@@ -396,13 +399,18 @@ public class AjglQbxsService {
     //处理线索状态
     Map<String, Object> baseP = new HashMap<>();
     baseP.put("ids", Arrays.asList(String.valueOf(qbxsId).split(",")));
-    baseP.put("qbxsDistribute", 1);
+    if("2".equals(String.valueOf(body.get("receiveDeptType")))){
+      baseP.put("qbxsDistribute", 2);
+    } else {
+      baseP.put("qbxsDistribute", 1);
+    }
+
     baseP.put("qbxsResult", 1);
     LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJGLQBXSBASEBATCHUPDATE");
     baseService.update("", baseP);
     //处理关联
     if (body.get("qbxsDeptId") != null) {
-      delAndCancel(body);
+      delAndCancel(body, "1".equals(body.get("toBoss"))?"del" : "cancel");
     }
 
     //给支队增加返回信息
@@ -450,7 +458,7 @@ public class AjglQbxsService {
     baseService.update("", baseP);
     //处理关联
     if (body.get("qbxsDeptId") != null) {
-      delAndCancel(body);
+      delAndCancel(body, "cancel");
     }
     //给支队增加签收信息返回信息
     createSign(Integer.parseInt(String.valueOf(body.get("receiveDeptType"))), assistId, body.get("receiveDept"), String.valueOf(body.get("assistType")), qbxsId);
@@ -974,7 +982,8 @@ public class AjglQbxsService {
       count.put("hcl", "-");
     }
 
-    if (!StringUtils.isEmpty(requestMap.get("curDeptCode")) && (1 == deptType || 2 == deptType)) {
+    if (1 == deptType || (!StringUtils.isEmpty(requestMap.get("curDeptCode")) &&  2 == deptType)) {
+//    if (1 == deptType || 2 == deptType) {
       //厅或者支队查看所有支队，这里查询所有的支队在和数据封装
       LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, 1 == type ? "AJASSISTTJZDFKXX" : "AJCLUSTERTJZDFKXX");
       List<Map<String, Object>> deptRes = (List<Map<String, Object>>) baseService.list(requestMap);
@@ -996,15 +1005,9 @@ public class AjglQbxsService {
         }
       }
       result.add(count);
-//      if (1 == deptType && result.size() > 0 && zdWffNum > 0) {
-//        result.add(0, zdWffMap);
-//      }
       return result;
     }
     list.add(count);
-//    if (1 == deptType && list.size() > 0 && zdWffNum > 0) {
-//      list.add(0, zdWffMap);
-//    }
     return list;
   }
 
