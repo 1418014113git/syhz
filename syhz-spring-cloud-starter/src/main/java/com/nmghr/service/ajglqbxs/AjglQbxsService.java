@@ -227,8 +227,10 @@ public class AjglQbxsService {
   }
 
   private void delSignDept(Object assistDeptId, Object assistId, Object code, int type) throws Exception {
-    List<Object> codes = new ArrayList<>();
-    codes.add(code);
+    if(StringUtils.isEmpty(code)){
+      return ;
+    }
+    List<Object> codes = Arrays.asList(String.valueOf(code).split(","));
     Map<String, Object> delP = new HashMap<>();
     delP.put("assistDeptId", assistDeptId);
     delP.put("assistType", type);
@@ -330,7 +332,7 @@ public class AjglQbxsService {
     LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJGLQBXSBASEDEL");
     baseService.remove(delMap);
     if (body.get("qbxsDeptId") != null) {
-      delAndCancel(body);
+      delAndCancel(body, "del");
     }
     if ("addRecord".equals(body.get("opt"))) {
       //增加记录
@@ -353,7 +355,7 @@ public class AjglQbxsService {
     return getClueTotal(String.valueOf(assistId));
   }
 
-  private void delAndCancel(Map<String, Object> body) throws Exception {
+  private void delAndCancel(Map<String, Object> body, String type) throws Exception {
     LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJGLQBXSDEPTONE");
     Map<String, Object> map = (Map<String, Object>) baseService.get(String.valueOf(body.get("qbxsDeptId")));
     //删线索部门关系信息及签收反馈信息
@@ -362,10 +364,19 @@ public class AjglQbxsService {
     baseP.put("qbxsDeptIds", body.get("qbxsDeptId"));
     baseP.put("assistId", body.get("assistId"));
     baseP.put("assistType", "1".equals(String.valueOf(body.get("assistType"))) ? 1 : 2);
+    baseP.put("optType", type);
     LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJGLQBXSDEPTDEL");
     baseService.update("", baseP);
     if (map != null) {
-      delSignDept(map.get("deptId"), body.get("assistId"), body.get("receiveCode"), "1".equals(String.valueOf(body.get("assistType"))) ? 1 : 2);
+      if("del".equals(type)){
+        String code = String.valueOf(body.get("receiveCode"));
+        if(!StringUtils.isEmpty(body.get("receiveDept"))){  //总队取消时要更改支队的签收线索数
+          code = body.get("receiveCode")+","+body.get("receiveDept");
+        }
+        delSignDept(map.get("deptId"), body.get("assistId"), code, "1".equals(String.valueOf(body.get("assistType"))) ? 1 : 2);
+      }else {
+        delSignDept(map.get("deptId"), body.get("assistId"), body.get("receiveCode"), "1".equals(String.valueOf(body.get("assistType"))) ? 1 : 2);
+      }
     }
   }
 
@@ -400,14 +411,16 @@ public class AjglQbxsService {
     baseP.put("qbxsResult", 1);
     LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJGLQBXSBASEBATCHUPDATE");
     baseService.update("", baseP);
-    //处理关联
+    //处理关联  toBoss，总队编辑取消时 删除大队支队线索关联，减少签收 线索数量
     if (body.get("qbxsDeptId") != null) {
-      delAndCancel(body);
+      delAndCancel(body, "1".equals(String.valueOf(body.get("toBoss")))?"del" : "cancel");
     }
+    int deptType = Integer.parseInt(String.valueOf(body.get("receiveDeptType")));
 
-    //给支队增加返回信息
-    createSign(Integer.parseInt(String.valueOf(body.get("receiveDeptType"))), assistId, body.get("receiveDept"), String.valueOf(body.get("assistType")), qbxsId);
-
+    if (deptType == 2 && StringUtils.isEmpty(String.valueOf(body.get("toBoss")))) {
+      //toBoss，总队编辑取消时 给支队增加返回信息
+      createSign(deptType, assistId, body.get("receiveDept"), String.valueOf(body.get("assistType")), qbxsId);
+    }
     if ("addRecord".equals(body.get("opt"))) {
       //增加记录
       Map<String, Object> map = new HashMap<>();
@@ -450,15 +463,17 @@ public class AjglQbxsService {
     baseService.update("", baseP);
     //处理关联
     if (body.get("qbxsDeptId") != null) {
-      delAndCancel(body);
+      delAndCancel(body, "cancel");
     }
     //给支队增加签收信息返回信息
-    createSign(Integer.parseInt(String.valueOf(body.get("receiveDeptType"))), assistId, body.get("receiveDept"), String.valueOf(body.get("assistType")), qbxsId);
-    if("1".equals(String.valueOf(body.get("receiveDeptType")))){
+    int deptType = Integer.parseInt(String.valueOf(body.get("receiveDeptType")));
+    if (deptType == 2) { //给支队增加签收信息返回信息
+      createSign(deptType, assistId, body.get("receiveDept"), String.valueOf(body.get("assistType")), qbxsId);
+    }
+    if(deptType == 1){
       //增加总队信息
       reBackMaster(body);
     }
-
 
     if ("addRecord".equals(body.get("opt"))) {
       //增加记录
@@ -555,7 +570,6 @@ public class AjglQbxsService {
 
 
   private void createSign(int deptType, Object assistId, Object deptCode, String assistType, Object qbxsId) throws Exception {
-    if (deptType == 2) {
       Map<String, Object> params = new HashMap<>();
       params.put("assistId", assistId);
       params.put("deptCode", deptCode);
@@ -572,7 +586,6 @@ public class AjglQbxsService {
       params.put("assistDeptId", bean.get("assistDeptId"));
       LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "1".equals(assistType) ? "AJASSISTFEEDBACK" : "AJCLUSTERFEEDBACK");
       baseService.save(params);
-    }
   }
 
 
@@ -974,10 +987,13 @@ public class AjglQbxsService {
       count.put("hcl", "-");
     }
 
-    if (!StringUtils.isEmpty(requestMap.get("curDeptCode")) && (1 == deptType || 2 == deptType)) {
+    if (1 == deptType || (!StringUtils.isEmpty(requestMap.get("curDeptCode")) &&  2 == deptType)) {
       //厅或者支队查看所有支队，这里查询所有的支队在和数据封装
+      Map<String, Object> deptMap = new HashMap<>();
+      deptMap.put("assistId", requestMap.get("assistId"));
+      deptMap.put("deptType", deptType);
       LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, 1 == type ? "AJASSISTTJZDFKXX" : "AJCLUSTERTJZDFKXX");
-      List<Map<String, Object>> deptRes = (List<Map<String, Object>>) baseService.list(requestMap);
+      List<Map<String, Object>> deptRes = (List<Map<String, Object>>) baseService.list(deptMap);
       if (deptRes == null || deptRes.size() == 0) {
         return new ArrayList();
       }
@@ -996,15 +1012,9 @@ public class AjglQbxsService {
         }
       }
       result.add(count);
-//      if (1 == deptType && result.size() > 0 && zdWffNum > 0) {
-//        result.add(0, zdWffMap);
-//      }
       return result;
     }
     list.add(count);
-//    if (1 == deptType && list.size() > 0 && zdWffNum > 0) {
-//      list.add(0, zdWffMap);
-//    }
     return list;
   }
 
