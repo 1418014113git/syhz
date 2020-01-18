@@ -138,7 +138,7 @@ public class CaseAssistClueController {
           flag++;
         }
       }
-      return keys.size() == flag?"success":"error";
+      return keys.size() == flag ? "success" : "error";
     }
     return "noData";
   }
@@ -161,6 +161,7 @@ public class CaseAssistClueController {
       }
       if ("".equals(type) || "2".equals(type)) { // 集群战役
         LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJGLQBXSBASECLUECOUNT");
+        type = "2";
       }
       if ("1".equals(type)) { // 案件协查
         LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJASSISTGLQBXSBASECLUECOUNT");
@@ -460,6 +461,7 @@ public class CaseAssistClueController {
     }
     return Result.fail("999887", "请求异常");
   }
+
   /**
    * 案件协查集群战役待反馈
    *

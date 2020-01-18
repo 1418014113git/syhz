@@ -188,7 +188,7 @@ public class CaseAssistController {
         return name.substring(0,name.indexOf("区")+1);
       }
     }
-    return "";
+    return "-";
   }
 
   /**

@@ -594,7 +594,6 @@ public class CaseAssistExportController {
     }
   }
 
-
   private List<Object> getTitle(Object id, int assistType) throws Exception {
     Map<String, Object> params = new HashMap<>();
     params.put("assistType", assistType);
@@ -629,7 +628,7 @@ public class CaseAssistExportController {
     }
 
     for (Map<String, Object> map : list) {
-      String key = String.valueOf(map.get("columnIndex"));
+      String key = String.valueOf(map.get("columnIndex"))+ String.valueOf(map.get("qbxsDeptId"));
       if (result.containsKey(key)) {
         List<Object> m = (List<Object>) result.get(key);
         m.add(map.get("value"));
@@ -677,6 +676,7 @@ public class CaseAssistExportController {
     }
     return wb;
   }
+
   private void setSizeColumn(XSSFSheet sheet, int size) {
     for (int columnNum = 0; columnNum <= size; columnNum++) {
       int columnWidth = sheet.getColumnWidth(columnNum) / 256;
