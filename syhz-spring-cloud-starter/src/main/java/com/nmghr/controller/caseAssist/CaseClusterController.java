@@ -102,13 +102,11 @@ public class CaseClusterController {
       List<Map<String, Object>> deptInfo = (List<Map<String, Object>>) baseService.list(p);
       if (deptInfo != null && deptInfo.size() > 0) {
         for (Map<String, Object> m : deptInfo) {
+          if(StringUtils.isEmpty(m.get("xsNum"))){
+            continue;
+          }
           Map<String, Object> bean = (Map<String, Object>) temp.get(String.valueOf(m.get("clusterId")));
           if (bean != null) {
-//            if (bean.containsKey("xsCount")) {
-//              bean.put("xsCount", Integer.parseInt(String.valueOf(bean.get("xsCount"))) + Integer.parseInt(String.valueOf(m.get("xsNum"))));
-//            } else {
-//              bean.put("xsCount", Integer.parseInt(String.valueOf(m.get("xsNum"))));
-//            }
             if (bean.containsKey("hcCount")) {
               bean.put("hcCount", Integer.parseInt(String.valueOf(bean.get("hcCount"))) + Integer.parseInt(String.valueOf(m.get("hc"))));
             } else {
