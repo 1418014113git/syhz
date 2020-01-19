@@ -634,6 +634,9 @@ public class AjglQbxsService {
     } else {
       return new ArrayList();
     }
+    if(!StringUtils.isEmpty(requestMap.get("queryType"))){
+      requestMap.put("queryType",Integer.parseInt(String.valueOf(requestMap.get("queryType"))));
+    }
     Paging pages = (Paging) baseService.page(requestMap, pageNum, pageSize);
     if (pages == null || pages.getList() == null || pages.getList().size() == 0) {
       result.put("list", new ArrayList<>());
