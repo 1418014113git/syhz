@@ -890,11 +890,6 @@ public class AjglQbxsService {
     //查询1.案件协查  2.集群战役
     int type = Integer.parseInt(String.valueOf(requestMap.get("type")));
     int deptType = Integer.parseInt(String.valueOf(requestMap.get("deptType")));
-//    Map<String, Object> zdWffMap = new HashMap<>();
-//    int zdWffNum = 0;
-//    if (1 == deptType) {
-//      zdWffNum = getZdWffNum(type, zdWffMap, zdWffNum, requestMap.get("assistId"));
-//    }
 
     LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, 1 == type ? "AJASSISTTJFKXX" : "AJCLUSTERTJFKXX");
     List<Map<String, Object>> list = (List<Map<String, Object>>) baseService.list(requestMap);
@@ -1018,37 +1013,6 @@ public class AjglQbxsService {
     return list;
   }
 
-//  private int getZdWffNum(int type, Map<String, Object> zdWffMap, int zdWffNum, Object assistId) throws Exception {
-//    //查询总队未分发
-//    Map<String, Object> zdP = new LinkedHashMap<>();
-//    zdP.put("assistId", assistId);
-//    zdP.put("assistType", 1 == type ? 1 : 2);
-//    LocalThreadStorage.put(Constant.CONTROLLER_ALIAS, "AJGLQBXSBASEZTNONELIST");
-//    List<Map<String, Object>> wff = (List<Map<String, Object>>) baseService.list(zdP);
-//    if (wff != null && wff.size() > 0) {
-//      Map<String, Object> m = wff.get(0);
-//      if (m.get("num") != null) {
-//        zdWffNum = Integer.parseInt(String.valueOf(m.get("num")));
-//        zdWffMap.put("deptName", "公安厅环食药总队");
-//        zdWffMap.put("deptCode", "610000530000");
-//        zdWffMap.put("xsNum", zdWffNum);
-//        zdWffMap.put("cf", "-");
-//        zdWffMap.put("cs", "-");
-//        zdWffMap.put("whc", "-");
-//        zdWffMap.put("larqCount", "-");
-//        zdWffMap.put("parqCount", "-");
-//        zdWffMap.put("dhwd", "-");
-//        zdWffMap.put("pzdb", "-");
-//        zdWffMap.put("zhrys", "-");
-//        zdWffMap.put("yjss", "-");
-//        zdWffMap.put("xsjl", "-");
-//        zdWffMap.put("sajz", "-");
-//        zdWffMap.put("ysxz", "-");
-//        zdWffMap.put("hcl", "-");
-//      }
-//    }
-//    return zdWffNum;
-//  }
 
   private int getDeptType(String deptCode) {
     if (StringUtils.isEmpty(deptCode)) {

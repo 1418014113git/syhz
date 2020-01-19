@@ -104,11 +104,11 @@ public class CaseClusterController {
         for (Map<String, Object> m : deptInfo) {
           Map<String, Object> bean = (Map<String, Object>) temp.get(String.valueOf(m.get("clusterId")));
           if (bean != null) {
-            if (bean.containsKey("xsCount")) {
-              bean.put("xsCount", Integer.parseInt(String.valueOf(bean.get("xsCount"))) + Integer.parseInt(String.valueOf(m.get("xsNum"))));
-            } else {
-              bean.put("xsCount", Integer.parseInt(String.valueOf(m.get("xsNum"))));
-            }
+//            if (bean.containsKey("xsCount")) {
+//              bean.put("xsCount", Integer.parseInt(String.valueOf(bean.get("xsCount"))) + Integer.parseInt(String.valueOf(m.get("xsNum"))));
+//            } else {
+//              bean.put("xsCount", Integer.parseInt(String.valueOf(m.get("xsNum"))));
+//            }
             if (bean.containsKey("hcCount")) {
               bean.put("hcCount", Integer.parseInt(String.valueOf(bean.get("hcCount"))) + Integer.parseInt(String.valueOf(m.get("hc"))));
             } else {
