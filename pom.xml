@@ -19,13 +19,13 @@
     <version>0.2.8</version>
   </parent>
 
-  <repositories>
-    <repository>
-      <id>myRepositories</id>
-      <name>myRepositories</name>
-      <url>http://192.168.43.32:8081/repository/public/</url>
-    </repository>
-  </repositories>
+<!--  <repositories>-->
+<!--    <repository>-->
+<!--      <id>myRepositories</id>-->
+<!--      <name>myRepositories</name>-->
+<!--      <url>http://192.168.43.32:8081/repository/public/</url>-->
+<!--    </repository>-->
+<!--  </repositories>-->
     <dependencyManagement>
     <dependencies>
       <dependency>
